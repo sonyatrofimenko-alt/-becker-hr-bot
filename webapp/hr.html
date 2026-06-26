@@ -41,6 +41,28 @@
     @keyframes splashFade { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
     @keyframes dotPulse   { 0%,80%,100% { transform:scale(0.7); opacity:0.4; } 40% { transform:scale(1); opacity:1; } }
 
+    /* ── CARD ENTRANCE ── */
+    @keyframes cardIn { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+    .card-in { animation:cardIn 0.32s ease both; }
+    @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+    /* ── SECTION FADE ── */
+    .section.active { animation:fadeIn 0.22s ease both; }
+
+    /* ── PULSE NUMBER COUNT ── */
+    @keyframes numPop { 0%{transform:scale(0.5);opacity:0} 70%{transform:scale(1.15)} 100%{transform:scale(1);opacity:1} }
+    .num-anim { animation:numPop 0.5s cubic-bezier(.34,1.56,.64,1) both; }
+
+    /* ── EKG DRAW ── */
+    .ekg-line { stroke-dasharray:600; stroke-dashoffset:600; animation:ekgDraw 2s 0.8s ease forwards; }
+    @keyframes ekgDraw { to { stroke-dashoffset:0; } }
+
+    /* ── BUTTON RIPPLE ── */
+    .card, .slot-btn, .chip, .nav-btn { transition:transform 0.12s, opacity 0.12s; }
+    .card:active, .slot-btn:active { transform:scale(0.97); opacity:0.85; }
+    .chip:active { transform:scale(0.92); }
+    .nav-btn:active { transform:scale(0.88); }
+
     /* ── HEADER ── */
     .app-header { background:var(--gold); padding:14px 18px 22px; position:sticky; top:0; z-index:10; }
     .hdr-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
@@ -221,7 +243,7 @@
     </div>
   </div>
   <svg class="pulse-ekg" viewBox="0 0 260 32" xmlns="http://www.w3.org/2000/svg">
-    <polyline points="0,16 30,16 42,16 50,3 56,29 62,3 68,16 80,16 100,16 108,16 116,9 120,23 124,9 128,16 140,16 180,16 188,10 192,22 196,10 200,16 260,16"
+    <polyline class="ekg-line" points="0,16 30,16 42,16 50,3 56,29 62,3 68,16 80,16 100,16 108,16 116,9 120,23 124,9 128,16 140,16 180,16 188,10 192,22 196,10 200,16 260,16"
       fill="none" stroke="#e84040" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
   </svg>
 </div>
@@ -314,7 +336,7 @@
     <select id="m-spec" class="modal-input" style="-webkit-appearance:none" onchange="onSpecChange(this)">
       <option value="">Загружаю...</option>
     </select>
-    <div id="new-spec-row" style="display:none;display:flex;gap:8px;margin-top:-4px;margin-bottom:10px">
+    <div id="new-spec-row" style="display:none;gap:8px;margin-top:-4px;margin-bottom:10px">
       <input id="m-newspec" class="modal-input" placeholder="Название специализации" style="margin-bottom:0;flex:1">
       <button onclick="addNewSpec()" style="padding:13px 14px;background:var(--gold);border:none;border-radius:12px;font-weight:800;cursor:pointer;font-size:13px;font-family:inherit;white-space:nowrap;transition:transform 0.1s" onmousedown="this.style.transform='scale(0.93)'" onmouseup="this.style.transform='scale(1)'">+ Добавить</button>
     </div>
@@ -372,6 +394,11 @@
   <div class="sec-head"><div class="sec-line"></div><div class="sec-text">Статистика</div></div>
   <div style="padding:0 14px">
     <div id="stats-wrap"><div class="loading">⏳</div></div>
+    <div style="margin-top:24px;padding-top:18px;border-top:1.5px solid var(--border)">
+      <div style="font-size:10px;font-weight:800;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:10px">Резервная копия данных</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px">Скачай файл с данными всех кандидатов перед обновлением приложения, чтобы ничего не потерялось.</div>
+      <button onclick="exportData()" style="width:100%;padding:13px;background:var(--dark);color:var(--gold);border:none;border-radius:13px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;transition:transform 0.1s;display:flex;align-items:center;justify-content:center;gap:8px" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">💾&nbsp; Скачать резервную копию</button>
+    </div>
   </div>
 </div>
 
@@ -438,11 +465,30 @@ const MONTHS = ['янв','фев','мар','апр','май','июн','июл','
 const DAYS   = ['вс','пн','вт','ср','чт','пт','сб'];
 let candidates = [], mySlots = {};
 
-// Splash dismiss
-function hideSplash() {
+// Splash — minimum 1.8s + data must be loaded
+let _splashMinDone = false;
+let _dataLoaded    = false;
+setTimeout(() => { _splashMinDone = true; if (_dataLoaded) _doHideSplash(); }, 1800);
+
+function hideSplash() { _dataLoaded = true; if (_splashMinDone) _doHideSplash(); }
+function _doHideSplash() {
   const s = document.getElementById('splash');
+  if (!s) return;
   s.classList.add('hidden');
-  setTimeout(() => s.remove(), 700);
+  setTimeout(() => { if (s.parentNode) s.remove(); }, 700);
+}
+
+// Count-up animation for a number element
+function animateCount(el, target, duration=700) {
+  if (typeof target !== 'number') { el.textContent = target; return; }
+  const start = performance.now();
+  function step(now) {
+    const p = Math.min((now - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(ease * target);
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
 }
 
 function nav(name, el) {
@@ -508,10 +554,19 @@ function renderPulse() {
   }).length;
   const came    = candidates.filter(c=>['approved','approved_pending','rejected','rejected_pending'].includes(c.status)).length;
   const approved= candidates.filter(c=>['approved','approved_pending'].includes(c.status)).length;
-  const conv    = came>0 ? Math.round(approved/came*100)+'%' : '—';
-  document.getElementById('s-today').textContent = todayCnt;
-  document.getElementById('s-week').textContent  = weekCnt;
-  document.getElementById('s-conv').textContent  = conv;
+  const convNum = came>0 ? Math.round(approved/came*100) : null;
+  const convStr = convNum !== null ? convNum+'%' : '—';
+
+  // Count-up animations with stagger
+  const eToday = document.getElementById('s-today');
+  const eWeek  = document.getElementById('s-week');
+  const eConv  = document.getElementById('s-conv');
+  [eToday, eWeek, eConv].forEach(el => { el.classList.remove('num-anim'); void el.offsetWidth; el.classList.add('num-anim'); });
+  setTimeout(()=>animateCount(eToday, todayCnt, 600), 200);
+  setTimeout(()=>animateCount(eWeek,  weekCnt,  600), 350);
+  setTimeout(()=>{ if (convNum !== null) animateCount(eConv, convNum, 700); else eConv.textContent = '—'; }, 500);
+  // suffix for conv
+  if (convNum !== null) setTimeout(()=>{ eConv.textContent = convNum+'%'; }, 900);
 }
 
 function renderReminders() {
@@ -535,11 +590,11 @@ function renderToday() {
   const list = candidates.filter(c=>c.interview_date===TODAY).sort((a,b)=>(a.interview_time||'').localeCompare(b.interview_time||''));
   const el = document.getElementById('today-list');
   if (!list.length) { el.innerHTML=`<div class="empty"><div class="e">☀️</div>Сегодня собеседований нет</div>`; return; }
-  el.innerHTML = list.map(c => {
+  el.innerHTML = list.map((c,i) => {
     const u = c.username?`@${c.username}`:`ID:${c.telegram_id}`;
     const conf = c.confirmed===true?'✅ Подтвердил(а)':c.confirmed===false?'❌ Отказал(ась)':'❓ Без ответа';
     const enc = encodeURIComponent(JSON.stringify(c));
-    return `<div class="card ${cardBorder(c.status)}" style="cursor:pointer" onclick="openCandModal(${enc.replace(/'/g,'&#39;')},event)">
+    return `<div class="card ${cardBorder(c.status)} card-in" style="cursor:pointer;animation-delay:${i*60}ms" onclick="openCandModal(${enc.replace(/'/g,'&#39;')},event)">
       <div style="display:flex;align-items:flex-start;justify-content:space-between">
         <div>
           <div class="cand-time">${c.interview_time||'—'}</div>
@@ -711,6 +766,7 @@ function renderCandidatesFull() {
 
   const catOrder = ['sales','admin','design','other'];
   let html = '';
+  let cardIdx = 0;
   for (const cat of catOrder) {
     if (!groups[cat]) continue;
     if (_fSpec === 'all') {
@@ -723,7 +779,8 @@ function renderCandidatesFull() {
     html += groups[cat].map(c => {
       const u = c.username ? `@${c.username}` : `ID:${c.telegram_id}`;
       const dl = c.interview_date ? fmtDate(c.interview_date) : '—';
-      return `<div class="card ${cardBorder(c.status)}">
+      const delay = (cardIdx++) * 55;
+      return `<div class="card ${cardBorder(c.status)} card-in" style="animation-delay:${delay}ms">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
           <div><div class="cand-name">${c.name}</div>
           <div class="cand-meta">${c.spec||'—'} · ${u}</div>
@@ -881,6 +938,20 @@ async function submitManual() {
     if (j.ok){closeManual(null);tg.showAlert('✅ Кандидат добавлен!');loadAll();}
     else tg.showAlert('Ошибка: '+(j.error||''));
   } catch(e){tg.showAlert('Ошибка соединения');}
+}
+
+// Export / backup
+async function exportData() {
+  try {
+    const r = await fetch(`/api/export?hr_id=${HR_ID}`);
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const date = new Date().toISOString().split('T')[0];
+    a.href = url; a.download = `becker_hr_backup_${date}.json`;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+  } catch(e) { tg.showAlert('Ошибка при скачивании'); }
 }
 
 // Minimum splash time 1.5s

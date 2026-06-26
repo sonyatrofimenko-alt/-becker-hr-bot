@@ -1535,6 +1535,39 @@ async def serve_notifications_read(request):
         return web.Response(text=json.dumps({"ok": False, "error": str(e)}),
                             content_type="application/json", headers=CORS)
 
+async def serve_export(request):
+    """Download a full backup of hr_data.json (authenticated by hr_id)."""
+    hr_id = int(request.rel_url.query.get("hr_id", 0))
+    if hr_id not in HR_IDS:
+        return web.Response(status=403, text="Forbidden")
+    data = load()
+    payload = json.dumps(data, ensure_ascii=False, indent=2)
+    return web.Response(
+        text=payload,
+        content_type="application/json",
+        headers={
+            **CORS,
+            "Content-Disposition": "attachment; filename=hr_data.json"
+        }
+    )
+
+async def serve_import(request):
+    """Restore hr_data.json from an uploaded backup (authenticated by hr_id)."""
+    try:
+        hr_id = int(request.rel_url.query.get("hr_id", 0))
+        if hr_id not in HR_IDS:
+            return web.Response(status=403, text="Forbidden")
+        body = await request.json()
+        # Validate basic structure
+        if not isinstance(body.get("candidates"), dict):
+            return web.Response(text='{"ok":false,"error":"invalid backup"}',
+                                content_type="application/json", headers=CORS)
+        save(body)
+        return web.Response(text='{"ok":true}', content_type="application/json", headers=CORS)
+    except Exception as e:
+        return web.Response(text=json.dumps({"ok": False, "error": str(e)}),
+                            content_type="application/json", headers=CORS)
+
 async def serve_static(request):
     filename = request.match_info["filename"]
     filepath = os.path.join(WEBAPP_DIR, filename)
@@ -1556,6 +1589,8 @@ async def run_webserver():
     app_web.router.add_post("/api/update-status",      serve_update_status)
     app_web.router.add_get("/api/specs",               serve_specs_get)
     app_web.router.add_post("/api/specs",              serve_specs_post)
+    app_web.router.add_get("/api/export",              serve_export)
+    app_web.router.add_post("/api/import",             serve_import)
     app_web.router.add_get("/{filename}",           serve_static)
     runner = web.AppRunner(app_web)
     await runner.setup()
