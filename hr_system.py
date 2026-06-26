@@ -86,16 +86,7 @@ NAME, PICK_SPEC, PICK_FORMAT, PICK_DATE, PICK_TIME = range(5)
 HR_SONYA = 859413090
 HR_YULIA  = 474244647
 
-# ── HR-клавиатура ─────────────────────────────────────────────────────────────
-HR_KEYBOARD = ReplyKeyboardMarkup(
-    [
-        [KeyboardButton("📅 Расписание"),  KeyboardButton("👥 Кандидаты")],
-        [KeyboardButton("📊 Статистика"),  KeyboardButton("❓ Помощь")],
-        [KeyboardButton("👁 Превью бота")],
-    ],
-    resize_keyboard=True,
-    input_field_placeholder="Выбери действие..."
-)
+# HR_KEYBOARD удалена — вся работа через мини-приложение
 
 # ── /menu ─────────────────────────────────────────────────────────────────────
 async def menu_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
@@ -115,63 +106,45 @@ async def menu_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         1 for c in data["candidates"].values()
         if c.get("hr_id") == uid and c.get("status") == "approved_pending"
     )
+    unread = sum(
+        1 for n in data.get("notifications", {}).get(str(uid), [])
+        if not n.get("read")
+    )
 
     status_lines = []
     if my_today:
-        status_lines.append(f"📋 СОБЕСЕДОВАНИЙ сегодня: <b>{my_today}</b>")
+        status_lines.append(f"📋 Собеседований сегодня: <b>{my_today}</b>")
     if my_pending:
-        status_lines.append(f"✉️ Ждут твоего письма: <b>{my_pending}</b>")
+        status_lines.append(f"✉️ Ждут письма: <b>{my_pending}</b>")
+    if unread:
+        status_lines.append(f"🔔 Новых уведомлений: <b>{unread}</b>")
     status_block = "\n".join(status_lines) + "\n\n" if status_lines else ""
 
-    # Кнопка HR-дашборда
-    webapp_kb = None
     if WEBAPP_URL:
         webapp_kb = InlineKeyboardMarkup([[
-            InlineKeyboardButton("📱 HR-панель", web_app=WebAppInfo(url=WEBAPP_URL + "/hr"))
+            InlineKeyboardButton("📱 Открыть HR-панель", web_app=WebAppInfo(url=WEBAPP_URL + "/hr"))
         ]])
-
-    await update.message.reply_text(
-        f"👩‍💼 <b>Панель HR — BECKER</b>\n"
-        f"━━━━━━━━━━━━━━━━━━\n"
-        f"Привет, <b>{hr_name(uid)}</b>!\n\n"
-        f"{status_block}"
-        f"Кнопки меню внизу экрана 👇",
-        reply_markup=HR_KEYBOARD,
-        parse_mode="HTML"
-    )
-    if webapp_kb:
         await update.message.reply_text(
-            "Посмотреть приложение глазами кандидата:",
-            reply_markup=webapp_kb
+            f"👋 Привет, <b>{hr_name(uid)}</b>!\n\n"
+            f"{status_block}"
+            f"Нажми, чтобы открыть панель:",
+            reply_markup=webapp_kb,
+            parse_mode="HTML"
+        )
+    else:
+        await update.message.reply_text(
+            f"👋 Привет, <b>{hr_name(uid)}</b>!\n\n"
+            f"{status_block}"
+            f"WEBAPP_URL не настроен.",
+            parse_mode="HTML"
         )
 
-# ── Обработка кнопок HR ───────────────────────────────────────────────────────
+# ── Обработка кнопок HR (устаревшее — оставлено для совместимости) ─────────────
 async def hr_keyboard_handler(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if not is_hr(update.effective_user.id):
         return
-    text = update.message.text
-    if   text == "📅 Расписание": await slots_cmd(update, ctx)
-    elif text == "👥 Кандидаты":  await list_cmd(update, ctx)
-    elif text == "📊 Статистика":  await stats_cmd(update, ctx)
-    elif text == "👁 Превью бота": await preview_cmd(update, ctx)
-    elif text == "❓ Помощь":
-        await update.message.reply_text(
-            "📖 <b>Справка по боту BECKER</b>\n"
-            "━━━━━━━━━━━━━━━━━━\n\n"
-            "📅 <b>Расписание</b>\n"
-            "Выстави свои слоты на неделю: нажми на день → отметь время → «Сохранить».\n"
-            "Кнопка ⚡ заполняет 11:00–17:30 одним нажатием.\n\n"
-            "👥 <b>Кандидаты</b>\n"
-            "Твои кандидаты с датой и статусом:\n"
-            "📅 записан  ·  ✅ одобрен  ·  ❌ отказ  ·  👻 не пришёл\n\n"
-            "🕘 <b>Автоматика</b>\n"
-            "09:00 — карточки по твоим СОБЕСЕДОВАНИЯМ на сегодня\n"
-            "17:00 — напоминание твоим кандидатам накануне\n"
-            "18:00 — список одобренных + авто-отказы\n\n"
-            "👁 <b>Превью</b> — все сообщения бота глазами кандидата.\n\n"
-            f"Вопросы: 💬 {HR_TELEGRAM}",
-            parse_mode="HTML"
-        )
+    # Вся работа теперь через мини-приложение — просто показываем кнопку
+    await menu_cmd(update, ctx)
 
 # ── /start ────────────────────────────────────────────────────────────────────
 async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
@@ -376,11 +349,23 @@ async def pick_time(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         "username":       user.username or "",
         "interview_date": d["interview_date"],
         "interview_time": chosen_time,
-        "hr_id":          booked_hr_id,   # чей слот физически занят
-        "shared":         is_shared,      # True → видят оба HR
+        "hr_id":          booked_hr_id,
+        "shared":         is_shared,
         "status":         "scheduled",
         "created_at":     datetime.now().isoformat()
     }
+    # Уведомление в мини-приложение
+    notifs = data.setdefault("notifications", {})
+    notif_entry = {
+        "type": "booked", "name": d["name"], "spec": spec,
+        "date": d["interview_date"], "time": chosen_time,
+        "username": user.username or "", "ts": datetime.now().isoformat(), "read": False
+    }
+    if is_shared:
+        for hid in HR_IDS:
+            notifs.setdefault(str(hid), []).insert(0, notif_entry)
+    else:
+        notifs.setdefault(str(booked_hr_id), []).insert(0, notif_entry)
     save(data)
 
     interview_dt = datetime.strptime(d["interview_date"], "%Y-%m-%d")
@@ -1336,6 +1321,18 @@ async def webapp_data_handler(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         "status":         "scheduled",
         "created_at":     datetime.now().isoformat()
     }
+    # Уведомление в мини-приложение
+    notifs = data.setdefault("notifications", {})
+    notif_entry = {
+        "type": "booked", "name": name, "spec": spec,
+        "date": day_str, "time": time_str,
+        "username": user.username or "", "ts": datetime.now().isoformat(), "read": False
+    }
+    if is_shared:
+        for hid in HR_IDS:
+            notifs.setdefault(str(hid), []).insert(0, notif_entry)
+    else:
+        notifs.setdefault(str(booked_hr), []).insert(0, notif_entry)
     save(data)
 
     try:
@@ -1425,6 +1422,65 @@ async def serve_my_slots_post(request):
         return web.Response(text=json.dumps({"ok": False, "error": str(e)}),
                             content_type="application/json", headers=CORS)
 
+async def serve_book_manual(request):
+    """HR вносит кандидата вручную из мини-приложения."""
+    try:
+        import re as _re
+        body     = await request.json()
+        hr_id    = int(body.get("hr_id", 0))
+        name     = body.get("name", "").strip()
+        spec     = body.get("spec", "—")
+        day_str  = body.get("date", "")
+        time_str = body.get("time", "")
+        phone    = body.get("phone", "")
+
+        if not (name and day_str and time_str):
+            return web.Response(text='{"ok":false,"error":"missing fields"}',
+                                content_type="application/json", headers=CORS)
+
+        key = f"manual_{_re.sub(r'[^a-zA-Zа-яА-ЯёЁ0-9]', '_', name)}_{day_str}_{time_str}"
+        data = load()
+        data["candidates"][key] = {
+            "name": name, "spec": spec,
+            "telegram_id": 0, "username": "",
+            "phone": phone,
+            "interview_date": day_str, "interview_time": time_str,
+            "hr_id": hr_id, "shared": False,
+            "status": "scheduled", "manual": True,
+            "created_at": datetime.now().isoformat()
+        }
+        notifs = data.setdefault("notifications", {})
+        notifs.setdefault(str(hr_id), []).insert(0, {
+            "type": "manual", "name": name, "spec": spec,
+            "date": day_str, "time": time_str,
+            "ts": datetime.now().isoformat(), "read": False
+        })
+        save(data)
+        return web.Response(text='{"ok":true}', content_type="application/json", headers=CORS)
+    except Exception as e:
+        return web.Response(text=json.dumps({"ok": False, "error": str(e)}),
+                            content_type="application/json", headers=CORS)
+
+async def serve_notifications_get(request):
+    hr_id = int(request.rel_url.query.get("hr_id", 0))
+    data  = load()
+    notifs = data.get("notifications", {}).get(str(hr_id), [])
+    return web.Response(text=json.dumps(notifs[:50], ensure_ascii=False),
+                        content_type="application/json", headers=CORS)
+
+async def serve_notifications_read(request):
+    try:
+        body  = await request.json()
+        hr_id = int(body.get("hr_id", 0))
+        data  = load()
+        for n in data.get("notifications", {}).get(str(hr_id), []):
+            n["read"] = True
+        save(data)
+        return web.Response(text='{"ok":true}', content_type="application/json", headers=CORS)
+    except Exception as e:
+        return web.Response(text=json.dumps({"ok": False, "error": str(e)}),
+                            content_type="application/json", headers=CORS)
+
 async def serve_static(request):
     filename = request.match_info["filename"]
     filepath = os.path.join(WEBAPP_DIR, filename)
@@ -1434,13 +1490,16 @@ async def serve_static(request):
 
 async def run_webserver():
     app_web = web.Application()
-    app_web.router.add_get("/",                serve_index)
-    app_web.router.add_get("/hr",              serve_hr_app)
-    app_web.router.add_get("/slots",           serve_slots)
-    app_web.router.add_get("/api/candidates",  serve_candidates_api)
-    app_web.router.add_get("/api/my-slots",    serve_my_slots_get)
-    app_web.router.add_post("/api/my-slots",   serve_my_slots_post)
-    app_web.router.add_get("/{filename}",      serve_static)
+    app_web.router.add_get("/",                     serve_index)
+    app_web.router.add_get("/hr",                   serve_hr_app)
+    app_web.router.add_get("/slots",                serve_slots)
+    app_web.router.add_get("/api/candidates",       serve_candidates_api)
+    app_web.router.add_get("/api/my-slots",         serve_my_slots_get)
+    app_web.router.add_post("/api/my-slots",        serve_my_slots_post)
+    app_web.router.add_post("/api/book-manual",     serve_book_manual)
+    app_web.router.add_get("/api/notifications",    serve_notifications_get)
+    app_web.router.add_post("/api/notifications/read", serve_notifications_read)
+    app_web.router.add_get("/{filename}",           serve_static)
     runner = web.AppRunner(app_web)
     await runner.setup()
     site = web.TCPSite(runner, "0.0.0.0", PORT)

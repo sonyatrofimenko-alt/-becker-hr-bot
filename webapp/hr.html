@@ -182,7 +182,24 @@
     <h1 id="hdr-title">Панель HR</h1>
     <p id="hdr-sub">Загружаю...</p>
   </div>
-  <div class="becker-badge">BECKER</div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <div id="bell-btn" onclick="toggleNotifs()" style="position:relative;cursor:pointer;font-size:22px;line-height:1;padding:4px;">
+      🔔
+      <span id="bell-badge" style="display:none;position:absolute;top:0;right:0;background:#e84040;color:white;font-size:9px;font-weight:800;border-radius:50%;width:16px;height:16px;display:none;align-items:center;justify-content:center;line-height:1;"></span>
+    </div>
+    <div class="becker-badge">BECKER</div>
+  </div>
+</div>
+
+<!-- Notifications panel -->
+<div id="notif-panel" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:100;" onclick="closeNotifs(event)">
+  <div style="position:absolute;top:0;left:0;right:0;background:var(--card);border-radius:0 0 20px 20px;padding:16px;max-height:70vh;overflow-y:auto;" onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-size:16px;font-weight:800;color:var(--gold)">🔔 Уведомления</div>
+      <div onclick="closeNotifs(null)" style="font-size:22px;cursor:pointer;color:var(--muted)">✕</div>
+    </div>
+    <div id="notif-list"><div style="text-align:center;color:var(--muted);padding:20px">Загружаю...</div></div>
+  </div>
 </div>
 
 <!-- Stats bar -->
@@ -209,9 +226,37 @@
 
 <!-- SLOTS -->
 <div class="section" id="sec-slots">
-  <div class="section-title" style="margin-top:14px">Расписание</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 8px">
+    <div class="section-title" style="margin:0">Расписание</div>
+    <button onclick="openManualEntry()" style="background:var(--gold);color:var(--black);border:none;border-radius:10px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;">+ Добавить</button>
+  </div>
   <div id="slots-wrap"><div class="loading">⏳</div></div>
   <button class="save-btn" onclick="saveSlots()">💾 Сохранить расписание</button>
+</div>
+
+<!-- Manual entry modal -->
+<div id="manual-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:200;align-items:flex-end;" onclick="closeManual(event)">
+  <div style="background:var(--card);border-radius:20px 20px 0 0;padding:20px;width:100%;" onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-size:16px;font-weight:800;color:var(--gold)">✏️ Добавить собеседование</div>
+      <div onclick="closeManual(null)" style="font-size:22px;cursor:pointer;color:var(--muted)">✕</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <input id="m-name"  placeholder="Имя и фамилия *" style="padding:12px 14px;border-radius:10px;border:1px solid rgba(251,193,72,0.2);background:var(--card2);color:var(--text);font-size:15px;font-family:inherit;outline:none;" />
+      <input id="m-phone" placeholder="Телефон" style="padding:12px 14px;border-radius:10px;border:1px solid rgba(251,193,72,0.2);background:var(--card2);color:var(--text);font-size:15px;font-family:inherit;outline:none;" />
+      <select id="m-spec" style="padding:12px 14px;border-radius:10px;border:1px solid rgba(251,193,72,0.2);background:var(--card2);color:var(--text);font-size:15px;font-family:inherit;outline:none;">
+        <option value="Продажи · Офис">Продажи · Офис</option>
+        <option value="Продажи · Разъезд">Продажи · Разъезд</option>
+        <option value="Другое">Другое</option>
+      </select>
+      <input id="m-date" type="date" style="padding:12px 14px;border-radius:10px;border:1px solid rgba(251,193,72,0.2);background:var(--card2);color:var(--text);font-size:15px;font-family:inherit;outline:none;" />
+      <select id="m-time" style="padding:12px 14px;border-radius:10px;border:1px solid rgba(251,193,72,0.2);background:var(--card2);color:var(--text);font-size:15px;font-family:inherit;outline:none;">
+        <option value="">Выбери время</option>
+        ${["11:00","12:00","13:00","14:00","15:00","16:00","17:00","17:30"].map(t=>`<option value="${t}">${t}</option>`).join('')}
+      </select>
+    </div>
+    <button onclick="submitManual()" style="width:100%;margin-top:16px;padding:14px;background:var(--gold);color:var(--black);border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;">Сохранить</button>
+  </div>
 </div>
 
 <!-- CANDIDATES -->
@@ -252,7 +297,7 @@ const HR_ID = tg.initDataUnsafe?.user?.id || 0;
 // ── Имя и аватар HR ──
 const HR_PROFILES = {
   859413090: { name: "Софья", avatar: "./sonya.jpg", initial: "С" },
-  474244647: { name: "Юлия",  avatar: null,          initial: "Ю" },
+  474244647: { name: "Юлия",  avatar: "./yulia.jpg", initial: "Ю" },
 };
 const hrProfile = HR_PROFILES[HR_ID] || { name: "HR", avatar: null, initial: "HR" };
 document.getElementById('hdr-title').textContent = "Панель HR — " + hrProfile.name;
@@ -321,12 +366,14 @@ function cardBorder(status) {
 // ── Load ──
 async function loadAll() {
   try {
-    const [r1, r2] = await Promise.all([
+    const [r1, r2, r3] = await Promise.all([
       fetch(`/api/candidates?hr_id=${HR_ID}`),
-      fetch(`/api/my-slots?hr_id=${HR_ID}`)
+      fetch(`/api/my-slots?hr_id=${HR_ID}`),
+      fetch(`/api/notifications?hr_id=${HR_ID}`)
     ]);
     candidates = await r1.json();
     mySlots    = await r2.json();
+    const notifs = await r3.json();
 
     renderHeader();
     renderStatsBar();
@@ -334,6 +381,8 @@ async function loadAll() {
     renderSlots();
     renderCandidates('all');
     renderStats();
+    renderNotifBadge(notifs);
+    renderNotifList(notifs);
   } catch(e) {
     document.getElementById('hdr-sub').textContent = 'Ошибка загрузки';
     console.error(e);
@@ -399,20 +448,28 @@ function renderSlots() {
     d.setDate(d.getDate() + i);
     const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     const active = mySlots[ds] || [];
-    const booked = candidates
-      .filter(c => c.interview_date === ds && c.status === 'scheduled')
-      .map(c => c.interview_time);
+    const bookedCands = candidates.filter(c => c.interview_date === ds && c.status === 'scheduled');
+    const bookedMap = {};
+    bookedCands.forEach(c => { bookedMap[c.interview_time] = c; });
 
     html += `<div class="day-label">${isToday(ds)?'📍 ':''}${fmtDate(ds)}</div>`;
     html += `<div class="slots-grid" data-date="${ds}">`;
     for (const t of DEFAULT_SLOTS) {
-      const isBook = booked.includes(t);
-      const isOn   = active.includes(t);
-      const cls    = isBook ? 'booked' : (isOn ? 'on' : '');
-      html += `<div class="slot-btn ${cls}" data-time="${t}" data-date="${ds}"
-                    onclick="${isBook?'':'toggleSlot(this)'}">
-                 ${t}${isBook ? '<br><span style="font-size:9px;opacity:0.7">занято</span>' : ''}
-               </div>`;
+      const cand  = bookedMap[t];
+      const isOn  = active.includes(t);
+      if (cand) {
+        const firstName = cand.name.split(' ')[0];
+        html += `<div class="slot-btn booked" data-time="${t}" data-date="${ds}"
+                      onclick="showCandPopup('${encodeURIComponent(JSON.stringify(cand))}')"
+                      style="border-color:var(--gold);background:rgba(251,193,72,0.15);cursor:pointer;">
+                   <span style="font-size:13px;font-weight:700">${t}</span>
+                   <br><span style="font-size:9px;color:var(--gold);font-weight:600">${firstName}</span>
+                 </div>`;
+      } else {
+        html += `<div class="slot-btn ${isOn?'on':''}" data-time="${t}" data-date="${ds}" onclick="toggleSlot(this)">
+                   ${t}
+                 </div>`;
+      }
     }
     html += `</div>
     <div class="day-actions">
@@ -423,6 +480,12 @@ function renderSlots() {
     </div>`;
   }
   el.innerHTML = html;
+}
+
+function showCandPopup(encoded) {
+  const c = JSON.parse(decodeURIComponent(encoded));
+  const uname = c.username ? `@${c.username}` : (c.phone || `ID: ${c.telegram_id}`);
+  tg.showAlert(`👤 ${c.name}\n💼 ${c.spec||'—'}\n📱 ${uname}\n📅 ${c.interview_time}`);
 }
 
 function toggleSlot(el) { el.classList.toggle('on'); }
@@ -489,7 +552,7 @@ function renderCandidates(filter) {
   }).join('');
 }
 
-// ── Statistics ──
+// ── Statistics (animated bars) ──
 function renderStats() {
   const total    = candidates.length;
   const came     = candidates.filter(c => ['approved','approved_pending','rejected','rejected_pending'].includes(c.status)).length;
@@ -497,28 +560,157 @@ function renderStats() {
   const rejected = candidates.filter(c => ['rejected','rejected_pending'].includes(c.status)).length;
   const noshow   = candidates.filter(c => c.status === 'no_show').length;
   const sched    = candidates.filter(c => c.status === 'scheduled').length;
-  const conv     = came > 0 ? Math.round(approved/came*100)+'%' : '—';
+  const convPct  = came > 0 ? Math.round(approved/came*100) : 0;
 
-  const rows = [
-    { n: total,    color:'var(--teal)', lbl:'Всего кандидатов' },
-    { n: sched,    color:'var(--muted)', lbl:'Ещё впереди' },
-    { n: came,     color:'var(--gold)', lbl:'Пришли на собеседование' },
-    { n: approved, color:'var(--teal)', lbl:'Приняты на работу' },
-    { n: rejected, color:'var(--red)',  lbl:'Отказы' },
-    { n: noshow,   color:'var(--red)',  lbl:'Не пришли' },
-    { n: conv,     color:'var(--gold)', lbl:'Конверсия пришёл→принят' },
-  ];
+  function bar(label, val, max, color) {
+    const pct = max > 0 ? Math.min(100, Math.round(val/max*100)) : 0;
+    return `<div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:13px;color:var(--text)">${label}</span>
+        <span style="font-size:14px;font-weight:800;color:${color}">${val}</span>
+      </div>
+      <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden">
+        <div class="anim-bar" style="height:100%;width:0;background:${color};border-radius:3px;transition:width 0.8s cubic-bezier(.4,0,.2,1)" data-pct="${pct}"></div>
+      </div>
+    </div>`;
+  }
 
-  document.getElementById('stats-wrap').innerHTML =
-    rows.map(r => `
-      <div class="big-stat">
-        <div class="big-num" style="color:${r.color}">${r.n}</div>
-        <div><div class="big-lbl">${r.lbl}</div></div>
-      </div>`).join('') +
-    `<svg class="ekg" viewBox="0 0 260 36" xmlns="http://www.w3.org/2000/svg">
-       <polyline points="0,18 30,18 42,18 50,4 56,32 62,4 68,18 80,18 100,18 108,18 116,10 120,26 124,10 128,18 140,18 180,18 188,12 192,24 196,12 200,18 260,18"
-         fill="none" stroke="#e84040" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
-     </svg>`;
+  document.getElementById('stats-wrap').innerHTML = `
+    <div style="background:var(--card2);border-radius:14px;padding:16px;margin-bottom:12px">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px">Воронка</div>
+      ${bar('Всего записей', total, total, 'var(--muted)')}
+      ${bar('Пришли на собеседование', came, total, 'var(--gold)')}
+      ${bar('Приняты на работу', approved, total, 'var(--teal)')}
+      ${bar('Не пришли', noshow, total, 'var(--red)')}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <div style="background:var(--card2);border-radius:14px;padding:14px;text-align:center">
+        <div style="font-size:32px;font-weight:900;color:var(--gold)">${convPct}%</div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-top:4px">Конверсия</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">пришёл → принят</div>
+      </div>
+      <div style="background:var(--card2);border-radius:14px;padding:14px;text-align:center">
+        <div style="font-size:32px;font-weight:900;color:var(--teal)">${sched}</div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-top:4px">Ещё впереди</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">запланировано</div>
+      </div>
+    </div>
+    <div style="background:var(--card2);border-radius:14px;padding:14px">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px">Конверсия</div>
+      <div style="height:8px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden">
+        <div class="anim-bar" style="height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--teal));border-radius:4px;transition:width 1s cubic-bezier(.4,0,.2,1)" data-pct="${convPct}"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px">
+        <span style="font-size:11px;color:var(--muted)">0%</span>
+        <span style="font-size:11px;color:var(--gold);font-weight:700">${convPct}%</span>
+        <span style="font-size:11px;color:var(--muted)">100%</span>
+      </div>
+    </div>
+    <svg class="ekg" viewBox="0 0 260 36" xmlns="http://www.w3.org/2000/svg" style="margin-top:12px">
+      <polyline points="0,18 30,18 42,18 50,4 56,32 62,4 68,18 80,18 100,18 108,18 116,10 120,26 124,10 128,18 140,18 180,18 188,12 192,24 196,12 200,18 260,18"
+        fill="none" stroke="#e84040" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+    </svg>`;
+
+  // Animate bars after render
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      document.querySelectorAll('.anim-bar').forEach(b => {
+        b.style.width = b.dataset.pct + '%';
+      });
+    }, 100);
+  });
+}
+
+// ── Notifications ──
+function renderNotifBadge(notifs) {
+  const unread = notifs.filter(n => !n.read).length;
+  const badge = document.getElementById('bell-badge');
+  if (unread > 0) {
+    badge.textContent = unread > 9 ? '9+' : unread;
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function renderNotifList(notifs) {
+  const el = document.getElementById('notif-list');
+  if (!notifs.length) {
+    el.innerHTML = '<div style="text-align:center;color:var(--muted);padding:20px">Уведомлений нет</div>';
+    return;
+  }
+  const typeLabel = { booked:'📅 Новая запись', manual:'✏️ Добавлено вручную', cancelled:'❌ Отмена' };
+  el.innerHTML = notifs.map(n => {
+    const ts = n.ts ? new Date(n.ts).toLocaleString('ru', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+    const lbl = typeLabel[n.type] || n.type;
+    const bg = n.read ? 'rgba(255,255,255,0.03)' : 'rgba(251,193,72,0.08)';
+    return `<div style="padding:12px;border-radius:10px;margin-bottom:6px;background:${bg}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="font-size:12px;font-weight:700;color:var(--gold)">${lbl}</div>
+        <div style="font-size:10px;color:var(--muted)">${ts}</div>
+      </div>
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-top:3px">${n.name}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:1px">${n.date} · ${n.time}${n.username?' · @'+n.username:''}</div>
+    </div>`;
+  }).join('');
+}
+
+async function toggleNotifs() {
+  const panel = document.getElementById('notif-panel');
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'flex';
+  if (!isOpen) {
+    // Mark as read
+    try {
+      await fetch('/api/notifications/read', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ hr_id: HR_ID })
+      });
+      document.getElementById('bell-badge').style.display = 'none';
+    } catch(e) {}
+  }
+}
+
+function closeNotifs(e) {
+  if (!e || e.target === document.getElementById('notif-panel'))
+    document.getElementById('notif-panel').style.display = 'none';
+}
+
+// ── Manual entry ──
+function openManualEntry() {
+  const today = new Date();
+  const def = new Date(today); def.setDate(today.getDate() + 1);
+  const ds = def.toISOString().split('T')[0];
+  document.getElementById('m-date').value = ds;
+  document.getElementById('m-name').value = '';
+  document.getElementById('m-phone').value = '';
+  document.getElementById('manual-modal').style.display = 'flex';
+}
+
+function closeManual(e) {
+  if (!e || e.target === document.getElementById('manual-modal'))
+    document.getElementById('manual-modal').style.display = 'none';
+}
+
+async function submitManual() {
+  const name  = document.getElementById('m-name').value.trim();
+  const phone = document.getElementById('m-phone').value.trim();
+  const spec  = document.getElementById('m-spec').value;
+  const date  = document.getElementById('m-date').value;
+  const time  = document.getElementById('m-time').value;
+  if (!name || !date || !time) { tg.showAlert('Заполни имя, дату и время'); return; }
+  try {
+    const r = await fetch('/api/book-manual', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ hr_id: HR_ID, name, phone, spec, date, time })
+    });
+    const j = await r.json();
+    if (j.ok) {
+      closeManual(null);
+      tg.showAlert('✅ Кандидат добавлен!');
+      loadAll();
+    } else { tg.showAlert('Ошибка: ' + (j.error||'')); }
+  } catch(e) { tg.showAlert('Ошибка соединения'); }
 }
 
 loadAll();
