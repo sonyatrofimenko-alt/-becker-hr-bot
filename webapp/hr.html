@@ -175,11 +175,11 @@
 
 <!-- Header -->
 <div class="header">
-  <img src="./sonya.jpg" class="header-avatar"
+  <img id="hdr-avatar-img" src="./sonya.jpg" class="header-avatar"
     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-  <div class="header-avatar-fallback">С</div>
+  <div id="hdr-avatar-fallback" class="header-avatar-fallback">С</div>
   <div class="header-info">
-    <h1>Панель HR — Софья</h1>
+    <h1 id="hdr-title">Панель HR</h1>
     <p id="hdr-sub">Загружаю...</p>
   </div>
   <div class="becker-badge">BECKER</div>
@@ -248,6 +248,21 @@ tg.setHeaderColor && tg.setHeaderColor('#1e1a12');
 tg.setBackgroundColor && tg.setBackgroundColor('#0f0d09');
 
 const HR_ID = tg.initDataUnsafe?.user?.id || 0;
+
+// ── Имя и аватар HR ──
+const HR_PROFILES = {
+  859413090: { name: "Софья", avatar: "./sonya.jpg", initial: "С" },
+  474244647: { name: "Юлия",  avatar: null,          initial: "Ю" },
+};
+const hrProfile = HR_PROFILES[HR_ID] || { name: "HR", avatar: null, initial: "HR" };
+document.getElementById('hdr-title').textContent = "Панель HR — " + hrProfile.name;
+document.getElementById('hdr-avatar-fallback').textContent = hrProfile.initial;
+if (!hrProfile.avatar) {
+  document.getElementById('hdr-avatar-img').style.display = 'none';
+  document.getElementById('hdr-avatar-fallback').style.display = 'flex';
+} else {
+  document.getElementById('hdr-avatar-img').src = hrProfile.avatar;
+}
 
 const TODAY = (() => {
   const d = new Date();
