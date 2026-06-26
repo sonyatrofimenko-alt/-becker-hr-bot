@@ -123,13 +123,12 @@ async def menu_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         status_lines.append(f"✉️ Ждут твоего письма: <b>{my_pending}</b>")
     status_block = "\n".join(status_lines) + "\n\n" if status_lines else ""
 
-    # Кнопки мини-приложений для HR
+    # Кнопка HR-дашборда
     webapp_kb = None
     if WEBAPP_URL:
-        webapp_kb = InlineKeyboardMarkup([
-            [InlineKeyboardButton("📱 HR-панель",              web_app=WebAppInfo(url=WEBAPP_URL + "/hr"))],
-            [InlineKeyboardButton("👁 Приложение кандидата",  web_app=WebAppInfo(url=WEBAPP_URL))],
-        ])
+        webapp_kb = InlineKeyboardMarkup([[
+            InlineKeyboardButton("📱 HR-панель", web_app=WebAppInfo(url=WEBAPP_URL + "/hr"))
+        ]])
 
     await update.message.reply_text(
         f"👩‍💼 <b>Панель HR — BECKER</b>\n"
@@ -179,32 +178,42 @@ async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if is_hr(update.effective_user.id):
         await menu_cmd(update, ctx)
         return ConversationHandler.END
-    # Кнопка мини-приложения (если WEBAPP_URL задан)
-    webapp_kb = None
     if WEBAPP_URL:
-        webapp_kb = InlineKeyboardMarkup([[
-            InlineKeyboardButton("📱 Записаться на собеседование", web_app=WebAppInfo(url=WEBAPP_URL))
-        ]])
+        # Кандидат использует мини-приложение
+        await update.message.reply_photo(
+            photo="https://static.tildacdn.com/tild3061-6264-4033-b339-386633363065/Group_9104.png",
+            caption=(
+                f"Привет! Я <b>Софья</b>, HR кухонной фабрики <b>BECKER</b>.\n\n"
+                "Нажми кнопку ниже, чтобы записаться на собеседование 👇\n\n"
+                f"Или напиши напрямую: {HR_TELEGRAM}"
+            ),
+            parse_mode="HTML",
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton("📱 Записаться на собеседование", web_app=WebAppInfo(url=WEBAPP_URL))
+            ]])
+        )
+        return ConversationHandler.END
 
+    # Текстовый режим (без WebApp)
     await update.message.reply_photo(
         photo="https://static.tildacdn.com/tild3061-6264-4033-b339-386633363065/Group_9104.png",
         caption=(
             f"Привет! Я <b>Софья</b>, HR кухонной фабрики <b>BECKER</b>.\n\n"
             "Мы делаем кухни премиум-класса — 26 лет опыта, немецкое качество, свой завод в Москве. "
             "Ищем людей в наш дружный и яркий коллектив.\n\n"
-            "Нажми кнопку ниже, чтобы записаться на собеседование.\n"
-            f"Или напиши мне напрямую: {HR_TELEGRAM}"
+            "Через бот можно записаться — всего четыре шага:\n"
+            "1. Напиши имя и фамилию\n2. Выбери направление\n"
+            "3. Выбери день\n4. Выбери время\n\n"
+            f"Или напиши напрямую: {HR_TELEGRAM}"
         ),
         parse_mode="HTML",
-        reply_markup=webapp_kb or ReplyKeyboardRemove()
+        reply_markup=ReplyKeyboardRemove()
     )
-    if not WEBAPP_URL:
-        await update.message.reply_text(
-            "Как тебя зовут? <i>(Имя и фамилия)</i>",
-            parse_mode="HTML"
-        )
-        return NAME
-    return ConversationHandler.END
+    await update.message.reply_text(
+        "Как тебя зовут? <i>(Имя и фамилия)</i>",
+        parse_mode="HTML"
+    )
+    return NAME
 
 async def get_name(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     ctx.user_data["name"] = update.message.text
