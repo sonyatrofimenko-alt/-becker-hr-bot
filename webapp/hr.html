@@ -19,7 +19,7 @@
       --shadow: 0 2px 14px rgba(0,0,0,0.07);
     }
     * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
-    body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--dark); min-height:100vh; padding-bottom:80px; overscroll-behavior:none; }
+    body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--dark); min-height:100vh; padding-bottom:100px; overscroll-behavior:none; }
 
     /* ── SPLASH ── */
     #splash {
@@ -146,12 +146,13 @@
     .empty .e { font-size:40px; margin-bottom:12px; }
 
     /* ── BOTTOM NAV ── */
-    .bot-nav { position:fixed; bottom:0; left:0; right:0; background:var(--card); border-top:1px solid var(--border); display:flex; padding:8px 0 env(safe-area-inset-bottom,10px); z-index:20; box-shadow:0 -4px 20px rgba(0,0,0,0.06); }
-    .nav-btn { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; padding:4px 0; color:var(--muted); font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; transition:color 0.15s; }
+    .bot-nav { position:fixed; bottom:16px; left:50%; transform:translateX(-50%); z-index:20; width:calc(100% - 40px); max-width:360px; pointer-events:none; }
+    .bot-nav-inner { background:rgba(255,255,255,0.55); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); border-radius:26px; border:1px solid rgba(255,255,255,0.6); display:flex; padding:8px 8px; box-shadow:0 8px 32px rgba(0,0,0,0.12); pointer-events:all; }
+    .nav-btn { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; padding:8px 4px 6px; color:var(--muted); font-size:9px; font-weight:700; letter-spacing:0.4px; border-radius:18px; transition:color 0.18s, transform 0.12s; }
     .nav-btn:active { transform:scale(0.88); }
     .nav-btn.on { color:var(--dark); }
-    .ico-wrap { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; transition:background 0.2s; }
-    .nav-btn.on .ico-wrap { background:var(--gold); }
+    .ico-wrap { width:36px; height:36px; border-radius:13px; display:flex; align-items:center; justify-content:center; font-size:19px; transition:background 0.2s, transform 0.2s; }
+    .nav-btn.on .ico-wrap { background:var(--gold); transform:scale(1.08); }
 
     /* ── MODAL ── */
     .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:200; align-items:flex-end; }
@@ -166,6 +167,10 @@
     /* ── SECTIONS ── */
     .section { display:none; }
     .section.active { display:block; }
+
+    /* ── BACK BUTTON ── */
+    .back-btn { display:flex; align-items:center; gap:6px; background:rgba(26,22,0,0.07); border:1.5px solid rgba(26,22,0,0.1); border-radius:10px; padding:7px 13px; font-size:12px; font-weight:800; color:var(--dark); cursor:pointer; font-family:inherit; transition:transform 0.1s; }
+    .back-btn:active { transform:scale(0.92); }
 
     /* ── NOTIF PANEL ── */
     #notif-panel { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:100; }
@@ -282,11 +287,11 @@
 <!-- SLOTS -->
 <div class="section" id="sec-slots">
   <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 14px 8px">
-    <div style="display:flex;align-items:center;gap:10px">
-      <div class="sec-line"></div>
-      <div class="sec-text">Расписание</div>
+    <button class="back-btn" onclick="navBack()" onmousedown="this.style.transform='scale(0.92)'" onmouseup="this.style.transform='scale(1)'">← Назад</button>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div style="font-size:13px;font-weight:800;color:var(--dark)">📅 Расписание</div>
+      <button onclick="openManualEntry()" style="background:var(--gold);color:var(--dark);border:none;border-radius:12px;padding:9px 14px;font-size:12px;font-weight:800;cursor:pointer;transition:transform 0.1s;font-family:inherit;" onmousedown="this.style.transform='scale(0.93)'" onmouseup="this.style.transform='scale(1)'">+ Запись</button>
     </div>
-    <button onclick="openManualEntry()" style="background:var(--gold);color:var(--dark);border:none;border-radius:12px;padding:9px 16px;font-size:12px;font-weight:800;cursor:pointer;transition:transform 0.1s;font-family:inherit;" onmousedown="this.style.transform='scale(0.93)'" onmouseup="this.style.transform='scale(1)'">+ Добавить</button>
   </div>
   <div style="padding:0 14px">
     <div id="slots-wrap"><div class="loading">⏳</div></div>
@@ -359,6 +364,8 @@
   <div class="sec-head"><div class="sec-line"></div><div class="sec-text">Кандидаты</div></div>
   <div style="padding:0 14px">
 
+    <input id="cand-search" class="modal-input" placeholder="🔍  Поиск по имени, телефону, @юзернейму..." oninput="renderCandidatesFull()" style="margin-bottom:14px;background:var(--card)">
+
     <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Период</div>
     <div class="filter-row" id="week-filters">
       <div class="chip on"  onclick="setWeekFilter(this,'all')">Все</div>
@@ -404,14 +411,16 @@
 
 <!-- BOTTOM NAV -->
 <div class="bot-nav">
-  <div class="nav-btn on" onclick="nav('today',this)">
-    <div class="ico-wrap">📋</div>Сегодня
-  </div>
-  <div class="nav-btn" onclick="nav('cands',this)">
-    <div class="ico-wrap">👥</div>Кандидаты
-  </div>
-  <div class="nav-btn" onclick="nav('stats',this)">
-    <div class="ico-wrap">📊</div>Статистика
+  <div class="bot-nav-inner">
+    <div class="nav-btn on" onclick="nav('today',this)">
+      <div class="ico-wrap">📋</div>Сегодня
+    </div>
+    <div class="nav-btn" onclick="nav('cands',this)">
+      <div class="ico-wrap">👥</div>Кандидаты
+    </div>
+    <div class="nav-btn" onclick="nav('stats',this)">
+      <div class="ico-wrap">📊</div>Статистика
+    </div>
   </div>
 </div>
 
@@ -465,17 +474,39 @@ const MONTHS = ['янв','фев','мар','апр','май','июн','июл','
 const DAYS   = ['вс','пн','вт','ср','чт','пт','сб'];
 let candidates = [], mySlots = {};
 
-// Splash — minimum 1.8s + data must be loaded
+// Splash — minimum 2.5s + data must be loaded
 let _splashMinDone = false;
 let _dataLoaded    = false;
-setTimeout(() => { _splashMinDone = true; if (_dataLoaded) _doHideSplash(); }, 1800);
+setTimeout(() => { _splashMinDone = true; if (_dataLoaded) _doHideSplash(); }, 2500);
 
 function hideSplash() { _dataLoaded = true; if (_splashMinDone) _doHideSplash(); }
 function _doHideSplash() {
   const s = document.getElementById('splash');
   if (!s) return;
   s.classList.add('hidden');
-  setTimeout(() => { if (s.parentNode) s.remove(); }, 700);
+  setTimeout(() => {
+    if (s.parentNode) s.remove();
+    _postSplashAnimate();
+  }, 650);
+}
+
+function _postSplashAnimate() {
+  // Restart EKG draw
+  const ekg = document.querySelector('.ekg-line');
+  if (ekg) {
+    ekg.style.animation = 'none';
+    void ekg.getBoundingClientRect();
+    ekg.style.strokeDashoffset = '600';
+    ekg.style.animation = 'ekgDraw 2.2s 0.2s ease forwards';
+  }
+  // Re-trigger pulse count-up so numbers animate visibly
+  renderPulse();
+  // Animate currently visible cards with stagger
+  document.querySelectorAll('.section.active .card').forEach((c, i) => {
+    c.style.animation = 'none';
+    void c.getBoundingClientRect();
+    c.style.animation = `cardIn 0.35s ease ${i * 65}ms both`;
+  });
 }
 
 // Count-up animation for a number element
@@ -491,12 +522,24 @@ function animateCount(el, target, duration=700) {
   requestAnimationFrame(step);
 }
 
+let _prevSection = 'today';
 function nav(name, el) {
+  const cur = document.querySelector('.section.active');
+  if (cur && cur.id !== 'sec-'+name) _prevSection = cur.id.replace('sec-','');
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
   document.getElementById('sec-'+name).classList.add('active');
   if (el) el.classList.add('on');
+  // animate cards in newly visible section
+  setTimeout(() => {
+    document.querySelectorAll('#sec-'+name+' .card').forEach((c, i) => {
+      c.style.animation = 'none';
+      void c.getBoundingClientRect();
+      c.style.animation = `cardIn 0.32s ease ${i * 55}ms both`;
+    });
+  }, 30);
 }
+function navBack() { nav(_prevSection, document.querySelector(`.nav-btn[onclick*="${_prevSection}"]`)); }
 
 function fmtDate(s) {
   const d = new Date(s+'T00:00:00');
@@ -735,6 +778,18 @@ function filterCands(el,f) { setStatusFilter(el,f); }
 
 function renderCandidatesFull() {
   let list = [...candidates];
+
+  // Search filter
+  const q = (document.getElementById('cand-search')?.value || '').toLowerCase().trim();
+  if (q) {
+    list = list.filter(c => {
+      const name = (c.name||'').toLowerCase();
+      const phone = (c.phone||'').replace(/\D/g,'');
+      const user = (c.username||'').toLowerCase();
+      const tgid = String(c.telegram_id||'');
+      return name.includes(q) || phone.includes(q.replace(/\D/g,'')) || user.includes(q.replace('@','')) || tgid.includes(q);
+    });
+  }
 
   // Week filter
   if (_fWeek !== 'all') {
