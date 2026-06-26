@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>BECKER — Запись на собеседование</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --gold: #FBC148;
+    --gold-dark: #e8a820;
+    --black: #1a1a1a;
+    --dark: #2c2c2c;
+    --gray-bg: #f0ede8;
+    --white: #ffffff;
+    --text: #1a1a1a;
+    --text-sub: #888888;
+    --radius: 14px;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--gray-bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+    padding: 16px 20px 28px;
+    position: relative;
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: rgba(0,0,0,0.15);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+  .logo-text {
+    line-height: 1.1;
+  }
+  .logo-text .brand { font-size: 15px; font-weight: 800; color: var(--black); letter-spacing: 0.5px; }
+  .logo-text .sub   { font-size: 10px; font-weight: 600; color: rgba(0,0,0,0.5); letter-spacing: 1px; text-transform: uppercase; }
+  .avatar {
+    width: 36px; height: 36px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; color: var(--black);
+  }
+  .header-title { font-size: 26px; font-weight: 800; color: var(--black); line-height: 1.1; }
+  .header-sub   { font-size: 13px; color: rgba(0,0,0,0.55); margin-top: 4px; }
+
+  /* ── CONTENT ── */
+  .content { padding: 20px 16px 40px; }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; font-weight: 700; letter-spacing: 1.2px;
+    text-transform: uppercase; color: #b8860b;
+    margin: 20px 0 10px;
+  }
+  .section-label::before { content: '—'; color: #b8860b; }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+
+  /* ── DARK CARD (stats) ── */
+  .card-dark {
+    background: #1e1a12;
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 10px;
+    color: white;
+  }
+  .card-dark .card-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 1.2px;
+    text-transform: uppercase; color: rgba(255,255,255,0.35);
+    margin-bottom: 12px;
+  }
+  .stats-row { display: flex; gap: 0; }
+  .stat-item { flex: 1; text-align: center; }
+  .stat-item:not(:last-child) { border-right: 1px solid rgba(255,255,255,0.08); }
+  .stat-num {
+    font-size: 34px; font-weight: 800;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .stat-num.gold { color: var(--gold); }
+  .stat-sub { font-size: 9px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-top: 4px; }
+
+  /* ── INPUT ── */
+  .input-wrap { position: relative; }
+  .input-field {
+    width: 100%; padding: 14px 16px;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    background: var(--gray-bg);
+    font-size: 16px; color: var(--text);
+    outline: none; transition: all 0.2s;
+    font-family: inherit;
+  }
+  .input-field:focus { border-color: var(--gold); background: white; }
+  .input-field::placeholder { color: var(--text-sub); }
+
+  /* ── DATE GRID ── */
+  .date-grid { display: flex; flex-direction: column; gap: 8px; }
+  .date-item {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.18s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .date-item:active { transform: scale(0.98); }
+  .date-item.selected { border-color: var(--gold); background: #fffbf0; }
+  .date-left { display: flex; align-items: center; gap: 12px; }
+  .date-icon {
+    width: 40px; height: 40px;
+    background: var(--gray-bg);
+    border-radius: 10px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    color: var(--text-sub); letter-spacing: 0.5px;
+  }
+  .date-icon .day-num { font-size: 18px; font-weight: 800; color: var(--text); line-height: 1; }
+  .date-item.selected .date-icon { background: var(--gold); }
+  .date-item.selected .date-icon .day-num { color: var(--black); }
+  .date-item.selected .date-icon { color: rgba(0,0,0,0.6); }
+  .date-name { font-size: 15px; font-weight: 600; }
+  .date-slots { font-size: 12px; color: var(--text-sub); margin-top: 1px; }
+  .chevron { font-size: 18px; color: #ccc; }
+  .date-item.selected .chevron { color: var(--gold-dark); }
+
+  /* ── TIME GRID ── */
+  .time-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .time-item {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 14px 8px;
+    text-align: center;
+    cursor: pointer;
+    border: 2px solid transparent;
+    font-size: 15px; font-weight: 600;
+    transition: all 0.18s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .time-item:active { transform: scale(0.96); }
+  .time-item.selected {
+    border-color: var(--gold);
+    background: var(--gold);
+    color: var(--black);
+  }
+
+  /* ── CONFIRM CARD ── */
+  .confirm-card {
+    background: #1e1a12;
+    border-radius: var(--radius);
+    padding: 20px;
+    color: white;
+    text-align: center;
+  }
+  .confirm-icon { font-size: 40px; margin-bottom: 12px; }
+  .confirm-title { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+  .confirm-sub { font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 20px; }
+  .confirm-detail {
+    background: rgba(255,255,255,0.07);
+    border-radius: 10px;
+    padding: 14px;
+    display: flex; align-items: center; gap: 12px;
+    text-align: left; margin-bottom: 8px;
+  }
+  .confirm-detail-icon { font-size: 20px; flex-shrink: 0; }
+  .confirm-detail-label { font-size: 11px; color: rgba(255,255,255,0.4); font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+  .confirm-detail-val { font-size: 15px; font-weight: 700; margin-top: 2px; }
+
+  /* ── MAIN BUTTON ── */
+  .btn-main {
+    width: 100%;
+    padding: 16px;
+    background: var(--gold);
+    border: none;
+    border-radius: 14px;
+    font-size: 16px; font-weight: 700;
+    color: var(--black);
+    cursor: pointer;
+    transition: all 0.18s;
+    font-family: inherit;
+    margin-top: 8px;
+    letter-spacing: 0.2px;
+  }
+  .btn-main:active { transform: scale(0.98); background: var(--gold-dark); }
+  .btn-main:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-secondary {
+    width: 100%;
+    padding: 14px;
+    background: transparent;
+    border: 2px solid rgba(0,0,0,0.1);
+    border-radius: 14px;
+    font-size: 15px; font-weight: 600;
+    color: var(--text-sub);
+    cursor: pointer;
+    font-family: inherit;
+    margin-top: 8px;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; animation: fadeIn 0.25s ease; }
+  .screen.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── STEP INDICATOR ── */
+  .steps {
+    display: flex; align-items: center; gap: 6px;
+    padding: 0 20px 16px;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+  }
+  .step { flex: 1; height: 3px; background: rgba(0,0,0,0.15); border-radius: 2px; }
+  .step.done { background: var(--black); }
+
+  /* ── SUCCESS ── */
+  .success-anim {
+    text-align: center; padding: 20px 0 10px;
+  }
+  .success-circle {
+    width: 72px; height: 72px;
+    background: var(--gold);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 32px;
+    color: var(--black);
+    font-weight: 800;
+  }
+  .success-title { font-size: 22px; font-weight: 800; }
+  .success-sub { font-size: 14px; color: var(--text-sub); margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<!-- ══ SCREEN 1: NAME ══════════════════════════════════════════ -->
+<div id="screen-name" class="screen active">
+  <div class="header">
+    <div class="header-top">
+      <div class="logo">
+        <div class="logo-icon"><img src="https://perfect-youth-production-b175.up.railway.app/logo.png" style="width:24px;height:24px;object-fit:contain;"></div>
+        <div class="logo-text">
+          <div class="brand">BECKER</div>
+          <div class="sub">Академия</div>
+        </div>
+      </div>
+      <div class="avatar" id="user-avatar">—</div>
+    </div>
+    <div class="header-title">Запись на<br>собеседование</div>
+    <div class="header-sub">кухонная фабрика · Москва</div>
+  </div>
+  <div class="steps"><div class="step done"></div><div class="step"></div><div class="step"></div></div>
+  <div class="content">
+    <div class="card-dark">
+      <div class="card-label">О компании · BECKER</div>
+      <div class="stats-row">
+        <div class="stat-item">
+          <div class="stat-num" style="color:#4ecdc4;">26</div>
+          <div class="stat-sub">лет опыта</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" style="color:#FBC148;">1</div>
+          <div class="stat-sub">завод в Москве</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" style="color:#e84040;">★</div>
+          <div class="stat-sub">Премиум</div>
+        </div>
+      </div>
+      <svg viewBox="0 0 260 36" xmlns="http://www.w3.org/2000/svg" style="width:100%;margin-top:14px;display:block;">
+        <polyline points="0,18 30,18 42,18 50,4 56,32 62,4 68,18 80,18 100,18 108,18 116,10 120,26 124,10 128,18 140,18 180,18 188,12 192,24 196,12 200,18 260,18"
+          fill="none" stroke="#e84040" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>
+      </svg>
+    </div>
+
+    <div class="section-label">Привет, я Софья — HR BECKER</div>
+    <div class="card" style="padding: 12px 14px; display: flex; align-items: center; gap: 14px;">
+      <img src="./sonya.jpg" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+        style="width:52px;height:52px;border-radius:50%;object-fit:cover;object-position:top;flex-shrink:0;border:2px solid var(--gold);">
+      <div style="width:52px;height:52px;border-radius:50%;background:var(--gold);display:none;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:var(--black);flex-shrink:0;">С</div>
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px;">Софья Трофименко</div>
+        <div style="font-size:13px;color:var(--text-sub);line-height:1.45;">Ищем людей в наш дружный коллектив — тех, кто хочет расти. Запишись на встречу за минуту.</div>
+      </div>
+    </div>
+
+    <div class="section-label">Как тебя зовут?</div>
+    <div class="input-wrap">
+      <input class="input-field" id="name-input" type="text" placeholder="Имя и фамилия" autocomplete="name" />
+    </div>
+    <button class="btn-main" id="btn-name" disabled onclick="goToDate()">Выбрать день →</button>
+  </div>
+</div>
+
+<!-- ══ SCREEN 2: DATE ══════════════════════════════════════════ -->
+<div id="screen-date" class="screen">
+  <div class="header">
+    <div class="header-top">
+      <div class="logo">
+        <div class="logo-icon"><img src="https://perfect-youth-production-b175.up.railway.app/logo.png" style="width:24px;height:24px;object-fit:contain;"></div>
+        <div class="logo-text">
+          <div class="brand">BECKER</div>
+          <div class="sub">Академия</div>
+        </div>
+      </div>
+      <div class="avatar" id="user-avatar-2">—</div>
+    </div>
+    <div class="header-title" id="header-name-greeting">Выбери день</div>
+    <div class="header-sub">шаг 2 из 3 · выбор даты</div>
+  </div>
+  <div class="steps"><div class="step done"></div><div class="step done"></div><div class="step"></div></div>
+  <div class="content">
+    <div class="section-label">Доступные дни</div>
+    <div class="date-grid" id="date-list">
+      <!-- populated by JS -->
+    </div>
+    <button class="btn-main" id="btn-date" disabled onclick="goToTime()">Выбрать время →</button>
+    <button class="btn-secondary" onclick="goBack('screen-name')">← Назад</button>
+  </div>
+</div>
+
+<!-- ══ SCREEN 3: TIME ══════════════════════════════════════════ -->
+<div id="screen-time" class="screen">
+  <div class="header">
+    <div class="header-top">
+      <div class="logo">
+        <div class="logo-icon"><img src="https://perfect-youth-production-b175.up.railway.app/logo.png" style="width:24px;height:24px;object-fit:contain;"></div>
+        <div class="logo-text">
+          <div class="brand">BECKER</div>
+          <div class="sub">Академия</div>
+        </div>
+      </div>
+    </div>
+    <div class="header-title" id="header-date-label">Выбери время</div>
+    <div class="header-sub">шаг 3 из 3 · выбор времени</div>
+  </div>
+  <div class="steps"><div class="step done"></div><div class="step done"></div><div class="step done"></div></div>
+  <div class="content">
+    <div class="section-label">Свободные слоты</div>
+    <div class="time-grid" id="time-list">
+      <!-- populated by JS -->
+    </div>
+    <button class="btn-main" id="btn-time" disabled onclick="submitBooking()">Записаться ✓</button>
+    <button class="btn-secondary" onclick="goBack('screen-date')">← Назад</button>
+  </div>
+</div>
+
+<!-- ══ SCREEN 4: SUCCESS ══════════════════════════════════════ -->
+<div id="screen-success" class="screen">
+  <div class="header">
+    <div class="header-top">
+      <div class="logo">
+        <div class="logo-icon"><img src="https://perfect-youth-production-b175.up.railway.app/logo.png" style="width:24px;height:24px;object-fit:contain;"></div>
+        <div class="logo-text">
+          <div class="brand">BECKER</div>
+          <div class="sub">Академия</div>
+        </div>
+      </div>
+    </div>
+    <div class="header-title">Готово!</div>
+    <div class="header-sub">запись подтверждена</div>
+  </div>
+  <div class="steps"><div class="step done"></div><div class="step done"></div><div class="step done"></div></div>
+  <div class="content">
+    <div class="success-anim">
+      <div class="success-circle">✓</div>
+      <div class="success-title">Записали!</div>
+      <div class="success-sub">Накануне придёт напоминание</div>
+    </div>
+
+    <div class="section-label">Детали встречи</div>
+    <div class="confirm-card">
+      <div class="confirm-detail">
+        <div class="confirm-detail-icon">📅</div>
+        <div>
+          <div class="confirm-detail-label">Дата и время</div>
+          <div class="confirm-detail-val" id="confirm-datetime">—</div>
+        </div>
+      </div>
+      <div class="confirm-detail">
+        <div class="confirm-detail-icon">📍</div>
+        <div>
+          <div class="confirm-detail-label">Адрес</div>
+          <div class="confirm-detail-val">Стромынка 18к13, м. Сокольники</div>
+        </div>
+      </div>
+      <div class="confirm-detail">
+        <img src="./sonya.jpg" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+          style="width:36px;height:36px;border-radius:50%;object-fit:cover;object-position:top;flex-shrink:0;border:2px solid var(--gold);">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--gold);display:none;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#1a1a1a;flex-shrink:0;">С</div>
+        <div>
+          <div class="confirm-detail-label">HR — Софья</div>
+          <div class="confirm-detail-val">@sonya_trof</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-main" onclick="closeApp()">Отлично, жду встречи!</button>
+  </div>
+</div>
+
+<!-- ══ SCREEN: NO SLOTS ══════════════════════════════════════ -->
+<div id="screen-noslots" class="screen">
+  <div class="header">
+    <div class="header-top">
+      <div class="logo">
+        <div class="logo-icon"><img src="https://perfect-youth-production-b175.up.railway.app/logo.png" style="width:24px;height:24px;object-fit:contain;"></div>
+        <div class="logo-text">
+          <div class="brand">BECKER</div>
+          <div class="sub">Академия</div>
+        </div>
+      </div>
+    </div>
+    <div class="header-title">Нет слотов</div>
+    <div class="header-sub">свяжись напрямую</div>
+  </div>
+  <div class="content">
+    <div class="card-dark" style="text-align:center; padding: 24px;">
+      <div style="font-size:36px; margin-bottom:12px;">📅</div>
+      <div style="font-size:17px; font-weight:700; margin-bottom:8px;">Слоты сейчас заняты</div>
+      <div style="font-size:13px; color:rgba(255,255,255,0.5); line-height:1.5;">Напиши Софье напрямую — подберём удобное время</div>
+    </div>
+    <div class="section-label">Контакты HR</div>
+    <div class="card" style="display:flex; align-items:center; gap:12px;">
+      <div style="width:44px;height:44px;background:var(--gold);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">💬</div>
+      <div>
+        <div style="font-weight:700;">Софья Трофименко</div>
+        <div style="color:var(--text-sub);font-size:13px;">@sonya_trof</div>
+      </div>
+    </div>
+    <div class="card" style="display:flex; align-items:center; gap:12px;">
+      <div style="width:44px;height:44px;background:var(--gold);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">📱</div>
+      <div>
+        <div style="font-weight:700;">+7 (919) 890-41-15</div>
+        <div style="color:var(--text-sub);font-size:13px;">звонки и WhatsApp</div>
+      </div>
+    </div>
+    <button class="btn-main" onclick="closeApp()">Понятно</button>
+  </div>
+</div>
+
+<script>
+// ── Telegram WebApp init ──────────────────────────────────────
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.ready();
+  tg.expand();
+  const user = tg.initDataUnsafe?.user;
+  if (user) {
+    const initials = (user.first_name?.[0] || '') + (user.last_name?.[0] || '');
+    document.querySelectorAll('.avatar, #user-avatar, #user-avatar-2').forEach(el => el.textContent = initials || '?');
+    const nameInput = document.getElementById('name-input');
+    if (user.first_name) nameInput.value = (user.first_name + ' ' + (user.last_name || '')).trim();
+    checkNameInput();
+  }
+}
+
+// ── State ────────────────────────────────────────────────────
+let selectedDate = null;
+let selectedTime = null;
+let availableSlots = {};  // { "2026-06-27": ["11:00", "14:00"] }
+
+// ── Load slots from bot ──────────────────────────────────────
+async function loadSlots() {
+  try {
+    const resp = await fetch('/slots');
+    availableSlots = await resp.json();
+  } catch(e) {
+    // fallback demo data for preview
+    const today = new Date();
+    for (let i = 1; i <= 7; i++) {
+      const d = new Date(today); d.setDate(today.getDate() + i);
+      const key = d.toISOString().split('T')[0];
+      availableSlots[key] = ["11:00","12:00","13:00","14:00","15:00","16:00","17:00"];
+    }
+  }
+}
+
+// ── Name screen ──────────────────────────────────────────────
+const nameInput = document.getElementById('name-input');
+const btnName   = document.getElementById('btn-name');
+
+nameInput.addEventListener('input', checkNameInput);
+function checkNameInput() {
+  const val = nameInput.value.trim();
+  btnName.disabled = val.split(' ').filter(w => w.length > 1).length < 2;
+}
+
+async function goToDate() {
+  await loadSlots();
+  const name = nameInput.value.trim();
+  const first = name.split(' ')[0];
+  document.getElementById('header-name-greeting').textContent = first + ', выбери день';
+  document.getElementById('user-avatar-2').textContent =
+    (name[0] || '') + (name.split(' ')[1]?.[0] || '');
+
+  // Build date list
+  const container = document.getElementById('date-list');
+  container.innerHTML = '';
+
+  const days = ['вс','пн','вт','ср','чт','пт','сб'];
+  const months = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+  const today = new Date();
+  let hasSlots = false;
+
+  for (let i = 1; i <= 7; i++) {
+    const d = new Date(today); d.setDate(today.getDate() + i);
+    const key = d.toISOString().split('T')[0];
+    const slots = availableSlots[key];
+    if (!slots || slots.length === 0) continue;
+    hasSlots = true;
+
+    const item = document.createElement('div');
+    item.className = 'date-item';
+    item.dataset.date = key;
+    item.innerHTML = `
+      <div class="date-left">
+        <div class="date-icon">
+          <span>${days[d.getDay()]}</span>
+          <span class="day-num">${d.getDate()}</span>
+          <span>${months[d.getMonth()]}</span>
+        </div>
+        <div>
+          <div class="date-name">${formatDate(d)}</div>
+          <div class="date-slots">${slots.length} ${slotWord(slots.length)}</div>
+        </div>
+      </div>
+      <div class="chevron">›</div>
+    `;
+    item.addEventListener('click', () => selectDate(key, item));
+    container.appendChild(item);
+  }
+
+  if (!hasSlots) { showScreen('screen-noslots'); return; }
+  showScreen('screen-date');
+}
+
+function selectDate(dateKey, el) {
+  document.querySelectorAll('.date-item').forEach(i => i.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedDate = dateKey;
+  document.getElementById('btn-date').disabled = false;
+}
+
+function goToTime() {
+  const d = new Date(selectedDate + 'T12:00:00');
+  document.getElementById('header-date-label').textContent = formatDate(d);
+
+  const slots = availableSlots[selectedDate] || [];
+  const container = document.getElementById('time-list');
+  container.innerHTML = '';
+  slots.forEach(t => {
+    const item = document.createElement('div');
+    item.className = 'time-item';
+    item.textContent = t;
+    item.addEventListener('click', () => selectTime(t, item));
+    container.appendChild(item);
+  });
+
+  selectedTime = null;
+  document.getElementById('btn-time').disabled = true;
+  showScreen('screen-time');
+}
+
+function selectTime(time, el) {
+  document.querySelectorAll('.time-item').forEach(i => i.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedTime = time;
+  document.getElementById('btn-time').disabled = false;
+}
+
+async function submitBooking() {
+  const name = nameInput.value.trim();
+  const d = new Date(selectedDate + 'T12:00:00');
+
+  document.getElementById('confirm-datetime').textContent =
+    formatDate(d) + ' · ' + selectedTime;
+
+  // Send to bot
+  try {
+    await fetch('/book', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        date: selectedDate,
+        time: selectedTime,
+        init_data: tg?.initData || ''
+      })
+    });
+  } catch(e) { /* offline preview */ }
+
+  if (tg) tg.sendData(JSON.stringify({ name, date: selectedDate, time: selectedTime }));
+  showScreen('screen-success');
+}
+
+function closeApp() { if (tg) tg.close(); }
+
+function goBack(screenId) {
+  selectedDate = null; selectedTime = null;
+  document.getElementById('btn-date').disabled = true;
+  document.getElementById('btn-time').disabled = true;
+  document.querySelectorAll('.date-item, .time-item').forEach(i => i.classList.remove('selected'));
+  showScreen(screenId);
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ── Helpers ──────────────────────────────────────────────────
+function formatDate(d) {
+  const months = ['января','февраля','марта','апреля','мая','июня',
+                  'июля','августа','сентября','октября','ноября','декабря'];
+  const days = ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+  return `${d.getDate()} ${months[d.getMonth()]}, ${days[d.getDay()]}`;
+}
+function slotWord(n) {
+  if (n === 1) return 'слот';
+  if (n >= 2 && n <= 4) return 'слота';
+  return 'слотов';
+}
+</script>
+</body>
+</html>
