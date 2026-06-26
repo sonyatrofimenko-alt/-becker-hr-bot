@@ -256,7 +256,17 @@
       <input id="m-date" type="date" style="padding:12px 14px;border-radius:10px;border:1px solid rgba(251,193,72,0.2);background:var(--card2);color:var(--text);font-size:15px;font-family:inherit;outline:none;" />
       <select id="m-time" style="padding:12px 14px;border-radius:10px;border:1px solid rgba(251,193,72,0.2);background:var(--card2);color:var(--text);font-size:15px;font-family:inherit;outline:none;">
         <option value="">Выбери время</option>
-        ${["11:00","12:00","13:00","14:00","15:00","16:00","17:00","17:30"].map(t=>`<option value="${t}">${t}</option>`).join('')}
+        <option value="09:00">09:00</option>
+        <option value="10:00">10:00</option>
+        <option value="11:00">11:00</option>
+        <option value="12:00">12:00</option>
+        <option value="13:00">13:00</option>
+        <option value="14:00">14:00</option>
+        <option value="15:00">15:00</option>
+        <option value="16:00">16:00</option>
+        <option value="17:00">17:00</option>
+        <option value="17:30">17:30</option>
+        <option value="18:00">18:00</option>
       </select>
     </div>
     <button onclick="submitManual()" style="width:100%;margin-top:16px;padding:14px;background:var(--gold);color:var(--black);border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;">Сохранить</button>
