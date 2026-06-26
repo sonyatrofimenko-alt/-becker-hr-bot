@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>BECKER HR</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --gold: #FBC148;
+      --black: #1e1a12;
+      --bg: #0f0d09;
+      --card: #1e1a12;
+      --card2: #261f13;
+      --text: #f5f0e8;
+      --muted: #8a7d5e;
+      --teal: #4ecdc4;
+      --red: #e84040;
+      --border: rgba(251,193,72,0.12);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 72px;
+      overscroll-behavior: none;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: var(--card);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .header-avatar {
+      width: 38px; height: 38px; border-radius: 50%;
+      border: 2px solid var(--gold);
+      object-fit: cover; object-position: top; flex-shrink: 0;
+    }
+    .header-avatar-fallback {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: var(--gold); display: none;
+      align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 800; color: var(--black); flex-shrink: 0;
+    }
+    .header-info { flex: 1; min-width: 0; }
+    .header-info h1 { font-size: 15px; font-weight: 800; color: var(--gold); }
+    .header-info p { font-size: 11px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .becker-badge { font-size: 9px; font-weight: 900; letter-spacing: 2.5px; color: var(--gold); padding: 3px 7px; border: 1px solid rgba(251,193,72,0.3); border-radius: 4px; }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px; padding: 12px 12px 0;
+    }
+    .stat-tile {
+      background: var(--card); border-radius: 12px; padding: 12px 8px;
+      text-align: center; border: 1px solid rgba(255,255,255,0.04);
+    }
+    .stat-num { font-size: 26px; font-weight: 900; line-height: 1; }
+    .stat-lbl { font-size: 9px; color: var(--muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.6px; }
+
+    /* ── Sections ── */
+    .section { display: none; padding: 12px 12px 8px; }
+    .section.active { display: block; }
+    .section-title { font-size: 17px; font-weight: 800; margin-bottom: 12px; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--card); border-radius: 14px; padding: 14px;
+      margin-bottom: 8px; border-left: 3px solid var(--gold);
+    }
+    .card.teal { border-left-color: var(--teal); }
+    .card.red   { border-left-color: var(--red); }
+    .card.grey  { border-left-color: #444; }
+
+    .cand-time { font-size: 22px; font-weight: 900; color: var(--gold); line-height: 1; }
+    .cand-name { font-size: 15px; font-weight: 700; margin-top: 4px; }
+    .cand-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .cand-confirm { font-size: 11px; margin-top: 4px; }
+
+    .badge {
+      display: inline-block; padding: 3px 9px; border-radius: 10px;
+      font-size: 11px; font-weight: 700; margin-top: 6px;
+    }
+
+    /* ── Slots ── */
+    .day-label {
+      font-size: 12px; font-weight: 700; color: var(--gold);
+      text-transform: uppercase; letter-spacing: 0.7px;
+      margin: 14px 0 8px;
+    }
+    .slots-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-bottom: 8px;
+    }
+    .slot-btn {
+      padding: 10px 0; border-radius: 10px; text-align: center;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      border: 1.5px solid rgba(255,255,255,0.07);
+      background: var(--card); color: var(--muted);
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+      user-select: none;
+    }
+    .slot-btn.on { background: rgba(251,193,72,0.14); border-color: var(--gold); color: var(--gold); }
+    .slot-btn.booked { background: rgba(232,64,64,0.09); border-color: rgba(232,64,64,0.25); color: var(--red); cursor: default; }
+    .day-actions { display: flex; gap: 7px; margin-bottom: 4px; }
+    .day-act-btn {
+      flex: 1; padding: 9px 0; border-radius: 9px; font-size: 12px; font-weight: 600;
+      cursor: pointer; border: none; transition: opacity 0.15s;
+    }
+    .day-act-btn:active { opacity: 0.7; }
+
+    /* ── Save button ── */
+    .save-btn {
+      width: 100%; padding: 15px; background: var(--gold); color: var(--black);
+      font-size: 15px; font-weight: 800; border: none; border-radius: 14px;
+      cursor: pointer; margin-top: 16px; transition: opacity 0.15s;
+    }
+    .save-btn:active { opacity: 0.8; }
+
+    /* ── Filters ── */
+    .filter-row { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 2px; }
+    .filter-row::-webkit-scrollbar { display: none; }
+    .chip {
+      padding: 6px 13px; border-radius: 16px; font-size: 12px; font-weight: 600;
+      cursor: pointer; white-space: nowrap;
+      background: var(--card); color: var(--muted);
+      border: 1px solid rgba(255,255,255,0.06);
+      transition: all 0.15s;
+    }
+    .chip.on { background: rgba(251,193,72,0.14); color: var(--gold); border-color: rgba(251,193,72,0.3); }
+
+    /* ── Big stats ── */
+    .big-stat {
+      background: var(--card); border-radius: 14px; padding: 16px 18px;
+      margin-bottom: 8px; display: flex; align-items: center; gap: 18px;
+    }
+    .big-num { font-size: 40px; font-weight: 900; line-height: 1; }
+    .big-lbl { font-size: 14px; color: var(--muted); margin-top: 2px; }
+
+    /* ── Empty state ── */
+    .empty { text-align: center; padding: 36px 20px; color: var(--muted); }
+    .empty .e { font-size: 38px; margin-bottom: 10px; }
+
+    /* ── EKG ── */
+    .ekg { width: 100%; margin-top: 12px; opacity: 0.55; }
+
+    /* ── Bottom nav ── */
+    .bot-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--card); border-top: 1px solid var(--border);
+      display: flex; padding: 8px 0 env(safe-area-inset-bottom, 10px);
+      z-index: 20;
+    }
+    .nav-btn {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      gap: 2px; cursor: pointer; padding: 5px 0;
+      color: var(--muted); font-size: 10px; font-weight: 600;
+      transition: color 0.15s;
+    }
+    .nav-btn.on { color: var(--gold); }
+    .nav-btn .ico { font-size: 19px; line-height: 1; }
+
+    .loading { text-align: center; padding: 40px; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <img src="./sonya.jpg" class="header-avatar"
+    onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+  <div class="header-avatar-fallback">С</div>
+  <div class="header-info">
+    <h1>Панель HR — Софья</h1>
+    <p id="hdr-sub">Загружаю...</p>
+  </div>
+  <div class="becker-badge">BECKER</div>
+</div>
+
+<!-- Stats bar -->
+<div class="stats-bar">
+  <div class="stat-tile">
+    <div class="stat-num" style="color:var(--teal)" id="s-today">—</div>
+    <div class="stat-lbl">Сегодня</div>
+  </div>
+  <div class="stat-tile">
+    <div class="stat-num" style="color:var(--gold)" id="s-week">—</div>
+    <div class="stat-lbl">Неделя</div>
+  </div>
+  <div class="stat-tile">
+    <div class="stat-num" style="color:var(--red)" id="s-conv">—</div>
+    <div class="stat-lbl">Конверсия</div>
+  </div>
+</div>
+
+<!-- TODAY -->
+<div class="section active" id="sec-today">
+  <div class="section-title" style="margin-top:14px">Сегодня</div>
+  <div id="today-list"><div class="loading">⏳</div></div>
+</div>
+
+<!-- SLOTS -->
+<div class="section" id="sec-slots">
+  <div class="section-title" style="margin-top:14px">Расписание</div>
+  <div id="slots-wrap"><div class="loading">⏳</div></div>
+  <button class="save-btn" onclick="saveSlots()">💾 Сохранить расписание</button>
+</div>
+
+<!-- CANDIDATES -->
+<div class="section" id="sec-cands">
+  <div class="section-title" style="margin-top:14px">Кандидаты</div>
+  <div class="filter-row">
+    <div class="chip on"  onclick="filterCands(this,'all')">Все</div>
+    <div class="chip"     onclick="filterCands(this,'scheduled')">📅 Записаны</div>
+    <div class="chip"     onclick="filterCands(this,'approved_pending')">✅ Приняты</div>
+    <div class="chip"     onclick="filterCands(this,'no_show')">👻 Не пришли</div>
+    <div class="chip"     onclick="filterCands(this,'rejected_pending')">❌ Отказы</div>
+  </div>
+  <div id="cands-list"><div class="loading">⏳</div></div>
+</div>
+
+<!-- STATS -->
+<div class="section" id="sec-stats">
+  <div class="section-title" style="margin-top:14px">Статистика</div>
+  <div id="stats-wrap"><div class="loading">⏳</div></div>
+</div>
+
+<!-- Bottom nav -->
+<div class="bot-nav">
+  <div class="nav-btn on" onclick="nav('today',this)"><div class="ico">📋</div>Сегодня</div>
+  <div class="nav-btn"    onclick="nav('slots',this)"><div class="ico">📅</div>Слоты</div>
+  <div class="nav-btn"    onclick="nav('cands',this)"><div class="ico">👥</div>Кандидаты</div>
+  <div class="nav-btn"    onclick="nav('stats',this)"><div class="ico">📊</div>Статистика</div>
+</div>
+
+<script>
+const tg = window.Telegram.WebApp;
+tg.expand();
+tg.setHeaderColor && tg.setHeaderColor('#1e1a12');
+tg.setBackgroundColor && tg.setBackgroundColor('#0f0d09');
+
+const HR_ID = tg.initDataUnsafe?.user?.id || 0;
+
+const TODAY = (() => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+})();
+
+const DEFAULT_SLOTS = ["11:00","12:00","13:00","14:00","15:00","16:00","17:00","17:30"];
+const MONTHS = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+const DAYS   = ['вс','пн','вт','ср','чт','пт','сб'];
+
+let candidates = [];
+let mySlots    = {};   // {dateStr: [times]}
+
+// ── Navigation ──
+function nav(name, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('on'));
+  document.getElementById('sec-'+name).classList.add('active');
+  el.classList.add('on');
+}
+
+// ── Helpers ──
+function fmtDate(s) {
+  const d = new Date(s + 'T00:00:00');
+  return `${d.getDate()} ${MONTHS[d.getMonth()]}, ${DAYS[d.getDay()]}`;
+}
+
+function isToday(s) { return s === TODAY; }
+
+function isSoon(s) {
+  const d = new Date(s + 'T00:00:00');
+  const t = new Date(TODAY + 'T00:00:00');
+  return d >= t;
+}
+
+const STATUS_MAP = {
+  scheduled:        { lbl:'📅 Записан',       color:'#FBC148', bg:'rgba(251,193,72,0.13)' },
+  approved_pending: { lbl:'✅ Принят',         color:'#4ecdc4', bg:'rgba(78,205,196,0.13)' },
+  approved:         { lbl:'✅ Принят',         color:'#4ecdc4', bg:'rgba(78,205,196,0.13)' },
+  rejected_pending: { lbl:'❌ Отказ',          color:'#e84040', bg:'rgba(232,64,64,0.13)'  },
+  rejected:         { lbl:'❌ Отказ',          color:'#e84040', bg:'rgba(232,64,64,0.13)'  },
+  no_show:          { lbl:'👻 Не пришёл',      color:'#888',    bg:'rgba(136,136,136,0.1)' },
+};
+
+function badge(status) {
+  const s = STATUS_MAP[status] || { lbl: status, color:'#888', bg:'rgba(136,136,136,0.1)' };
+  return `<span class="badge" style="background:${s.bg};color:${s.color}">${s.lbl}</span>`;
+}
+
+function cardBorder(status) {
+  if (['approved','approved_pending'].includes(status)) return 'teal';
+  if (['rejected','rejected_pending','no_show'].includes(status)) return 'red';
+  return '';
+}
+
+// ── Load ──
+async function loadAll() {
+  try {
+    const [r1, r2] = await Promise.all([
+      fetch(`/api/candidates?hr_id=${HR_ID}`),
+      fetch(`/api/my-slots?hr_id=${HR_ID}`)
+    ]);
+    candidates = await r1.json();
+    mySlots    = await r2.json();
+
+    renderHeader();
+    renderStatsBar();
+    renderToday();
+    renderSlots();
+    renderCandidates('all');
+    renderStats();
+  } catch(e) {
+    document.getElementById('hdr-sub').textContent = 'Ошибка загрузки';
+    console.error(e);
+  }
+}
+
+// ── Header subtitle ──
+function renderHeader() {
+  const todayCnt = candidates.filter(c => c.interview_date === TODAY && c.status === 'scheduled').length;
+  document.getElementById('hdr-sub').textContent =
+    todayCnt ? `${todayCnt} собеседований сегодня` : 'Сегодня собеседований нет';
+}
+
+// ── Stats bar ──
+function renderStatsBar() {
+  const todayCnt = candidates.filter(c => c.interview_date === TODAY && c.status === 'scheduled').length;
+  const weekEnd  = new Date(TODAY + 'T00:00:00'); weekEnd.setDate(weekEnd.getDate() + 7);
+  const weekCnt  = candidates.filter(c => {
+    const d = new Date(c.interview_date + 'T00:00:00');
+    return d >= new Date(TODAY + 'T00:00:00') && d <= weekEnd && c.status === 'scheduled';
+  }).length;
+  const came     = candidates.filter(c => ['approved','approved_pending','rejected','rejected_pending'].includes(c.status)).length;
+  const approved = candidates.filter(c => ['approved','approved_pending'].includes(c.status)).length;
+  const conv     = came > 0 ? Math.round(approved/came*100)+'%' : '—';
+
+  document.getElementById('s-today').textContent = todayCnt;
+  document.getElementById('s-week').textContent  = weekCnt;
+  document.getElementById('s-conv').textContent  = conv;
+}
+
+// ── Today ──
+function renderToday() {
+  const list = candidates
+    .filter(c => c.interview_date === TODAY)
+    .sort((a,b) => (a.interview_time||'').localeCompare(b.interview_time||''));
+
+  const el = document.getElementById('today-list');
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><div class="e">☀️</div>Сегодня собеседований нет</div>`;
+    return;
+  }
+  el.innerHTML = list.map(c => {
+    const uname  = c.username ? `@${c.username}` : `ID: ${c.telegram_id}`;
+    const conf   = c.confirmed === true  ? '✅ Подтвердил(а)'
+                 : c.confirmed === false ? '❌ Отказал(ась)'
+                 : '❓ Без ответа';
+    return `<div class="card ${cardBorder(c.status)}">
+      <div class="cand-time">${c.interview_time || '—'}</div>
+      <div class="cand-name">${c.name}</div>
+      <div class="cand-meta">${c.spec || '—'} · ${uname}</div>
+      <div class="cand-confirm" style="color:var(--muted)">${conf}</div>
+      ${badge(c.status)}
+    </div>`;
+  }).join('');
+}
+
+// ── Slots ──
+function renderSlots() {
+  const el = document.getElementById('slots-wrap');
+  let html = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(TODAY + 'T00:00:00');
+    d.setDate(d.getDate() + i);
+    const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const active = mySlots[ds] || [];
+    const booked = candidates
+      .filter(c => c.interview_date === ds && c.status === 'scheduled')
+      .map(c => c.interview_time);
+
+    html += `<div class="day-label">${isToday(ds)?'📍 ':''}${fmtDate(ds)}</div>`;
+    html += `<div class="slots-grid" data-date="${ds}">`;
+    for (const t of DEFAULT_SLOTS) {
+      const isBook = booked.includes(t);
+      const isOn   = active.includes(t);
+      const cls    = isBook ? 'booked' : (isOn ? 'on' : '');
+      html += `<div class="slot-btn ${cls}" data-time="${t}" data-date="${ds}"
+                    onclick="${isBook?'':'toggleSlot(this)'}">
+                 ${t}${isBook ? '<br><span style="font-size:9px;opacity:0.7">занято</span>' : ''}
+               </div>`;
+    }
+    html += `</div>
+    <div class="day-actions">
+      <button class="day-act-btn" style="background:rgba(251,193,72,0.1);color:var(--gold);border:1px solid rgba(251,193,72,0.2)"
+        onclick="fillDay('${ds}')">⚡ Заполнить</button>
+      <button class="day-act-btn" style="background:rgba(232,64,64,0.08);color:var(--red);border:1px solid rgba(232,64,64,0.18)"
+        onclick="clearDay('${ds}')">🗑 Очистить</button>
+    </div>`;
+  }
+  el.innerHTML = html;
+}
+
+function toggleSlot(el) { el.classList.toggle('on'); }
+
+function fillDay(ds) {
+  document.querySelectorAll(`.slots-grid[data-date="${ds}"] .slot-btn:not(.booked)`)
+    .forEach(b => b.classList.add('on'));
+}
+
+function clearDay(ds) {
+  document.querySelectorAll(`.slots-grid[data-date="${ds}"] .slot-btn:not(.booked)`)
+    .forEach(b => b.classList.remove('on'));
+}
+
+async function saveSlots() {
+  const slots = {};
+  document.querySelectorAll('.slots-grid').forEach(g => {
+    const ds  = g.dataset.date;
+    slots[ds] = [...g.querySelectorAll('.slot-btn.on')].map(b => b.dataset.time);
+  });
+  try {
+    const r = await fetch('/api/my-slots', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ hr_id: HR_ID, slots })
+    });
+    const j = await r.json();
+    if (j.ok) tg.showAlert('✅ Расписание сохранено!');
+    else      tg.showAlert('Ошибка: ' + (j.error||''));
+  } catch(e) { tg.showAlert('Ошибка соединения'); }
+}
+
+// ── Candidates ──
+function filterCands(el, f) {
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  renderCandidates(f);
+}
+
+function renderCandidates(filter) {
+  let list = [...candidates].sort((a,b) =>
+    (b.interview_date||'').localeCompare(a.interview_date||'') ||
+    (b.interview_time||'').localeCompare(a.interview_time||''));
+  if (filter !== 'all') list = list.filter(c => c.status === filter);
+
+  const el = document.getElementById('cands-list');
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><div class="e">🔍</div>Кандидатов нет</div>`;
+    return;
+  }
+  el.innerHTML = list.map(c => {
+    const uname = c.username ? `@${c.username}` : `ID: ${c.telegram_id}`;
+    const dl    = c.interview_date ? fmtDate(c.interview_date) : '—';
+    return `<div class="card ${cardBorder(c.status)}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div>
+          <div class="cand-name">${c.name}</div>
+          <div class="cand-meta">${c.spec||'—'} · ${uname}</div>
+          <div class="cand-meta" style="margin-top:2px">${dl} · ${c.interview_time||'—'}</div>
+        </div>
+        ${badge(c.status)}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Statistics ──
+function renderStats() {
+  const total    = candidates.length;
+  const came     = candidates.filter(c => ['approved','approved_pending','rejected','rejected_pending'].includes(c.status)).length;
+  const approved = candidates.filter(c => ['approved','approved_pending'].includes(c.status)).length;
+  const rejected = candidates.filter(c => ['rejected','rejected_pending'].includes(c.status)).length;
+  const noshow   = candidates.filter(c => c.status === 'no_show').length;
+  const sched    = candidates.filter(c => c.status === 'scheduled').length;
+  const conv     = came > 0 ? Math.round(approved/came*100)+'%' : '—';
+
+  const rows = [
+    { n: total,    color:'var(--teal)', lbl:'Всего кандидатов' },
+    { n: sched,    color:'var(--muted)', lbl:'Ещё впереди' },
+    { n: came,     color:'var(--gold)', lbl:'Пришли на собеседование' },
+    { n: approved, color:'var(--teal)', lbl:'Приняты на работу' },
+    { n: rejected, color:'var(--red)',  lbl:'Отказы' },
+    { n: noshow,   color:'var(--red)',  lbl:'Не пришли' },
+    { n: conv,     color:'var(--gold)', lbl:'Конверсия пришёл→принят' },
+  ];
+
+  document.getElementById('stats-wrap').innerHTML =
+    rows.map(r => `
+      <div class="big-stat">
+        <div class="big-num" style="color:${r.color}">${r.n}</div>
+        <div><div class="big-lbl">${r.lbl}</div></div>
+      </div>`).join('') +
+    `<svg class="ekg" viewBox="0 0 260 36" xmlns="http://www.w3.org/2000/svg">
+       <polyline points="0,18 30,18 42,18 50,4 56,32 62,4 68,18 80,18 100,18 108,18 116,10 120,26 124,10 128,18 140,18 180,18 188,12 192,24 196,12 200,18 260,18"
+         fill="none" stroke="#e84040" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+     </svg>`;
+}
+
+loadAll();
+</script>
+</body>
+</html>

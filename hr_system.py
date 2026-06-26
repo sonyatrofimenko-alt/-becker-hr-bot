@@ -123,12 +123,13 @@ async def menu_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         status_lines.append(f"✉️ Ждут твоего письма: <b>{my_pending}</b>")
     status_block = "\n".join(status_lines) + "\n\n" if status_lines else ""
 
-    # Кнопка мини-приложения для HR
+    # Кнопки мини-приложений для HR
     webapp_kb = None
     if WEBAPP_URL:
-        webapp_kb = InlineKeyboardMarkup([[
-            InlineKeyboardButton("📱 Открыть мини-приложение", web_app=WebAppInfo(url=WEBAPP_URL))
-        ]])
+        webapp_kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("📱 HR-панель",              web_app=WebAppInfo(url=WEBAPP_URL + "/hr"))],
+            [InlineKeyboardButton("👁 Приложение кандидата",  web_app=WebAppInfo(url=WEBAPP_URL))],
+        ])
 
     await update.message.reply_text(
         f"👩‍💼 <b>Панель HR — BECKER</b>\n"
@@ -1361,11 +1362,16 @@ async def webapp_data_handler(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         await ctx.bot.send_message(chat_id=booked_hr, text=summary, parse_mode="HTML")
 
 # ── Aiohttp web-сервер ─────────────────────────────────────────────────────────
+CORS = {"Access-Control-Allow-Origin": "*"}
+
 async def serve_index(request):
     return web.FileResponse(os.path.join(WEBAPP_DIR, "index.html"))
 
+async def serve_hr_app(request):
+    return web.FileResponse(os.path.join(WEBAPP_DIR, "hr.html"))
+
 async def serve_slots(request):
-    """Возвращает JSON со свободными слотами на 7 дней."""
+    """Свободные слоты кандидату (следующие 7 дней)."""
     data  = load()
     today = date.today()
     result = {}
@@ -1375,11 +1381,40 @@ async def serve_slots(request):
         slots = get_all_free_slots(data, d_str)
         if slots:
             result[d_str] = [{"time": t, "hr_id": h} for (t, h) in slots]
-    return web.Response(
-        text=json.dumps(result, ensure_ascii=False),
-        content_type="application/json",
-        headers={"Access-Control-Allow-Origin": "*"}
-    )
+    return web.Response(text=json.dumps(result, ensure_ascii=False),
+                        content_type="application/json", headers=CORS)
+
+async def serve_candidates_api(request):
+    """Список кандидатов для HR."""
+    hr_id = int(request.rel_url.query.get("hr_id", 0))
+    data  = load()
+    cands = [c for c in data["candidates"].values()
+             if c.get("hr_id") == hr_id or c.get("shared")]
+    return web.Response(text=json.dumps(cands, ensure_ascii=False),
+                        content_type="application/json", headers=CORS)
+
+async def serve_my_slots_get(request):
+    """Слоты конкретного HR."""
+    hr_id = int(request.rel_url.query.get("hr_id", 0))
+    data  = load()
+    slots = _hr_slots(data, hr_id)
+    return web.Response(text=json.dumps(slots, ensure_ascii=False),
+                        content_type="application/json", headers=CORS)
+
+async def serve_my_slots_post(request):
+    """Сохранить слоты от HR-дашборда."""
+    try:
+        body  = await request.json()
+        hr_id = int(body.get("hr_id", 0))
+        slots = body.get("slots", {})
+        data  = load()
+        _hr_slots(data, hr_id).update(slots)
+        save(data)
+        return web.Response(text='{"ok":true}',
+                            content_type="application/json", headers=CORS)
+    except Exception as e:
+        return web.Response(text=json.dumps({"ok": False, "error": str(e)}),
+                            content_type="application/json", headers=CORS)
 
 async def serve_static(request):
     filename = request.match_info["filename"]
@@ -1390,9 +1425,13 @@ async def serve_static(request):
 
 async def run_webserver():
     app_web = web.Application()
-    app_web.router.add_get("/",             serve_index)
-    app_web.router.add_get("/slots",        serve_slots)
-    app_web.router.add_get("/{filename}",   serve_static)
+    app_web.router.add_get("/",                serve_index)
+    app_web.router.add_get("/hr",              serve_hr_app)
+    app_web.router.add_get("/slots",           serve_slots)
+    app_web.router.add_get("/api/candidates",  serve_candidates_api)
+    app_web.router.add_get("/api/my-slots",    serve_my_slots_get)
+    app_web.router.add_post("/api/my-slots",   serve_my_slots_post)
+    app_web.router.add_get("/{filename}",      serve_static)
     runner = web.AppRunner(app_web)
     await runner.setup()
     site = web.TCPSite(runner, "0.0.0.0", PORT)
