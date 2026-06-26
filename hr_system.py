@@ -156,7 +156,7 @@ async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_photo(
             photo="https://static.tildacdn.com/tild3061-6264-4033-b339-386633363065/Group_9104.png",
             caption=(
-                f"Привет! Я <b>Софья</b>, HR кухонной фабрики <b>BECKER</b>.\n\n"
+                f"Привет! 👋 Это HR-отдел <b>BECKER Академии</b> — здесь можно записаться на собеседование.\n\n"
                 "Нажми кнопку ниже, чтобы записаться на собеседование 👇\n\n"
                 f"Или напиши напрямую: {HR_TELEGRAM}"
             ),
@@ -1394,10 +1394,38 @@ async def serve_candidates_api(request):
     """Список кандидатов для HR."""
     hr_id = int(request.rel_url.query.get("hr_id", 0))
     data  = load()
-    cands = [c for c in data["candidates"].values()
-             if c.get("hr_id") == hr_id or c.get("shared")]
+    cands = []
+    for key, c in data["candidates"].items():
+        if c.get("hr_id") == hr_id or c.get("shared"):
+            cands.append({**c, "_key": key})
     return web.Response(text=json.dumps(cands, ensure_ascii=False),
                         content_type="application/json", headers=CORS)
+
+async def serve_update_status(request):
+    """HR обновляет статус кандидата из мини-приложения."""
+    try:
+        body   = await request.json()
+        hr_id  = int(body.get("hr_id", 0))
+        key    = body.get("key", "")
+        status = body.get("status", "")
+        VALID  = {"no_show", "approved_pending", "rejected_pending", "scheduled"}
+        if not key or status not in VALID:
+            return web.Response(text='{"ok":false,"error":"invalid params"}',
+                                content_type="application/json", headers=CORS)
+        data = load()
+        cand = data["candidates"].get(key)
+        if not cand:
+            return web.Response(text='{"ok":false,"error":"not found"}',
+                                content_type="application/json", headers=CORS)
+        if cand.get("hr_id") != hr_id and not cand.get("shared"):
+            return web.Response(text='{"ok":false,"error":"forbidden"}',
+                                content_type="application/json", headers=CORS)
+        cand["status"] = status
+        save(data)
+        return web.Response(text='{"ok":true}', content_type="application/json", headers=CORS)
+    except Exception as e:
+        return web.Response(text=json.dumps({"ok": False, "error": str(e)}),
+                            content_type="application/json", headers=CORS)
 
 async def serve_my_slots_get(request):
     """Слоты конкретного HR."""
@@ -1499,6 +1527,7 @@ async def run_webserver():
     app_web.router.add_post("/api/book-manual",     serve_book_manual)
     app_web.router.add_get("/api/notifications",    serve_notifications_get)
     app_web.router.add_post("/api/notifications/read", serve_notifications_read)
+    app_web.router.add_post("/api/update-status",      serve_update_status)
     app_web.router.add_get("/{filename}",           serve_static)
     runner = web.AppRunner(app_web)
     await runner.setup()

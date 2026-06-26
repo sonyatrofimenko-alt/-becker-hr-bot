@@ -8,379 +8,408 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
-      --gold: #FBC148;
-      --black: #1e1a12;
-      --bg: #0f0d09;
-      --card: #1e1a12;
-      --card2: #261f13;
-      --text: #f5f0e8;
-      --muted: #8a7d5e;
-      --teal: #4ecdc4;
-      --red: #e84040;
-      --border: rgba(251,193,72,0.12);
+      --gold:   #FBC148;
+      --dark:   #1a1600;
+      --bg:     #f5f2ea;
+      --card:   #ffffff;
+      --muted:  #9e8e6e;
+      --teal:   #4ecdc4;
+      --red:    #e84040;
+      --border: rgba(0,0,0,0.08);
+      --shadow: 0 2px 14px rgba(0,0,0,0.07);
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      padding-bottom: 72px;
-      overscroll-behavior: none;
-    }
+    * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+    body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--dark); min-height:100vh; padding-bottom:80px; overscroll-behavior:none; }
 
-    /* ── Header ── */
-    .header {
-      background: var(--card);
-      padding: 14px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      border-bottom: 1px solid var(--border);
-      position: sticky; top: 0; z-index: 10;
+    /* ── SPLASH ── */
+    #splash {
+      position:fixed; inset:0; z-index:9999;
+      background:var(--gold);
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      transition:opacity 0.6s ease;
     }
-    .header-avatar {
-      width: 38px; height: 38px; border-radius: 50%;
-      border: 2px solid var(--gold);
-      object-fit: cover; object-position: top; flex-shrink: 0;
-    }
-    .header-avatar-fallback {
-      width: 38px; height: 38px; border-radius: 50%;
-      background: var(--gold); display: none;
-      align-items: center; justify-content: center;
-      font-size: 16px; font-weight: 800; color: var(--black); flex-shrink: 0;
-    }
-    .header-info { flex: 1; min-width: 0; }
-    .header-info h1 { font-size: 15px; font-weight: 800; color: var(--gold); }
-    .header-info p { font-size: 11px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .becker-badge { font-size: 9px; font-weight: 900; letter-spacing: 2.5px; color: var(--gold); padding: 3px 7px; border: 1px solid rgba(251,193,72,0.3); border-radius: 4px; }
+    #splash.hidden { opacity:0; pointer-events:none; }
+    .splash-logo { width:100px; height:100px; border-radius:22px; object-fit:contain; margin-bottom:24px; animation:splashPop 0.6s cubic-bezier(.34,1.56,.64,1) both; }
+    .splash-brand { font-size:42px; font-weight:900; color:var(--dark); letter-spacing:4px; animation:splashFade 0.5s 0.3s ease both; }
+    .splash-sub { font-size:12px; font-weight:700; color:rgba(26,22,0,0.55); letter-spacing:3px; text-transform:uppercase; margin-top:8px; animation:splashFade 0.5s 0.45s ease both; }
+    .splash-line { width:60px; height:2px; background:rgba(26,22,0,0.25); border-radius:1px; margin-top:14px; animation:splashFade 0.5s 0.55s ease both; }
+    .splash-dots { display:flex; gap:7px; margin-top:36px; animation:splashFade 0.5s 0.7s ease both; }
+    .splash-dot { width:7px; height:7px; border-radius:50%; background:rgba(26,22,0,0.3); animation:dotPulse 1.2s infinite ease-in-out; }
+    .splash-dot:nth-child(2) { animation-delay:0.2s; }
+    .splash-dot:nth-child(3) { animation-delay:0.4s; }
+    @keyframes splashPop  { from { transform:scale(0.6); opacity:0; } to { transform:scale(1); opacity:1; } }
+    @keyframes splashFade { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes dotPulse   { 0%,80%,100% { transform:scale(0.7); opacity:0.4; } 40% { transform:scale(1); opacity:1; } }
 
-    /* ── Stats bar ── */
-    .stats-bar {
-      display: grid; grid-template-columns: 1fr 1fr 1fr;
-      gap: 8px; padding: 12px 12px 0;
-    }
-    .stat-tile {
-      background: var(--card); border-radius: 12px; padding: 12px 8px;
-      text-align: center; border: 1px solid rgba(255,255,255,0.04);
-    }
-    .stat-num { font-size: 26px; font-weight: 900; line-height: 1; }
-    .stat-lbl { font-size: 9px; color: var(--muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.6px; }
+    /* ── HEADER ── */
+    .app-header { background:var(--gold); padding:14px 18px 22px; position:sticky; top:0; z-index:10; }
+    .hdr-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+    .hdr-brand { display:flex; align-items:center; gap:10px; }
+    .hdr-logo { width:34px; height:34px; border-radius:8px; object-fit:contain; background:rgba(26,22,0,0.1); }
+    .hdr-brand-text .name { font-size:16px; font-weight:900; color:var(--dark); letter-spacing:1px; }
+    .hdr-brand-text .sub  { font-size:9px;  font-weight:700; color:rgba(26,22,0,0.5); letter-spacing:2px; text-transform:uppercase; }
+    .hdr-actions { display:flex; align-items:center; gap:8px; }
+    .bell-btn { position:relative; width:38px; height:38px; border-radius:50%; background:rgba(26,22,0,0.1); display:flex; align-items:center; justify-content:center; font-size:18px; cursor:pointer; transition:transform 0.15s; }
+    .bell-btn:active { transform:scale(0.9); }
+    #bell-badge { display:none; position:absolute; top:2px; right:2px; background:var(--red); color:white; font-size:8px; font-weight:800; border-radius:50%; width:15px; height:15px; align-items:center; justify-content:center; border:2px solid var(--gold); }
+    .hr-avatar { width:38px; height:38px; border-radius:50%; background:var(--dark); display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:800; color:var(--gold); overflow:hidden; border:2px solid rgba(26,22,0,0.2); }
+    .hr-avatar img { width:100%; height:100%; object-fit:cover; object-position:top; }
+    .hdr-title { font-size:28px; font-weight:900; color:var(--dark); line-height:1; }
+    .hdr-subtitle { font-size:12px; color:rgba(26,22,0,0.55); margin-top:5px; font-weight:500; }
 
-    /* ── Sections ── */
-    .section { display: none; padding: 12px 12px 8px; }
-    .section.active { display: block; }
-    .section-title { font-size: 17px; font-weight: 800; margin-bottom: 12px; }
+    /* ── PULSE CARD ── */
+    .pulse-card { background:var(--dark); border-radius:20px; margin:0 14px 6px; padding:18px 20px; }
+    .pulse-label { font-size:9px; font-weight:800; color:rgba(255,255,255,0.35); letter-spacing:2px; text-transform:uppercase; margin-bottom:14px; }
+    .pulse-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+    .pulse-stat .num { font-size:36px; font-weight:900; line-height:1; }
+    .pulse-stat .lbl { font-size:8px; font-weight:700; color:rgba(255,255,255,0.35); letter-spacing:1.5px; text-transform:uppercase; margin-top:4px; }
+    .pulse-ekg { width:100%; margin-top:14px; opacity:0.5; }
 
-    /* ── Cards ── */
-    .card {
-      background: var(--card); border-radius: 14px; padding: 14px;
-      margin-bottom: 8px; border-left: 3px solid var(--gold);
-    }
-    .card.teal { border-left-color: var(--teal); }
-    .card.red   { border-left-color: var(--red); }
-    .card.grey  { border-left-color: #444; }
+    /* ── SECTION HEADER ── */
+    .sec-head { display:flex; align-items:center; gap:10px; padding:16px 14px 8px; }
+    .sec-line { width:22px; height:2.5px; background:var(--gold); border-radius:2px; flex-shrink:0; }
+    .sec-text { font-size:11px; font-weight:800; color:var(--dark); letter-spacing:1.5px; text-transform:uppercase; }
 
-    .cand-time { font-size: 22px; font-weight: 900; color: var(--gold); line-height: 1; }
-    .cand-name { font-size: 15px; font-weight: 700; margin-top: 4px; }
-    .cand-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
-    .cand-confirm { font-size: 11px; margin-top: 4px; }
+    /* ── CARDS ── */
+    .card { background:var(--card); border-radius:16px; padding:15px; margin-bottom:10px; box-shadow:var(--shadow); transition:transform 0.1s; }
+    .card:active { transform:scale(0.98); }
+    .card.gold-l { border-left:3px solid var(--gold); }
+    .card.teal-l { border-left:3px solid var(--teal); }
+    .card.red-l  { border-left:3px solid var(--red); }
+    .cand-time { font-size:26px; font-weight:900; color:var(--gold); line-height:1; }
+    .cand-name { font-size:15px; font-weight:700; margin-top:5px; }
+    .cand-meta { font-size:12px; color:var(--muted); margin-top:2px; }
+    .cand-confirm { font-size:11px; color:var(--muted); margin-top:4px; }
+    .badge { display:inline-block; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; margin-top:7px; }
 
-    .badge {
-      display: inline-block; padding: 3px 9px; border-radius: 10px;
-      font-size: 11px; font-weight: 700; margin-top: 6px;
-    }
-
-    /* ── Slots ── */
-    .day-label {
-      font-size: 12px; font-weight: 700; color: var(--gold);
-      text-transform: uppercase; letter-spacing: 0.7px;
-      margin: 14px 0 8px;
-    }
-    .slots-grid {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-bottom: 8px;
-    }
+    /* ── SLOTS ── */
+    .day-label { font-size:11px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:0.8px; margin:14px 0 8px; }
+    .day-label .today-tag { color:var(--gold); }
+    .slots-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:7px; margin-bottom:8px; }
     .slot-btn {
-      padding: 10px 0; border-radius: 10px; text-align: center;
-      font-size: 13px; font-weight: 600; cursor: pointer;
-      border: 1.5px solid rgba(255,255,255,0.07);
-      background: var(--card); color: var(--muted);
-      transition: background 0.15s, border-color 0.15s, color 0.15s;
-      user-select: none;
+      padding:10px 0; border-radius:12px; text-align:center;
+      font-size:13px; font-weight:600; cursor:pointer;
+      border:1.5px solid var(--border); background:var(--card); color:var(--muted);
+      transition:transform 0.1s, background 0.15s, border-color 0.15s;
+      box-shadow:0 1px 4px rgba(0,0,0,0.04); user-select:none;
     }
-    .slot-btn.on { background: rgba(251,193,72,0.14); border-color: var(--gold); color: var(--gold); }
-    .slot-btn.booked { background: rgba(232,64,64,0.09); border-color: rgba(232,64,64,0.25); color: var(--red); cursor: default; }
-    .day-actions { display: flex; gap: 7px; margin-bottom: 4px; }
-    .day-act-btn {
-      flex: 1; padding: 9px 0; border-radius: 9px; font-size: 12px; font-weight: 600;
-      cursor: pointer; border: none; transition: opacity 0.15s;
-    }
-    .day-act-btn:active { opacity: 0.7; }
+    .slot-btn:active { transform:scale(0.92); }
+    .slot-btn.on { background:rgba(251,193,72,0.2); border-color:var(--gold); color:var(--dark); font-weight:700; }
+    .slot-btn.booked { background:rgba(251,193,72,0.12); border-color:rgba(251,193,72,0.5); color:var(--dark); cursor:default; }
+    .day-actions { display:flex; gap:8px; margin-bottom:4px; }
+    .day-act-btn { flex:1; padding:9px 0; border-radius:10px; font-size:12px; font-weight:700; cursor:pointer; border:none; transition:transform 0.1s, opacity 0.1s; }
+    .day-act-btn:active { transform:scale(0.95); opacity:0.8; }
 
-    /* ── Save button ── */
-    .save-btn {
-      width: 100%; padding: 15px; background: var(--gold); color: var(--black);
-      font-size: 15px; font-weight: 800; border: none; border-radius: 14px;
-      cursor: pointer; margin-top: 16px; transition: opacity 0.15s;
-    }
-    .save-btn:active { opacity: 0.8; }
+    /* ── SAVE BUTTON ── */
+    .save-btn { width:100%; padding:16px; background:var(--gold); color:var(--dark); font-size:15px; font-weight:800; border:none; border-radius:14px; cursor:pointer; margin-top:16px; transition:transform 0.1s; box-shadow:0 4px 16px rgba(251,193,72,0.4); font-family:inherit; }
+    .save-btn:active { transform:scale(0.97); }
 
-    /* ── Filters ── */
-    .filter-row { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 2px; }
-    .filter-row::-webkit-scrollbar { display: none; }
-    .chip {
-      padding: 6px 13px; border-radius: 16px; font-size: 12px; font-weight: 600;
-      cursor: pointer; white-space: nowrap;
-      background: var(--card); color: var(--muted);
-      border: 1px solid rgba(255,255,255,0.06);
-      transition: all 0.15s;
-    }
-    .chip.on { background: rgba(251,193,72,0.14); color: var(--gold); border-color: rgba(251,193,72,0.3); }
+    /* ── FILTERS ── */
+    .filter-row { display:flex; gap:6px; margin-bottom:12px; overflow-x:auto; padding-bottom:2px; }
+    .filter-row::-webkit-scrollbar { display:none; }
+    .chip { padding:7px 14px; border-radius:20px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; background:var(--card); color:var(--muted); border:1.5px solid var(--border); transition:transform 0.1s, background 0.15s, color 0.15s; box-shadow:0 1px 4px rgba(0,0,0,0.04); }
+    .chip:active { transform:scale(0.93); }
+    .chip.on { background:var(--gold); color:var(--dark); border-color:var(--gold); font-weight:700; }
 
-    /* ── Big stats ── */
-    .big-stat {
-      background: var(--card); border-radius: 14px; padding: 16px 18px;
-      margin-bottom: 8px; display: flex; align-items: center; gap: 18px;
-    }
-    .big-num { font-size: 40px; font-weight: 900; line-height: 1; }
-    .big-lbl { font-size: 14px; color: var(--muted); margin-top: 2px; }
+    /* ── EMPTY ── */
+    .empty { text-align:center; padding:40px 20px; color:var(--muted); }
+    .empty .e { font-size:40px; margin-bottom:12px; }
 
-    /* ── Empty state ── */
-    .empty { text-align: center; padding: 36px 20px; color: var(--muted); }
-    .empty .e { font-size: 38px; margin-bottom: 10px; }
+    /* ── BOTTOM NAV ── */
+    .bot-nav { position:fixed; bottom:0; left:0; right:0; background:var(--card); border-top:1px solid var(--border); display:flex; padding:8px 0 env(safe-area-inset-bottom,10px); z-index:20; box-shadow:0 -4px 20px rgba(0,0,0,0.06); }
+    .nav-btn { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; padding:4px 0; color:var(--muted); font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; transition:color 0.15s; }
+    .nav-btn:active { transform:scale(0.88); }
+    .nav-btn.on { color:var(--dark); }
+    .ico-wrap { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; transition:background 0.2s; }
+    .nav-btn.on .ico-wrap { background:var(--gold); }
 
-    /* ── EKG ── */
-    .ekg { width: 100%; margin-top: 12px; opacity: 0.55; }
+    /* ── MODAL ── */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:200; align-items:flex-end; }
+    .modal-sheet { background:var(--card); border-radius:24px 24px 0 0; padding:22px; width:100%; box-shadow:0 -8px 32px rgba(0,0,0,0.12); }
+    .modal-handle { width:36px; height:4px; background:var(--border); border-radius:2px; margin:0 auto 18px; }
+    .modal-title { font-size:17px; font-weight:800; margin-bottom:18px; }
+    .modal-input { padding:13px 15px; border-radius:12px; border:1.5px solid var(--border); background:var(--bg); color:var(--dark); font-size:15px; font-family:inherit; outline:none; width:100%; margin-bottom:10px; transition:border-color 0.15s; }
+    .modal-input:focus { border-color:var(--gold); }
 
-    /* ── Bottom nav ── */
-    .bot-nav {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      background: var(--card); border-top: 1px solid var(--border);
-      display: flex; padding: 8px 0 env(safe-area-inset-bottom, 10px);
-      z-index: 20;
-    }
-    .nav-btn {
-      flex: 1; display: flex; flex-direction: column; align-items: center;
-      gap: 2px; cursor: pointer; padding: 5px 0;
-      color: var(--muted); font-size: 10px; font-weight: 600;
-      transition: color 0.15s;
-    }
-    .nav-btn.on { color: var(--gold); }
-    .nav-btn .ico { font-size: 19px; line-height: 1; }
+    .loading { text-align:center; padding:40px; color:var(--muted); }
 
-    .loading { text-align: center; padding: 40px; color: var(--muted); }
+    /* ── NOTIF PANEL ── */
+    #notif-panel { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:100; }
+    .notif-sheet { position:absolute; top:0; left:0; right:0; background:var(--card); border-radius:0 0 24px 24px; padding:18px; max-height:75vh; overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,0.12); }
+
+    /* ── STATS ── */
+    .anim-bar { height:100%; width:0; border-radius:3px; transition:width 0.8s cubic-bezier(.4,0,.2,1); }
   </style>
 </head>
 <body>
 
-<!-- Header -->
-<div class="header">
-  <img id="hdr-avatar-img" src="./sonya.jpg" class="header-avatar"
-    onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-  <div id="hdr-avatar-fallback" class="header-avatar-fallback">С</div>
-  <div class="header-info">
-    <h1 id="hdr-title">Панель HR</h1>
-    <p id="hdr-sub">Загружаю...</p>
-  </div>
-  <div style="display:flex;align-items:center;gap:8px">
-    <div id="bell-btn" onclick="toggleNotifs()" style="position:relative;cursor:pointer;font-size:22px;line-height:1;padding:4px;">
-      🔔
-      <span id="bell-badge" style="display:none;position:absolute;top:0;right:0;background:#e84040;color:white;font-size:9px;font-weight:800;border-radius:50%;width:16px;height:16px;display:none;align-items:center;justify-content:center;line-height:1;"></span>
-    </div>
-    <img src="https://perfect-youth-production-b175.up.railway.app/logo.png" style="height:28px;width:28px;border-radius:6px;object-fit:contain;background:rgba(251,193,72,0.1);" onerror="this.style.display='none'">
+<!-- SPLASH -->
+<div id="splash">
+  <img class="splash-logo" src="https://perfect-youth-production-b175.up.railway.app/logo.png" onerror="this.style.opacity='0'">
+  <div class="splash-brand">BECKER</div>
+  <div class="splash-sub">Академия продаж</div>
+  <div class="splash-line"></div>
+  <div class="splash-dots">
+    <div class="splash-dot"></div>
+    <div class="splash-dot"></div>
+    <div class="splash-dot"></div>
   </div>
 </div>
 
-<!-- Notifications panel -->
-<div id="notif-panel" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:100;" onclick="closeNotifs(event)">
-  <div style="position:absolute;top:0;left:0;right:0;background:var(--card);border-radius:0 0 20px 20px;padding:16px;max-height:70vh;overflow-y:auto;" onclick="event.stopPropagation()">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-      <div style="font-size:16px;font-weight:800;color:var(--gold)">🔔 Уведомления</div>
-      <div onclick="closeNotifs(null)" style="font-size:22px;cursor:pointer;color:var(--muted)">✕</div>
+<!-- HEADER -->
+<div class="app-header">
+  <div class="hdr-top">
+    <div class="hdr-brand">
+      <img class="hdr-logo" src="https://perfect-youth-production-b175.up.railway.app/logo.png" onerror="this.style.display='none'">
+      <div class="hdr-brand-text">
+        <div class="name">BECKER</div>
+        <div class="sub">Академия</div>
+      </div>
     </div>
-    <div id="notif-list"><div style="text-align:center;color:var(--muted);padding:20px">Загружаю...</div></div>
+    <div class="hdr-actions">
+      <div class="bell-btn" onclick="toggleNotifs()">
+        🔔
+        <span id="bell-badge"></span>
+      </div>
+      <div class="hr-avatar" id="hdr-avatar">
+        <img id="hdr-avatar-img" src="" onerror="this.style.display='none'">
+        <span id="hdr-avatar-init"></span>
+      </div>
+    </div>
   </div>
+  <div class="hdr-title" id="hdr-title">Кабинет HR</div>
+  <div class="hdr-subtitle" id="hdr-sub">кадры · собеседования · аналитика</div>
 </div>
 
-<!-- Stats bar -->
-<div class="stats-bar">
-  <div class="stat-tile">
-    <div class="stat-num" style="color:var(--teal)" id="s-today">—</div>
-    <div class="stat-lbl">Сегодня</div>
+<!-- PULSE CARD (always visible) -->
+<div class="pulse-card">
+  <div class="pulse-label">Пульс · этот месяц</div>
+  <div class="pulse-stats">
+    <div class="pulse-stat">
+      <div class="num" style="color:var(--teal)" id="s-today">—</div>
+      <div class="lbl">Сегодня</div>
+    </div>
+    <div class="pulse-stat">
+      <div class="num" style="color:var(--red)" id="s-week">—</div>
+      <div class="lbl">Неделя</div>
+    </div>
+    <div class="pulse-stat">
+      <div class="num" style="color:var(--gold)" id="s-conv">—</div>
+      <div class="lbl">Конверсия</div>
+    </div>
   </div>
-  <div class="stat-tile">
-    <div class="stat-num" style="color:var(--gold)" id="s-week">—</div>
-    <div class="stat-lbl">Неделя</div>
-  </div>
-  <div class="stat-tile">
-    <div class="stat-num" style="color:var(--red)" id="s-conv">—</div>
-    <div class="stat-lbl">Конверсия</div>
+  <svg class="pulse-ekg" viewBox="0 0 260 32" xmlns="http://www.w3.org/2000/svg">
+    <polyline points="0,16 30,16 42,16 50,3 56,29 62,3 68,16 80,16 100,16 108,16 116,9 120,23 124,9 128,16 140,16 180,16 188,10 192,22 196,10 200,16 260,16"
+      fill="none" stroke="#e84040" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+  </svg>
+</div>
+
+<!-- NOTIFICATIONS PANEL -->
+<div id="notif-panel" onclick="closeNotifs(event)">
+  <div class="notif-sheet" onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div style="font-size:16px;font-weight:800">🔔 Уведомления</div>
+      <div onclick="closeNotifs(null)" style="font-size:22px;cursor:pointer;color:var(--muted);line-height:1">✕</div>
+    </div>
+    <div id="notif-list"><div class="loading">Загружаю...</div></div>
   </div>
 </div>
 
 <!-- TODAY -->
 <div class="section active" id="sec-today">
-  <div class="section-title" style="margin-top:14px">Сегодня</div>
-  <div id="reminder-block" style="display:none;background:rgba(251,193,72,0.08);border:1px solid rgba(251,193,72,0.25);border-radius:14px;padding:14px;margin-bottom:12px">
-    <div style="font-size:13px;font-weight:800;color:var(--gold);margin-bottom:10px">📝 Нужно написать</div>
-    <div id="reminder-list"></div>
+  <div class="sec-head"><div class="sec-line"></div><div class="sec-text">Сегодня</div></div>
+  <div style="padding:0 14px">
+    <div id="reminder-block" style="display:none;background:rgba(251,193,72,0.12);border:1.5px solid rgba(251,193,72,0.4);border-radius:14px;padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:800;color:var(--dark);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px">📝 Нужно написать</div>
+      <div id="reminder-list"></div>
+    </div>
+    <div id="today-list"><div class="loading">⏳</div></div>
   </div>
-  <div id="today-list"><div class="loading">⏳</div></div>
 </div>
 
 <!-- SLOTS -->
 <div class="section" id="sec-slots">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 8px">
-    <div class="section-title" style="margin:0">Расписание</div>
-    <button onclick="openManualEntry()" style="background:var(--gold);color:var(--black);border:none;border-radius:10px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;">+ Добавить</button>
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 14px 8px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="sec-line"></div>
+      <div class="sec-text">Расписание</div>
+    </div>
+    <button onclick="openManualEntry()" style="background:var(--gold);color:var(--dark);border:none;border-radius:12px;padding:9px 16px;font-size:12px;font-weight:800;cursor:pointer;transition:transform 0.1s;font-family:inherit;" onmousedown="this.style.transform='scale(0.93)'" onmouseup="this.style.transform='scale(1)'">+ Добавить</button>
   </div>
-  <div id="slots-wrap"><div class="loading">⏳</div></div>
-  <button class="save-btn" onclick="saveSlots()">💾 Сохранить расписание</button>
+  <div style="padding:0 14px">
+    <div id="slots-wrap"><div class="loading">⏳</div></div>
+    <button class="save-btn" onclick="saveSlots()">💾 Сохранить расписание</button>
+  </div>
 </div>
 
-<!-- Manual entry modal -->
-<div id="manual-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:200;align-items:flex-end;" onclick="closeManual(event)">
-  <div style="background:var(--card);border-radius:20px 20px 0 0;padding:20px;width:100%;" onclick="event.stopPropagation()">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div style="font-size:16px;font-weight:800;color:var(--gold)">✏️ Добавить собеседование</div>
-      <div onclick="closeManual(null)" style="font-size:22px;cursor:pointer;color:var(--muted)">✕</div>
+<!-- CANDIDATE STATUS MODAL -->
+<div id="cand-modal" class="modal-overlay" onclick="closeCandModal(event)">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <div class="modal-title" id="cm-name">—</div>
+      <div onclick="closeCandModal(null)" style="font-size:22px;cursor:pointer;color:var(--muted);line-height:1">✕</div>
     </div>
-    <div style="display:flex;flex-direction:column;gap:10px">
-      <input id="m-name"  placeholder="Имя и фамилия *" style="padding:12px 14px;border-radius:10px;border:1px solid rgba(251,193,72,0.2);background:var(--card2);color:var(--text);font-size:15px;font-family:inherit;outline:none;" />
-      <input id="m-phone" placeholder="Телефон" style="padding:12px 14px;border-radius:10px;border:1px solid rgba(251,193,72,0.2);background:var(--card2);color:var(--text);font-size:15px;font-family:inherit;outline:none;" />
-      <select id="m-spec" style="padding:12px 14px;border-radius:10px;border:1px solid rgba(251,193,72,0.2);background:var(--card2);color:var(--text);font-size:15px;font-family:inherit;outline:none;">
-        <option value="Продажи · Офис">Продажи · Офис</option>
-        <option value="Продажи · Разъезд">Продажи · Разъезд</option>
-        <option value="Другое">Другое</option>
-      </select>
-      <input id="m-date" type="date" style="padding:12px 14px;border-radius:10px;border:1px solid rgba(251,193,72,0.2);background:var(--card2);color:var(--text);font-size:15px;font-family:inherit;outline:none;" />
-      <select id="m-time" style="padding:12px 14px;border-radius:10px;border:1px solid rgba(251,193,72,0.2);background:var(--card2);color:var(--text);font-size:15px;font-family:inherit;outline:none;">
-        <option value="">Выбери время</option>
-        <option value="09:00">09:00</option>
-        <option value="10:00">10:00</option>
-        <option value="11:00">11:00</option>
-        <option value="12:00">12:00</option>
-        <option value="13:00">13:00</option>
-        <option value="14:00">14:00</option>
-        <option value="15:00">15:00</option>
-        <option value="16:00">16:00</option>
-        <option value="17:00">17:00</option>
-        <option value="17:30">17:30</option>
-        <option value="18:00">18:00</option>
-      </select>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:4px" id="cm-meta">—</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:18px" id="cm-contact">—</div>
+
+    <div style="font-size:11px;font-weight:800;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Отметить результат</div>
+    <div style="display:grid;gap:8px">
+      <button onclick="setStatus('no_show')" style="padding:13px;background:rgba(0,0,0,0.04);border:1.5px solid var(--border);border-radius:13px;font-size:14px;font-weight:700;cursor:pointer;transition:transform 0.1s;font-family:inherit;text-align:left;color:var(--dark)" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
+        👻&nbsp;&nbsp;Не пришёл(а)
+      </button>
+      <button onclick="setStatus('approved_pending')" style="padding:13px;background:rgba(78,205,196,0.08);border:1.5px solid rgba(78,205,196,0.3);border-radius:13px;font-size:14px;font-weight:700;cursor:pointer;transition:transform 0.1s;font-family:inherit;text-align:left;color:#1a7a74" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
+        ✅&nbsp;&nbsp;Принят(а) — написать оффер
+      </button>
+      <button onclick="setStatus('rejected_pending')" style="padding:13px;background:rgba(232,64,64,0.06);border:1.5px solid rgba(232,64,64,0.2);border-radius:13px;font-size:14px;font-weight:700;cursor:pointer;transition:transform 0.1s;font-family:inherit;text-align:left;color:var(--red)" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
+        ❌&nbsp;&nbsp;Отказ
+      </button>
+      <button onclick="setStatus('scheduled')" style="padding:13px;background:rgba(251,193,72,0.1);border:1.5px solid rgba(251,193,72,0.3);border-radius:13px;font-size:14px;font-weight:700;cursor:pointer;transition:transform 0.1s;font-family:inherit;text-align:left;color:#8a5e00" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
+        📅&nbsp;&nbsp;Записан(а) — сбросить статус
+      </button>
     </div>
-    <button onclick="submitManual()" style="width:100%;margin-top:16px;padding:14px;background:var(--gold);color:var(--black);border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;">Сохранить</button>
+  </div>
+</div>
+
+<!-- MANUAL ENTRY MODAL -->
+<div id="manual-modal" class="modal-overlay" onclick="closeManual(event)">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div class="modal-title">✏️ Добавить собеседование</div>
+      <div onclick="closeManual(null)" style="font-size:22px;cursor:pointer;color:var(--muted);line-height:1">✕</div>
+    </div>
+    <input id="m-name"  class="modal-input" placeholder="Имя и фамилия *">
+    <input id="m-phone" class="modal-input" placeholder="Телефон">
+    <select id="m-spec" class="modal-input" style="-webkit-appearance:none">
+      <option value="Продажи · Офис">Продажи · Офис</option>
+      <option value="Продажи · Разъезд">Продажи · Разъезд</option>
+      <option value="Другое">Другое</option>
+    </select>
+    <input id="m-date" type="date" class="modal-input">
+    <select id="m-time" class="modal-input" style="-webkit-appearance:none">
+      <option value="">Выбери время</option>
+      <option value="09:00">09:00</option><option value="10:00">10:00</option>
+      <option value="11:00">11:00</option><option value="12:00">12:00</option>
+      <option value="13:00">13:00</option><option value="14:00">14:00</option>
+      <option value="15:00">15:00</option><option value="16:00">16:00</option>
+      <option value="17:00">17:00</option><option value="17:30">17:30</option>
+      <option value="18:00">18:00</option>
+    </select>
+    <button onclick="submitManual()" style="width:100%;margin-top:8px;padding:15px;background:var(--gold);color:var(--dark);border:none;border-radius:14px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;transition:transform 0.1s;" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">Сохранить</button>
   </div>
 </div>
 
 <!-- CANDIDATES -->
 <div class="section" id="sec-cands">
-  <div class="section-title" style="margin-top:14px">Кандидаты</div>
-  <div class="filter-row">
-    <div class="chip on"  onclick="filterCands(this,'all')">Все</div>
-    <div class="chip"     onclick="filterCands(this,'scheduled')">📅 Записаны</div>
-    <div class="chip"     onclick="filterCands(this,'approved_pending')">✅ Приняты</div>
-    <div class="chip"     onclick="filterCands(this,'no_show')">👻 Не пришли</div>
-    <div class="chip"     onclick="filterCands(this,'rejected_pending')">❌ Отказы</div>
+  <div class="sec-head"><div class="sec-line"></div><div class="sec-text">Кандидаты</div></div>
+  <div style="padding:0 14px">
+    <div class="filter-row">
+      <div class="chip on"  onclick="filterCands(this,'all')">Все</div>
+      <div class="chip"     onclick="filterCands(this,'scheduled')">📅 Записаны</div>
+      <div class="chip"     onclick="filterCands(this,'approved_pending')">✅ Приняты</div>
+      <div class="chip"     onclick="filterCands(this,'no_show')">👻 Не пришли</div>
+      <div class="chip"     onclick="filterCands(this,'rejected_pending')">❌ Отказы</div>
+    </div>
+    <div id="cands-list"><div class="loading">⏳</div></div>
   </div>
-  <div id="cands-list"><div class="loading">⏳</div></div>
 </div>
 
 <!-- STATS -->
 <div class="section" id="sec-stats">
-  <div class="section-title" style="margin-top:14px">Статистика</div>
-  <div id="stats-wrap"><div class="loading">⏳</div></div>
+  <div class="sec-head"><div class="sec-line"></div><div class="sec-text">Статистика</div></div>
+  <div style="padding:0 14px">
+    <div id="stats-wrap"><div class="loading">⏳</div></div>
+  </div>
 </div>
 
-<!-- Bottom nav -->
+<!-- BOTTOM NAV -->
 <div class="bot-nav">
-  <div class="nav-btn on" onclick="nav('today',this)"><div class="ico">📋</div>Сегодня</div>
-  <div class="nav-btn"    onclick="nav('slots',this)"><div class="ico">📅</div>Слоты</div>
-  <div class="nav-btn"    onclick="nav('cands',this)"><div class="ico">👥</div>Кандидаты</div>
-  <div class="nav-btn"    onclick="nav('stats',this)"><div class="ico">📊</div>Статистика</div>
+  <div class="nav-btn on" onclick="nav('today',this)">
+    <div class="ico-wrap">📋</div>Сегодня
+  </div>
+  <div class="nav-btn" onclick="nav('slots',this)">
+    <div class="ico-wrap">📅</div>Слоты
+  </div>
+  <div class="nav-btn" onclick="nav('cands',this)">
+    <div class="ico-wrap">👥</div>Кандидаты
+  </div>
+  <div class="nav-btn" onclick="nav('stats',this)">
+    <div class="ico-wrap">📊</div>Статистика
+  </div>
 </div>
 
 <script>
 const tg = window.Telegram.WebApp;
 tg.expand();
-tg.setHeaderColor && tg.setHeaderColor('#1e1a12');
-tg.setBackgroundColor && tg.setBackgroundColor('#0f0d09');
+tg.setHeaderColor    && tg.setHeaderColor('#FBC148');
+tg.setBackgroundColor && tg.setBackgroundColor('#f5f2ea');
 
 const HR_ID = tg.initDataUnsafe?.user?.id || 0;
 
-// ── Имя и аватар HR ──
 const HR_PROFILES = {
-  859413090: { name: "Софья", avatar: "./sonya.jpg", initial: "С" },
-  474244647: { name: "Юлия",  avatar: "./yulia.jpg", initial: "Ю" },
+  859413090: { name:"Софья Трофименко", short:"Софья", avatar:"./sonya.jpg", initial:"С", role:"HR · офисные продажи" },
+  474244647: { name:"Юлия Лукоянова",  short:"Юлия",  avatar:"./yulia.jpg", initial:"Ю", role:"HR · разъездные продажи" },
 };
-const hrProfile = HR_PROFILES[HR_ID] || { name: "HR", avatar: null, initial: "HR" };
-document.getElementById('hdr-title').textContent = "Панель HR — " + hrProfile.name;
-document.getElementById('hdr-avatar-fallback').textContent = hrProfile.initial;
-if (!hrProfile.avatar) {
-  document.getElementById('hdr-avatar-img').style.display = 'none';
-  document.getElementById('hdr-avatar-fallback').style.display = 'flex';
-} else {
-  document.getElementById('hdr-avatar-img').src = hrProfile.avatar;
-}
+const me = HR_PROFILES[HR_ID] || { name:"HR", short:"HR", avatar:null, initial:"H", role:"Панель HR" };
+
+// Setup avatar
+const avatarImg  = document.getElementById('hdr-avatar-img');
+const avatarInit = document.getElementById('hdr-avatar-init');
+if (me.avatar) { avatarImg.src = me.avatar; avatarImg.onload = () => { avatarInit.style.display='none'; }; }
+avatarInit.textContent = me.initial;
+
+document.getElementById('hdr-title').textContent = 'Кабинет HR — ' + me.short;
 
 const TODAY = (() => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 })();
-
 const DEFAULT_SLOTS = ["11:00","12:00","13:00","14:00","15:00","16:00","17:00","17:30"];
 const MONTHS = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
 const DAYS   = ['вс','пн','вт','ср','чт','пт','сб'];
+let candidates = [], mySlots = {};
 
-let candidates = [];
-let mySlots    = {};   // {dateStr: [times]}
+// Splash dismiss
+function hideSplash() {
+  const s = document.getElementById('splash');
+  s.classList.add('hidden');
+  setTimeout(() => s.remove(), 700);
+}
 
-// ── Navigation ──
 function nav(name, el) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('on'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
   document.getElementById('sec-'+name).classList.add('active');
   el.classList.add('on');
 }
 
-// ── Helpers ──
 function fmtDate(s) {
-  const d = new Date(s + 'T00:00:00');
+  const d = new Date(s+'T00:00:00');
   return `${d.getDate()} ${MONTHS[d.getMonth()]}, ${DAYS[d.getDay()]}`;
 }
 
-function isToday(s) { return s === TODAY; }
-
-function isSoon(s) {
-  const d = new Date(s + 'T00:00:00');
-  const t = new Date(TODAY + 'T00:00:00');
-  return d >= t;
-}
-
 const STATUS_MAP = {
-  scheduled:        { lbl:'📅 Записан',       color:'#FBC148', bg:'rgba(251,193,72,0.13)' },
-  approved_pending: { lbl:'✅ Принят',         color:'#4ecdc4', bg:'rgba(78,205,196,0.13)' },
-  approved:         { lbl:'✅ Принят',         color:'#4ecdc4', bg:'rgba(78,205,196,0.13)' },
-  rejected_pending: { lbl:'❌ Отказ',          color:'#e84040', bg:'rgba(232,64,64,0.13)'  },
-  rejected:         { lbl:'❌ Отказ',          color:'#e84040', bg:'rgba(232,64,64,0.13)'  },
-  no_show:          { lbl:'👻 Не пришёл',      color:'#888',    bg:'rgba(136,136,136,0.1)' },
+  scheduled:        {lbl:'📅 Записан',    color:'#8a5e00', bg:'rgba(251,193,72,0.15)'},
+  approved_pending: {lbl:'✅ Принят',      color:'#1a7a74', bg:'rgba(78,205,196,0.12)'},
+  approved:         {lbl:'✅ Принят',      color:'#1a7a74', bg:'rgba(78,205,196,0.12)'},
+  rejected_pending: {lbl:'❌ Отказ',       color:'#c0392b', bg:'rgba(232,64,64,0.1)' },
+  rejected:         {lbl:'❌ Отказ',       color:'#c0392b', bg:'rgba(232,64,64,0.1)' },
+  no_show:          {lbl:'👻 Не пришёл',   color:'#888',    bg:'rgba(0,0,0,0.06)'    },
 };
-
-function badge(status) {
-  const s = STATUS_MAP[status] || { lbl: status, color:'#888', bg:'rgba(136,136,136,0.1)' };
+function badge(st) {
+  const s = STATUS_MAP[st] || {lbl:st, color:'#888', bg:'rgba(0,0,0,0.06)'};
   return `<span class="badge" style="background:${s.bg};color:${s.color}">${s.lbl}</span>`;
 }
-
-function cardBorder(status) {
-  if (['approved','approved_pending'].includes(status)) return 'teal';
-  if (['rejected','rejected_pending','no_show'].includes(status)) return 'red';
-  return '';
+function cardBorder(st) {
+  if (['approved','approved_pending'].includes(st)) return 'teal-l';
+  if (['rejected','rejected_pending','no_show'].includes(st)) return 'red-l';
+  return 'gold-l';
 }
 
-// ── Load ──
 async function loadAll() {
   try {
-    const [r1, r2, r3] = await Promise.all([
+    const [r1,r2,r3] = await Promise.all([
       fetch(`/api/candidates?hr_id=${HR_ID}`),
       fetch(`/api/my-slots?hr_id=${HR_ID}`),
       fetch(`/api/notifications?hr_id=${HR_ID}`)
@@ -388,9 +417,7 @@ async function loadAll() {
     candidates = await r1.json();
     mySlots    = await r2.json();
     const notifs = await r3.json();
-
-    renderHeader();
-    renderStatsBar();
+    renderPulse();
     renderReminders();
     renderToday();
     renderSlots();
@@ -398,357 +425,279 @@ async function loadAll() {
     renderStats();
     renderNotifBadge(notifs);
     renderNotifList(notifs);
-  } catch(e) {
-    document.getElementById('hdr-sub').textContent = 'Ошибка загрузки';
-    console.error(e);
-  }
+    const todayCnt = candidates.filter(c=>c.interview_date===TODAY&&c.status==='scheduled').length;
+    document.getElementById('hdr-sub').textContent = todayCnt ? `${todayCnt} собеседований сегодня` : me.role;
+  } catch(e) { console.error(e); }
+  setTimeout(hideSplash, 400);
 }
 
-// ── Header subtitle ──
-function renderHeader() {
-  const todayCnt = candidates.filter(c => c.interview_date === TODAY && c.status === 'scheduled').length;
-  document.getElementById('hdr-sub').textContent =
-    todayCnt ? `${todayCnt} собеседований сегодня` : 'Сегодня собеседований нет';
-}
-
-// ── Stats bar ──
-function renderStatsBar() {
-  const todayCnt = candidates.filter(c => c.interview_date === TODAY && c.status === 'scheduled').length;
-  const weekEnd  = new Date(TODAY + 'T00:00:00'); weekEnd.setDate(weekEnd.getDate() + 7);
-  const weekCnt  = candidates.filter(c => {
-    const d = new Date(c.interview_date + 'T00:00:00');
-    return d >= new Date(TODAY + 'T00:00:00') && d <= weekEnd && c.status === 'scheduled';
+function renderPulse() {
+  const todayCnt = candidates.filter(c=>c.interview_date===TODAY&&c.status==='scheduled').length;
+  const we = new Date(TODAY+'T00:00:00'); we.setDate(we.getDate()+7);
+  const weekCnt  = candidates.filter(c=>{
+    const d=new Date(c.interview_date+'T00:00:00');
+    return d>=new Date(TODAY+'T00:00:00')&&d<=we&&c.status==='scheduled';
   }).length;
-  const came     = candidates.filter(c => ['approved','approved_pending','rejected','rejected_pending'].includes(c.status)).length;
-  const approved = candidates.filter(c => ['approved','approved_pending'].includes(c.status)).length;
-  const conv     = came > 0 ? Math.round(approved/came*100)+'%' : '—';
-
+  const came    = candidates.filter(c=>['approved','approved_pending','rejected','rejected_pending'].includes(c.status)).length;
+  const approved= candidates.filter(c=>['approved','approved_pending'].includes(c.status)).length;
+  const conv    = came>0 ? Math.round(approved/came*100)+'%' : '—';
   document.getElementById('s-today').textContent = todayCnt;
   document.getElementById('s-week').textContent  = weekCnt;
   document.getElementById('s-conv').textContent  = conv;
 }
 
-// ── Reminders (кому написать) ──
 function renderReminders() {
-  const pending = candidates.filter(c => c.status === 'approved_pending' || c.status === 'rejected_pending');
+  const pending = candidates.filter(c=>c.status==='approved_pending'||c.status==='rejected_pending');
   const block = document.getElementById('reminder-block');
-  const list  = document.getElementById('reminder-list');
-  if (!pending.length) { block.style.display = 'none'; return; }
+  if (!pending.length) { block.style.display='none'; return; }
   block.style.display = 'block';
-  list.innerHTML = pending.map(c => {
-    const uname = c.username ? `@${c.username}` : (c.phone || `ID: ${c.telegram_id}`);
-    const action = c.status === 'approved_pending' ? '✅ Принят — написать об оффере' : '❌ Отказ — уведомить кандидата';
-    const color  = c.status === 'approved_pending' ? 'var(--teal)' : 'var(--red)';
-    return `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:700;color:var(--text)">${c.name}</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px">${uname}</div>
-        <div style="font-size:11px;color:${color};margin-top:3px">${action}</div>
+  document.getElementById('reminder-list').innerHTML = pending.map(c => {
+    const u = c.username?`@${c.username}`:(c.phone||`ID:${c.telegram_id}`);
+    const a = c.status==='approved_pending'?'✅ Написать об оффере':'❌ Уведомить об отказе';
+    const col = c.status==='approved_pending'?'var(--teal)':'var(--red)';
+    return `<div style="padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.05)">
+      <div style="font-size:13px;font-weight:700">${c.name}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">${u}</div>
+      <div style="font-size:11px;color:${col};font-weight:600;margin-top:3px">${a}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderToday() {
+  const list = candidates.filter(c=>c.interview_date===TODAY).sort((a,b)=>(a.interview_time||'').localeCompare(b.interview_time||''));
+  const el = document.getElementById('today-list');
+  if (!list.length) { el.innerHTML=`<div class="empty"><div class="e">☀️</div>Сегодня собеседований нет</div>`; return; }
+  el.innerHTML = list.map(c => {
+    const u = c.username?`@${c.username}`:`ID:${c.telegram_id}`;
+    const conf = c.confirmed===true?'✅ Подтвердил(а)':c.confirmed===false?'❌ Отказал(ась)':'❓ Без ответа';
+    const enc = encodeURIComponent(JSON.stringify(c));
+    return `<div class="card ${cardBorder(c.status)}" style="cursor:pointer" onclick="openCandModal(${enc.replace(/'/g,'&#39;')},event)">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between">
+        <div>
+          <div class="cand-time">${c.interview_time||'—'}</div>
+          <div class="cand-name">${c.name}</div>
+          <div class="cand-meta">${c.spec||'—'} · ${u}</div>
+          <div class="cand-confirm">${conf}</div>
+          ${badge(c.status)}
+        </div>
+        <button onclick="event.stopPropagation();openCandModal(JSON.parse(decodeURIComponent('${enc}')))" style="background:rgba(251,193,72,0.15);border:1.5px solid rgba(251,193,72,0.4);border-radius:10px;padding:8px 11px;font-size:12px;font-weight:700;color:var(--dark);cursor:pointer;white-space:nowrap;font-family:inherit;transition:transform 0.1s;margin-top:2px" onmousedown="this.style.transform='scale(0.93)'" onmouseup="this.style.transform='scale(1)'">✏️ Статус</button>
       </div>
     </div>`;
   }).join('');
 }
 
-// ── Today ──
-function renderToday() {
-  const list = candidates
-    .filter(c => c.interview_date === TODAY)
-    .sort((a,b) => (a.interview_time||'').localeCompare(b.interview_time||''));
-
-  const el = document.getElementById('today-list');
-  if (!list.length) {
-    el.innerHTML = `<div class="empty"><div class="e">☀️</div>Сегодня собеседований нет</div>`;
-    return;
-  }
-  el.innerHTML = list.map(c => {
-    const uname  = c.username ? `@${c.username}` : `ID: ${c.telegram_id}`;
-    const conf   = c.confirmed === true  ? '✅ Подтвердил(а)'
-                 : c.confirmed === false ? '❌ Отказал(ась)'
-                 : '❓ Без ответа';
-    return `<div class="card ${cardBorder(c.status)}">
-      <div class="cand-time">${c.interview_time || '—'}</div>
-      <div class="cand-name">${c.name}</div>
-      <div class="cand-meta">${c.spec || '—'} · ${uname}</div>
-      <div class="cand-confirm" style="color:var(--muted)">${conf}</div>
-      ${badge(c.status)}
-    </div>`;
-  }).join('');
-}
-
-// ── Slots ──
 function renderSlots() {
-  const el = document.getElementById('slots-wrap');
-  let html = '';
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(TODAY + 'T00:00:00');
-    d.setDate(d.getDate() + i);
-    const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    const active = mySlots[ds] || [];
-    const bookedCands = candidates.filter(c => c.interview_date === ds && c.status === 'scheduled');
-    const bookedMap = {};
-    bookedCands.forEach(c => { bookedMap[c.interview_time] = c; });
-
-    html += `<div class="day-label">${isToday(ds)?'📍 ':''}${fmtDate(ds)}</div>`;
-    html += `<div class="slots-grid" data-date="${ds}">`;
+  let html='';
+  for (let i=0;i<7;i++) {
+    const d=new Date(TODAY+'T00:00:00'); d.setDate(d.getDate()+i);
+    const ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const active=mySlots[ds]||[];
+    const bm={};
+    candidates.filter(c=>c.interview_date===ds&&c.status==='scheduled').forEach(c=>{bm[c.interview_time]=c;});
+    html+=`<div class="day-label">${ds===TODAY?'<span class="today-tag">📍 Сегодня</span> · ':''}${fmtDate(ds)}</div>`;
+    html+=`<div class="slots-grid" data-date="${ds}">`;
     for (const t of DEFAULT_SLOTS) {
-      const cand  = bookedMap[t];
-      const isOn  = active.includes(t);
+      const cand=bm[t], isOn=active.includes(t);
       if (cand) {
-        const firstName = cand.name.split(' ')[0];
-        html += `<div class="slot-btn booked" data-time="${t}" data-date="${ds}"
-                      onclick="showCandPopup('${encodeURIComponent(JSON.stringify(cand))}')"
-                      style="border-color:var(--gold);background:rgba(251,193,72,0.15);cursor:pointer;">
-                   <span style="font-size:13px;font-weight:700">${t}</span>
-                   <br><span style="font-size:9px;color:var(--gold);font-weight:600">${firstName}</span>
-                 </div>`;
+        const fn=cand.name.split(' ')[0];
+        html+=`<div class="slot-btn booked" data-time="${t}" data-date="${ds}" onclick="openCandModal(JSON.parse(decodeURIComponent('${encodeURIComponent(JSON.stringify(cand))}')))" style="cursor:pointer">
+          <span style="font-size:12px;font-weight:800">${t}</span><br>
+          <span style="font-size:9px;color:var(--dark);font-weight:700">${fn}</span>
+        </div>`;
       } else {
-        html += `<div class="slot-btn ${isOn?'on':''}" data-time="${t}" data-date="${ds}" onclick="toggleSlot(this)">
-                   ${t}
-                 </div>`;
+        html+=`<div class="slot-btn ${isOn?'on':''}" data-time="${t}" data-date="${ds}" onclick="toggleSlot(this)">${t}</div>`;
       }
     }
-    html += `</div>
-    <div class="day-actions">
-      <button class="day-act-btn" style="background:rgba(251,193,72,0.1);color:var(--gold);border:1px solid rgba(251,193,72,0.2)"
-        onclick="fillDay('${ds}')">⚡ Заполнить</button>
-      <button class="day-act-btn" style="background:rgba(232,64,64,0.08);color:var(--red);border:1px solid rgba(232,64,64,0.18)"
-        onclick="clearDay('${ds}')">🗑 Очистить</button>
+    html+=`</div><div class="day-actions">
+      <button class="day-act-btn" style="background:rgba(251,193,72,0.15);color:var(--dark);border:1.5px solid rgba(251,193,72,0.3)" onclick="fillDay('${ds}')">⚡ Заполнить</button>
+      <button class="day-act-btn" style="background:rgba(232,64,64,0.08);color:var(--red);border:1.5px solid rgba(232,64,64,0.15)" onclick="clearDay('${ds}')">🗑 Очистить</button>
     </div>`;
   }
-  el.innerHTML = html;
+  document.getElementById('slots-wrap').innerHTML = html;
 }
 
-function showCandPopup(encoded) {
-  const c = JSON.parse(decodeURIComponent(encoded));
-  const uname = c.username ? `@${c.username}` : (c.phone || `ID: ${c.telegram_id}`);
-  tg.showAlert(`👤 ${c.name}\n💼 ${c.spec||'—'}\n📱 ${uname}\n📅 ${c.interview_time}`);
+let _activeCand = null;
+
+function openCandModal(c) {
+  _activeCand = c;
+  const u = c.username ? `@${c.username}` : (c.phone || (c.telegram_id ? `ID:${c.telegram_id}` : '—'));
+  document.getElementById('cm-name').textContent    = c.name;
+  document.getElementById('cm-meta').textContent    = `${c.spec||'—'}  ·  ${c.interview_date||'—'} ${c.interview_time||''}`;
+  document.getElementById('cm-contact').textContent = u;
+  document.getElementById('cand-modal').style.display = 'flex';
 }
-
-function toggleSlot(el) { el.classList.toggle('on'); }
-
-function fillDay(ds) {
-  document.querySelectorAll(`.slots-grid[data-date="${ds}"] .slot-btn:not(.booked)`)
-    .forEach(b => b.classList.add('on'));
+function closeCandModal(e) {
+  if (!e || e.target === document.getElementById('cand-modal'))
+    document.getElementById('cand-modal').style.display = 'none';
 }
-
-function clearDay(ds) {
-  document.querySelectorAll(`.slots-grid[data-date="${ds}"] .slot-btn:not(.booked)`)
-    .forEach(b => b.classList.remove('on'));
-}
-
-async function saveSlots() {
-  const slots = {};
-  document.querySelectorAll('.slots-grid').forEach(g => {
-    const ds  = g.dataset.date;
-    slots[ds] = [...g.querySelectorAll('.slot-btn.on')].map(b => b.dataset.time);
-  });
+async function setStatus(status) {
+  if (!_activeCand) return;
+  const key = _activeCand._key;
+  if (!key) { tg.showAlert('Нет ключа кандидата'); return; }
   try {
-    const r = await fetch('/api/my-slots', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ hr_id: HR_ID, slots })
-    });
-    const j = await r.json();
-    if (j.ok) tg.showAlert('✅ Расписание сохранено!');
-    else      tg.showAlert('Ошибка: ' + (j.error||''));
-  } catch(e) { tg.showAlert('Ошибка соединения'); }
-}
-
-// ── Candidates ──
-function filterCands(el, f) {
-  document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
-  el.classList.add('on');
-  renderCandidates(f);
-}
-
-function renderCandidates(filter) {
-  let list = [...candidates].sort((a,b) =>
-    (b.interview_date||'').localeCompare(a.interview_date||'') ||
-    (b.interview_time||'').localeCompare(a.interview_time||''));
-  if (filter !== 'all') list = list.filter(c => c.status === filter);
-
-  const el = document.getElementById('cands-list');
-  if (!list.length) {
-    el.innerHTML = `<div class="empty"><div class="e">🔍</div>Кандидатов нет</div>`;
-    return;
-  }
-  el.innerHTML = list.map(c => {
-    const uname = c.username ? `@${c.username}` : `ID: ${c.telegram_id}`;
-    const dl    = c.interview_date ? fmtDate(c.interview_date) : '—';
-    return `<div class="card ${cardBorder(c.status)}">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-        <div>
-          <div class="cand-name">${c.name}</div>
-          <div class="cand-meta">${c.spec||'—'} · ${uname}</div>
-          <div class="cand-meta" style="margin-top:2px">${dl} · ${c.interview_time||'—'}</div>
-        </div>
-        ${badge(c.status)}
-      </div>
-    </div>`;
-  }).join('');
-}
-
-// ── Statistics (animated bars) ──
-function renderStats() {
-  const total    = candidates.length;
-  const came     = candidates.filter(c => ['approved','approved_pending','rejected','rejected_pending'].includes(c.status)).length;
-  const approved = candidates.filter(c => ['approved','approved_pending'].includes(c.status)).length;
-  const rejected = candidates.filter(c => ['rejected','rejected_pending'].includes(c.status)).length;
-  const noshow   = candidates.filter(c => c.status === 'no_show').length;
-  const sched    = candidates.filter(c => c.status === 'scheduled').length;
-  const convPct  = came > 0 ? Math.round(approved/came*100) : 0;
-
-  function bar(label, val, max, color) {
-    const pct = max > 0 ? Math.min(100, Math.round(val/max*100)) : 0;
-    return `<div style="margin-bottom:14px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-        <span style="font-size:13px;color:var(--text)">${label}</span>
-        <span style="font-size:14px;font-weight:800;color:${color}">${val}</span>
-      </div>
-      <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden">
-        <div class="anim-bar" style="height:100%;width:0;background:${color};border-radius:3px;transition:width 0.8s cubic-bezier(.4,0,.2,1)" data-pct="${pct}"></div>
-      </div>
-    </div>`;
-  }
-
-  document.getElementById('stats-wrap').innerHTML = `
-    <div style="background:var(--card2);border-radius:14px;padding:16px;margin-bottom:12px">
-      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px">Воронка</div>
-      ${bar('Всего записей', total, total, 'var(--muted)')}
-      ${bar('Пришли на собеседование', came, total, 'var(--gold)')}
-      ${bar('Приняты на работу', approved, total, 'var(--teal)')}
-      ${bar('Не пришли', noshow, total, 'var(--red)')}
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-      <div style="background:var(--card2);border-radius:14px;padding:14px;text-align:center">
-        <div style="font-size:32px;font-weight:900;color:var(--gold)">${convPct}%</div>
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-top:4px">Конверсия</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:2px">пришёл → принят</div>
-      </div>
-      <div style="background:var(--card2);border-radius:14px;padding:14px;text-align:center">
-        <div style="font-size:32px;font-weight:900;color:var(--teal)">${sched}</div>
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-top:4px">Ещё впереди</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:2px">запланировано</div>
-      </div>
-    </div>
-    <div style="background:var(--card2);border-radius:14px;padding:14px">
-      <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px">Конверсия</div>
-      <div style="height:8px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden">
-        <div class="anim-bar" style="height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--teal));border-radius:4px;transition:width 1s cubic-bezier(.4,0,.2,1)" data-pct="${convPct}"></div>
-      </div>
-      <div style="display:flex;justify-content:space-between;margin-top:6px">
-        <span style="font-size:11px;color:var(--muted)">0%</span>
-        <span style="font-size:11px;color:var(--gold);font-weight:700">${convPct}%</span>
-        <span style="font-size:11px;color:var(--muted)">100%</span>
-      </div>
-    </div>
-    <svg class="ekg" viewBox="0 0 260 36" xmlns="http://www.w3.org/2000/svg" style="margin-top:12px">
-      <polyline points="0,18 30,18 42,18 50,4 56,32 62,4 68,18 80,18 100,18 108,18 116,10 120,26 124,10 128,18 140,18 180,18 188,12 192,24 196,12 200,18 260,18"
-        fill="none" stroke="#e84040" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
-    </svg>`;
-
-  // Animate bars after render
-  requestAnimationFrame(() => {
-    setTimeout(() => {
-      document.querySelectorAll('.anim-bar').forEach(b => {
-        b.style.width = b.dataset.pct + '%';
-      });
-    }, 100);
-  });
-}
-
-// ── Notifications ──
-function renderNotifBadge(notifs) {
-  const unread = notifs.filter(n => !n.read).length;
-  const badge = document.getElementById('bell-badge');
-  if (unread > 0) {
-    badge.textContent = unread > 9 ? '9+' : unread;
-    badge.style.display = 'flex';
-  } else {
-    badge.style.display = 'none';
-  }
-}
-
-function renderNotifList(notifs) {
-  const el = document.getElementById('notif-list');
-  if (!notifs.length) {
-    el.innerHTML = '<div style="text-align:center;color:var(--muted);padding:20px">Уведомлений нет</div>';
-    return;
-  }
-  const typeLabel = { booked:'📅 Новая запись', manual:'✏️ Добавлено вручную', cancelled:'❌ Отмена' };
-  el.innerHTML = notifs.map(n => {
-    const ts = n.ts ? new Date(n.ts).toLocaleString('ru', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
-    const lbl = typeLabel[n.type] || n.type;
-    const bg = n.read ? 'rgba(255,255,255,0.03)' : 'rgba(251,193,72,0.08)';
-    return `<div style="padding:12px;border-radius:10px;margin-bottom:6px;background:${bg}">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div style="font-size:12px;font-weight:700;color:var(--gold)">${lbl}</div>
-        <div style="font-size:10px;color:var(--muted)">${ts}</div>
-      </div>
-      <div style="font-size:14px;font-weight:700;color:var(--text);margin-top:3px">${n.name}</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:1px">${n.date} · ${n.time}${n.username?' · @'+n.username:''}</div>
-    </div>`;
-  }).join('');
-}
-
-async function toggleNotifs() {
-  const panel = document.getElementById('notif-panel');
-  const isOpen = panel.style.display !== 'none';
-  panel.style.display = isOpen ? 'none' : 'flex';
-  if (!isOpen) {
-    // Mark as read
-    try {
-      await fetch('/api/notifications/read', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ hr_id: HR_ID })
-      });
-      document.getElementById('bell-badge').style.display = 'none';
-    } catch(e) {}
-  }
-}
-
-function closeNotifs(e) {
-  if (!e || e.target === document.getElementById('notif-panel'))
-    document.getElementById('notif-panel').style.display = 'none';
-}
-
-// ── Manual entry ──
-function openManualEntry() {
-  const today = new Date();
-  const def = new Date(today); def.setDate(today.getDate() + 1);
-  const ds = def.toISOString().split('T')[0];
-  document.getElementById('m-date').value = ds;
-  document.getElementById('m-name').value = '';
-  document.getElementById('m-phone').value = '';
-  document.getElementById('manual-modal').style.display = 'flex';
-}
-
-function closeManual(e) {
-  if (!e || e.target === document.getElementById('manual-modal'))
-    document.getElementById('manual-modal').style.display = 'none';
-}
-
-async function submitManual() {
-  const name  = document.getElementById('m-name').value.trim();
-  const phone = document.getElementById('m-phone').value.trim();
-  const spec  = document.getElementById('m-spec').value;
-  const date  = document.getElementById('m-date').value;
-  const time  = document.getElementById('m-time').value;
-  if (!name || !date || !time) { tg.showAlert('Заполни имя, дату и время'); return; }
-  try {
-    const r = await fetch('/api/book-manual', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ hr_id: HR_ID, name, phone, spec, date, time })
+    const r = await fetch('/api/update-status', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({hr_id: HR_ID, key, status})
     });
     const j = await r.json();
     if (j.ok) {
-      closeManual(null);
-      tg.showAlert('✅ Кандидат добавлен!');
-      loadAll();
+      closeCandModal(null);
+      tg.showAlert(STATUS_MAP[status]?.lbl ? `${STATUS_MAP[status].lbl} — сохранено!` : 'Сохранено!');
+      await loadAll();
     } else { tg.showAlert('Ошибка: ' + (j.error||'')); }
   } catch(e) { tg.showAlert('Ошибка соединения'); }
 }
 
+function showCandPopup(enc) {
+  const c = JSON.parse(decodeURIComponent(enc));
+  openCandModal(c);
+}
+function toggleSlot(el) { el.classList.toggle('on'); }
+function fillDay(ds)  { document.querySelectorAll(`.slots-grid[data-date="${ds}"] .slot-btn:not(.booked)`).forEach(b=>b.classList.add('on')); }
+function clearDay(ds) { document.querySelectorAll(`.slots-grid[data-date="${ds}"] .slot-btn:not(.booked)`).forEach(b=>b.classList.remove('on')); }
+
+async function saveSlots() {
+  const slots={};
+  document.querySelectorAll('.slots-grid').forEach(g=>{slots[g.dataset.date]=[...g.querySelectorAll('.slot-btn.on')].map(b=>b.dataset.time);});
+  try {
+    const r=await fetch('/api/my-slots',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hr_id:HR_ID,slots})});
+    const j=await r.json();
+    tg.showAlert(j.ok?'✅ Расписание сохранено!':'Ошибка: '+(j.error||''));
+  } catch(e){tg.showAlert('Ошибка соединения');}
+}
+
+function filterCands(el,f) { document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on')); el.classList.add('on'); renderCandidates(f); }
+function renderCandidates(filter) {
+  let list=[...candidates].sort((a,b)=>(b.interview_date||'').localeCompare(a.interview_date||'')||(b.interview_time||'').localeCompare(a.interview_time||''));
+  if (filter!=='all') list=list.filter(c=>c.status===filter);
+  const el=document.getElementById('cands-list');
+  if (!list.length){el.innerHTML=`<div class="empty"><div class="e">🔍</div>Кандидатов нет</div>`;return;}
+  el.innerHTML=list.map(c=>{
+    const u=c.username?`@${c.username}`:`ID:${c.telegram_id}`;
+    const dl=c.interview_date?fmtDate(c.interview_date):'—';
+    return `<div class="card ${cardBorder(c.status)}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div><div class="cand-name">${c.name}</div>
+        <div class="cand-meta">${c.spec||'—'} · ${u}</div>
+        <div class="cand-meta" style="margin-top:3px">${dl} · ${c.interview_time||'—'}</div>
+        ${badge(c.status)}</div>
+        <button onclick="openCandModal(JSON.parse(decodeURIComponent('${encodeURIComponent(JSON.stringify(c))}')))" style="background:rgba(251,193,72,0.15);border:1.5px solid rgba(251,193,72,0.4);border-radius:10px;padding:8px 11px;font-size:12px;font-weight:700;color:var(--dark);cursor:pointer;white-space:nowrap;font-family:inherit;transition:transform 0.1s;flex-shrink:0" onmousedown="this.style.transform='scale(0.93)'" onmouseup="this.style.transform='scale(1)'">✏️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderStats() {
+  const total=candidates.length,
+    came=candidates.filter(c=>['approved','approved_pending','rejected','rejected_pending'].includes(c.status)).length,
+    approved=candidates.filter(c=>['approved','approved_pending'].includes(c.status)).length,
+    noshow=candidates.filter(c=>c.status==='no_show').length,
+    sched=candidates.filter(c=>c.status==='scheduled').length,
+    convPct=came>0?Math.round(approved/came*100):0;
+
+  function bar(lbl,val,max,color){
+    const pct=max>0?Math.min(100,Math.round(val/max*100)):0;
+    return `<div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:13px;font-weight:500">${lbl}</span>
+        <span style="font-size:14px;font-weight:800;color:${color}">${val}</span>
+      </div>
+      <div style="height:6px;background:rgba(0,0,0,0.07);border-radius:3px;overflow:hidden">
+        <div class="anim-bar" style="background:${color}" data-pct="${pct}"></div>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('stats-wrap').innerHTML=`
+    <div style="background:var(--card);border-radius:16px;padding:18px;margin-bottom:12px;box-shadow:var(--shadow)">
+      <div class="pulse-label" style="color:var(--muted)">Воронка</div>
+      ${bar('Всего записей',total,total,'var(--muted)')}
+      ${bar('Пришли на собеседование',came,total,'var(--gold)')}
+      ${bar('Приняты на работу',approved,total,'var(--teal)')}
+      ${bar('Не пришли',noshow,total,'var(--red)')}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div style="background:var(--card);border-radius:16px;padding:16px;text-align:center;box-shadow:var(--shadow)">
+        <div style="font-size:38px;font-weight:900;color:var(--gold)">${convPct}%</div>
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px;font-weight:700">Конверсия</div>
+      </div>
+      <div style="background:var(--card);border-radius:16px;padding:16px;text-align:center;box-shadow:var(--shadow)">
+        <div style="font-size:38px;font-weight:900;color:var(--teal)">${sched}</div>
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px;font-weight:700">Впереди</div>
+      </div>
+    </div>
+    <div style="background:var(--card);border-radius:16px;padding:16px;box-shadow:var(--shadow)">
+      <div style="font-size:9px;color:var(--muted);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">Конверсия в найм</div>
+      <div style="height:10px;background:rgba(0,0,0,0.07);border-radius:5px;overflow:hidden">
+        <div class="anim-bar" style="background:linear-gradient(90deg,var(--gold),var(--teal));height:100%;border-radius:5px;" data-pct="${convPct}"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:7px">
+        <span style="font-size:11px;color:var(--muted)">0%</span>
+        <span style="font-size:12px;color:var(--gold);font-weight:800">${convPct}%</span>
+        <span style="font-size:11px;color:var(--muted)">100%</span>
+      </div>
+    </div>`;
+
+  requestAnimationFrame(()=>setTimeout(()=>{
+    document.querySelectorAll('.anim-bar').forEach(b=>{b.style.width=b.dataset.pct+'%';});
+  },100));
+}
+
+function renderNotifBadge(notifs) {
+  const unread=notifs.filter(n=>!n.read).length;
+  const b=document.getElementById('bell-badge');
+  b.textContent=unread>9?'9+':unread;
+  b.style.display=unread>0?'flex':'none';
+}
+function renderNotifList(notifs) {
+  const el=document.getElementById('notif-list');
+  if (!notifs.length){el.innerHTML='<div style="text-align:center;color:var(--muted);padding:24px">Уведомлений нет</div>';return;}
+  const tl={booked:'📅 Новая запись',manual:'✏️ Вручную',cancelled:'❌ Отмена'};
+  el.innerHTML=notifs.map(n=>{
+    const ts=n.ts?new Date(n.ts).toLocaleString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+    const bg=n.read?'rgba(0,0,0,0.02)':'rgba(251,193,72,0.1)';
+    return `<div style="padding:12px;border-radius:12px;margin-bottom:8px;background:${bg};border:1px solid ${n.read?'var(--border)':'rgba(251,193,72,0.3)'}">
+      <div style="display:flex;justify-content:space-between">
+        <div style="font-size:12px;font-weight:700;color:var(--dark)">${tl[n.type]||n.type}</div>
+        <div style="font-size:10px;color:var(--muted)">${ts}</div>
+      </div>
+      <div style="font-size:14px;font-weight:700;margin-top:3px">${n.name}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px">${n.date} · ${n.time}${n.username?' · @'+n.username:''}</div>
+    </div>`;
+  }).join('');
+}
+async function toggleNotifs() {
+  const p=document.getElementById('notif-panel');
+  const open=p.style.display==='flex';
+  p.style.display=open?'none':'flex';
+  if (!open) {
+    try { await fetch('/api/notifications/read',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hr_id:HR_ID})}); document.getElementById('bell-badge').style.display='none'; } catch(e){}
+  }
+}
+function closeNotifs(e) { if (!e||e.target===document.getElementById('notif-panel')) document.getElementById('notif-panel').style.display='none'; }
+
+function openManualEntry() {
+  const def=new Date(); def.setDate(def.getDate()+1);
+  document.getElementById('m-date').value=def.toISOString().split('T')[0];
+  document.getElementById('m-name').value='';
+  document.getElementById('m-phone').value='';
+  document.getElementById('m-time').value='';
+  document.getElementById('manual-modal').style.display='flex';
+}
+function closeManual(e) { if (!e||e.target===document.getElementById('manual-modal')) document.getElementById('manual-modal').style.display='none'; }
+async function submitManual() {
+  const name=document.getElementById('m-name').value.trim(),phone=document.getElementById('m-phone').value.trim(),spec=document.getElementById('m-spec').value,date=document.getElementById('m-date').value,time=document.getElementById('m-time').value;
+  if (!name||!date||!time){tg.showAlert('Заполни имя, дату и время');return;}
+  try {
+    const r=await fetch('/api/book-manual',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hr_id:HR_ID,name,phone,spec,date,time})});
+    const j=await r.json();
+    if (j.ok){closeManual(null);tg.showAlert('✅ Кандидат добавлен!');loadAll();}
+    else tg.showAlert('Ошибка: '+(j.error||''));
+  } catch(e){tg.showAlert('Ошибка соединения');}
+}
+
+// Minimum splash time 1.5s
+setTimeout(() => { if (candidates.length===0) hideSplash(); }, 3000);
 loadAll();
 </script>
 </body>
