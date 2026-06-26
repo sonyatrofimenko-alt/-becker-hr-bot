@@ -187,7 +187,7 @@
       🔔
       <span id="bell-badge" style="display:none;position:absolute;top:0;right:0;background:#e84040;color:white;font-size:9px;font-weight:800;border-radius:50%;width:16px;height:16px;display:none;align-items:center;justify-content:center;line-height:1;"></span>
     </div>
-    <div class="becker-badge">BECKER</div>
+    <img src="https://perfect-youth-production-b175.up.railway.app/logo.png" style="height:28px;width:28px;border-radius:6px;object-fit:contain;background:rgba(251,193,72,0.1);" onerror="this.style.display='none'">
   </div>
 </div>
 
@@ -221,6 +221,10 @@
 <!-- TODAY -->
 <div class="section active" id="sec-today">
   <div class="section-title" style="margin-top:14px">Сегодня</div>
+  <div id="reminder-block" style="display:none;background:rgba(251,193,72,0.08);border:1px solid rgba(251,193,72,0.25);border-radius:14px;padding:14px;margin-bottom:12px">
+    <div style="font-size:13px;font-weight:800;color:var(--gold);margin-bottom:10px">📝 Нужно написать</div>
+    <div id="reminder-list"></div>
+  </div>
   <div id="today-list"><div class="loading">⏳</div></div>
 </div>
 
@@ -377,6 +381,7 @@ async function loadAll() {
 
     renderHeader();
     renderStatsBar();
+    renderReminders();
     renderToday();
     renderSlots();
     renderCandidates('all');
@@ -411,6 +416,27 @@ function renderStatsBar() {
   document.getElementById('s-today').textContent = todayCnt;
   document.getElementById('s-week').textContent  = weekCnt;
   document.getElementById('s-conv').textContent  = conv;
+}
+
+// ── Reminders (кому написать) ──
+function renderReminders() {
+  const pending = candidates.filter(c => c.status === 'approved_pending' || c.status === 'rejected_pending');
+  const block = document.getElementById('reminder-block');
+  const list  = document.getElementById('reminder-list');
+  if (!pending.length) { block.style.display = 'none'; return; }
+  block.style.display = 'block';
+  list.innerHTML = pending.map(c => {
+    const uname = c.username ? `@${c.username}` : (c.phone || `ID: ${c.telegram_id}`);
+    const action = c.status === 'approved_pending' ? '✅ Принят — написать об оффере' : '❌ Отказ — уведомить кандидата';
+    const color  = c.status === 'approved_pending' ? 'var(--teal)' : 'var(--red)';
+    return `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:700;color:var(--text)">${c.name}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">${uname}</div>
+        <div style="font-size:11px;color:${color};margin-top:3px">${action}</div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ── Today ──
