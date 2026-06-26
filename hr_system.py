@@ -7,10 +7,11 @@ from telegram.ext import (
     MessageHandler, ConversationHandler, filters, ContextTypes
 )
 
-TOKEN      = os.environ.get("TOKEN", "")
-WEBAPP_URL = os.environ.get("WEBAPP_URL", "")
-PORT       = int(os.environ.get("PORT", 8080))
-WEBAPP_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "webapp")
+TOKEN        = os.environ.get("TOKEN", "")
+WEBAPP_URL   = os.environ.get("WEBAPP_URL", "")
+PORT         = int(os.environ.get("PORT", 8080))
+WEBAPP_DIR   = os.path.join(os.path.dirname(os.path.abspath(__file__)), "webapp")
+DATABASE_URL = os.environ.get("DATABASE_URL", "")
 
 # ── Настройки ────────────────────────────────────────────────────────────────
 HR_IDS = {
@@ -27,25 +28,74 @@ DATA_FILE    = "hr_data.json"
 
 DEFAULT_SLOTS = ["11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "17:30"]
 
+_EMPTY_DATA = lambda: {"slots": {}, "candidates": {}, "notifications": {}, "custom_specs": []}
+
 def is_hr(user_id: int) -> bool:
     return user_id in HR_IDS
 
 def hr_name(user_id: int) -> str:
     return HR_IDS.get(user_id, "HR")
 
-# ── Хранилище ─────────────────────────────────────────────────────────────────
-# Структура:
-#   data["slots"][str(hr_id)][date_str]  = [time_list]   — расписание каждого HR
-#   data["candidates"][str(user_id)]     = {..., "hr_id": int}  — к кому записан
+# ── Хранилище (PostgreSQL с fallback на файл) ─────────────────────────────────
+# Структура JSON:
+#   data["slots"][str(hr_id)][date_str]  = [time_list]
+#   data["candidates"][key]              = {..., "hr_id": int}
+#   data["notifications"][str(hr_id)]   = [{...}]
+#   data["custom_specs"]                 = ["spec1", ...]
+
+def _db_conn():
+    import psycopg2
+    return psycopg2.connect(DATABASE_URL, sslmode="require")
+
+def _ensure_table():
+    try:
+        conn = _db_conn()
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS hr_store (
+                    key  TEXT PRIMARY KEY,
+                    value TEXT NOT NULL
+                )
+            """)
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"[DB] ensure_table error: {e}")
+
 def load():
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, encoding="utf-8") as f:
-            return json.load(f)
-    return {"slots": {}, "candidates": {}}
+    if not DATABASE_URL:
+        # Локальный режим: читаем из файла
+        if os.path.exists(DATA_FILE):
+            with open(DATA_FILE, encoding="utf-8") as f:
+                return json.load(f)
+        return _EMPTY_DATA()
+    try:
+        conn = _db_conn()
+        with conn.cursor() as cur:
+            cur.execute("SELECT value FROM hr_store WHERE key='data'")
+            row = cur.fetchone()
+        conn.close()
+        return json.loads(row[0]) if row else _EMPTY_DATA()
+    except Exception as e:
+        print(f"[DB] load error: {e}")
+        return _EMPTY_DATA()
 
 def save(data):
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+    if not DATABASE_URL:
+        with open(DATA_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        return
+    try:
+        conn = _db_conn()
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO hr_store (key, value) VALUES ('data', %s)
+                ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+            """, (json.dumps(data, ensure_ascii=False),))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"[DB] save error: {e}")
 
 def _hr_slots(data, hr_id: int) -> dict:
     """Возвращает словарь слотов конкретного HR (по ссылке — изменения сохранятся)."""
@@ -1654,6 +1704,11 @@ if __name__ == "__main__":
             print(f"   HR: {name} (ID: {uid})")
         if WEBAPP_URL:
             print(f"   WebApp URL: {WEBAPP_URL}")
+        if DATABASE_URL:
+            print("🗄  PostgreSQL: подключено")
+            _ensure_table()
+        else:
+            print("📄  Хранилище: файл hr_data.json (локальный режим)")
 
         await run_webserver()
 

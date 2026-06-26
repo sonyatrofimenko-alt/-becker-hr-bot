@@ -490,23 +490,27 @@ function _doHideSplash() {
   }, 650);
 }
 
-function _postSplashAnimate() {
-  // Restart EKG draw
+function _restartEkg() {
+  // Most reliable way: clone the element to fully reset all animation state
   const ekg = document.querySelector('.ekg-line');
-  if (ekg) {
-    ekg.style.animation = 'none';
-    void ekg.getBoundingClientRect();
-    ekg.style.strokeDashoffset = '600';
-    ekg.style.animation = 'ekgDraw 2.2s 0.2s ease forwards';
-  }
-  // Re-trigger pulse count-up so numbers animate visibly
-  renderPulse();
+  if (!ekg) return;
+  const clone = ekg.cloneNode(true);
+  ekg.parentNode.replaceChild(clone, ekg);
+}
+
+function _postSplashAnimate() {
+  // Restart EKG by replacing element (resets CSS animation from scratch)
+  _restartEkg();
+  // Re-trigger pulse count-up so numbers animate visibly after splash
+  setTimeout(() => renderPulse(), 100);
   // Animate currently visible cards with stagger
-  document.querySelectorAll('.section.active .card').forEach((c, i) => {
-    c.style.animation = 'none';
-    void c.getBoundingClientRect();
-    c.style.animation = `cardIn 0.35s ease ${i * 65}ms both`;
-  });
+  setTimeout(() => {
+    document.querySelectorAll('.section.active .card').forEach((c, i) => {
+      c.style.animation = 'none';
+      void c.getBoundingClientRect();
+      c.style.animation = `cardIn 0.32s ease ${i * 60}ms both`;
+    });
+  }, 150);
 }
 
 // Count-up animation for a number element
@@ -574,7 +578,6 @@ async function loadAll() {
     candidates = await r1.json();
     mySlots    = await r2.json();
     const notifs = await r3.json();
-    renderPulse();
     renderReminders();
     renderToday();
     renderSlots();
