@@ -123,6 +123,13 @@ async def menu_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         status_lines.append(f"✉️ Ждут твоего письма: <b>{my_pending}</b>")
     status_block = "\n".join(status_lines) + "\n\n" if status_lines else ""
 
+    # Кнопка мини-приложения для HR
+    webapp_kb = None
+    if WEBAPP_URL:
+        webapp_kb = InlineKeyboardMarkup([[
+            InlineKeyboardButton("📱 Открыть мини-приложение", web_app=WebAppInfo(url=WEBAPP_URL))
+        ]])
+
     await update.message.reply_text(
         f"👩‍💼 <b>Панель HR — BECKER</b>\n"
         f"━━━━━━━━━━━━━━━━━━\n"
@@ -132,6 +139,11 @@ async def menu_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         reply_markup=HR_KEYBOARD,
         parse_mode="HTML"
     )
+    if webapp_kb:
+        await update.message.reply_text(
+            "Посмотреть приложение глазами кандидата:",
+            reply_markup=webapp_kb
+        )
 
 # ── Обработка кнопок HR ───────────────────────────────────────────────────────
 async def hr_keyboard_handler(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
