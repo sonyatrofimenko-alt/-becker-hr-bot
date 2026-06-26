@@ -9,13 +9,32 @@
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   :root {
-    --gold:#FBC148; --gold-dark:#e8a820; --black:#1a1a1a; --dark:#2c2c2c;
+    --gold:#FBC148; --gold-dark:#e8a820; --black:#1a1a1a;
     --gray-bg:#f0ede8; --white:#ffffff; --text:#1a1a1a;
-    --text-sub:#888888; --radius:14px;
+    --text-sub:#888888; --radius:14px; --red:#e84040; --teal:#4ecdc4;
   }
-  body { font-family:'Inter',-apple-system,sans-serif; background:var(--gray-bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
+  body { font-family:'Inter',-apple-system,sans-serif; background:var(--gray-bg); color:var(--text); min-height:100vh; overflow-x:hidden; padding-bottom:24px; }
 
-  /* HEADER */
+  /* ── SPLASH ─────────────────────────────────────────────────────── */
+  #splash {
+    position:fixed; inset:0; z-index:9999;
+    background:#FBC148;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    transition:opacity 0.55s ease;
+  }
+  #splash.hidden { opacity:0; pointer-events:none; }
+  .splash-logo  { width:88px; height:88px; border-radius:20px; object-fit:contain; margin-bottom:20px; animation:splashPop 0.6s cubic-bezier(.34,1.56,.64,1) both; }
+  .splash-brand { font-size:40px; font-weight:900; color:#1a1600; letter-spacing:4px; animation:splashFade 0.5s 0.3s ease both; }
+  .splash-sub   { font-size:11px; font-weight:700; color:rgba(26,22,0,0.5); letter-spacing:3px; text-transform:uppercase; margin-top:8px; animation:splashFade 0.5s 0.45s ease both; }
+  .splash-line  { width:55px; height:2px; background:rgba(26,22,0,0.2); border-radius:1px; margin-top:13px; animation:splashFade 0.5s 0.55s ease both; }
+  .splash-dots  { display:flex; gap:7px; margin-top:32px; animation:splashFade 0.5s 0.7s ease both; }
+  .splash-dot   { width:7px; height:7px; border-radius:50%; background:rgba(26,22,0,0.28); animation:dotBounce 1.2s infinite ease-in-out; }
+  .splash-dot:nth-child(2){animation-delay:0.2s;} .splash-dot:nth-child(3){animation-delay:0.4s;}
+  @keyframes splashPop  { from{transform:scale(0.5);opacity:0} to{transform:scale(1);opacity:1} }
+  @keyframes splashFade { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes dotBounce  { 0%,80%,100%{transform:scale(0.7);opacity:0.4} 40%{transform:scale(1);opacity:1} }
+
+  /* ── HEADER ─────────────────────────────────────────────────────── */
   .header { background:linear-gradient(135deg,var(--gold) 0%,var(--gold-dark) 100%); padding:16px 20px 28px; position:relative; }
   .header-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
   .logo { display:flex; align-items:center; gap:10px; }
@@ -26,22 +45,21 @@
   .header-title { font-size:26px; font-weight:800; color:var(--black); line-height:1.1; }
   .header-sub   { font-size:13px; color:rgba(0,0,0,0.55); margin-top:4px; }
 
-  /* STEPS */
+  /* ── PROGRESS ────────────────────────────────────────────────────── */
   .steps { display:flex; align-items:center; gap:6px; padding:0 20px 16px; background:linear-gradient(135deg,var(--gold) 0%,var(--gold-dark) 100%); }
-  .step { flex:1; height:3px; background:rgba(0,0,0,0.15); border-radius:2px; }
+  .step { flex:1; height:3px; background:rgba(0,0,0,0.15); border-radius:2px; transition:background 0.3s; }
   .step.done { background:var(--black); }
 
-  /* CONTENT */
-  .content { padding:20px 16px 40px; }
+  /* ── CONTENT ─────────────────────────────────────────────────────── */
+  .content { padding:20px 16px 16px; }
 
-  /* SECTION LABEL */
+  /* ── SECTION LABEL ───────────────────────────────────────────────── */
   .section-label { display:flex; align-items:center; gap:8px; font-size:11px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:#b8860b; margin:20px 0 10px; }
   .section-label::before { content:'—'; color:#b8860b; }
+  .section-label:first-child { margin-top:0; }
 
-  /* CARD */
+  /* ── CARDS ───────────────────────────────────────────────────────── */
   .card { background:var(--white); border-radius:var(--radius); padding:16px; margin-bottom:10px; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
-
-  /* DARK CARD */
   .card-dark { background:#1e1a12; border-radius:var(--radius); padding:18px; margin-bottom:10px; color:white; }
   .card-dark .card-label { font-size:10px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:rgba(255,255,255,0.35); margin-bottom:12px; }
   .stats-row { display:flex; }
@@ -50,104 +68,118 @@
   .stat-num { font-size:34px; font-weight:800; line-height:1; }
   .stat-sub { font-size:9px; font-weight:600; letter-spacing:0.8px; text-transform:uppercase; color:rgba(255,255,255,0.35); margin-top:4px; }
 
-  /* FORMAT CARDS */
+  /* ── SPEC CHIPS GRID ─────────────────────────────────────────────── */
+  .spec-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:8px; }
+  .spec-card {
+    background:var(--white); border-radius:14px; padding:16px 14px;
+    cursor:pointer; border:2px solid transparent;
+    transition:all 0.18s; box-shadow:0 1px 4px rgba(0,0,0,0.06);
+    display:flex; align-items:center; gap:12px;
+  }
+  .spec-card:active { transform:scale(0.97); }
+  .spec-card.selected { border-color:var(--gold); background:#fffbf0; }
+  .spec-card .spec-icon { font-size:24px; flex-shrink:0; }
+  .spec-card .spec-name { font-size:14px; font-weight:700; line-height:1.2; }
+  .spec-card .spec-sub  { font-size:11px; color:var(--text-sub); margin-top:2px; }
+
+  /* ── FORMAT CARDS (without HR photos) ───────────────────────────── */
   .format-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
   .format-card {
-    background:var(--white); border-radius:14px; padding:16px 12px;
+    background:var(--white); border-radius:14px; padding:20px 12px 16px;
     text-align:center; cursor:pointer; border:2px solid transparent;
     transition:all 0.2s; box-shadow:0 1px 4px rgba(0,0,0,0.06);
   }
   .format-card:active { transform:scale(0.97); }
   .format-card.selected { border-color:var(--gold); background:#fffbf0; }
-  .format-card .fmt-hr-photo { width:54px; height:54px; border-radius:50%; object-fit:cover; object-position:top; border:2.5px solid var(--gold); margin:0 auto 8px; display:block; }
-  .format-card .fmt-hr-fallback { width:54px; height:54px; border-radius:50%; background:var(--gold); display:none; align-items:center; justify-content:center; font-size:20px; font-weight:800; color:var(--black); border:2.5px solid var(--gold); margin:0 auto 8px; }
-  .format-card .fmt-icon { font-size:28px; margin-bottom:8px; }
-  .format-card .fmt-title { font-size:14px; font-weight:700; }
-  .format-card .fmt-sub   { font-size:11px; color:var(--text-sub); margin-top:3px; }
-  .format-card .fmt-hr-name { font-size:11px; color:var(--text-sub); margin-top:5px; font-weight:500; }
+  .format-card .fmt-icon  { font-size:32px; margin-bottom:10px; }
+  .format-card .fmt-title { font-size:15px; font-weight:700; }
+  .format-card .fmt-sub   { font-size:11px; color:var(--text-sub); margin-top:4px; line-height:1.4; }
 
-  /* HR PREVIEW CARD */
+  /* HR PREVIEW — shows after format selected */
   .hr-preview {
-    background:var(--white); border-radius:var(--radius); padding:12px 14px;
-    display:flex; align-items:center; gap:14px; margin-bottom:4px;
-    border:2px solid var(--gold); display:none;
+    background:var(--white); border-radius:var(--radius); padding:14px 16px;
+    display:none; align-items:center; gap:14px; margin-bottom:4px;
+    border:2px solid var(--gold);
+    animation:fadeIn 0.22s ease both;
   }
   .hr-preview.visible { display:flex; }
   .hr-photo { width:48px; height:48px; border-radius:50%; object-fit:cover; object-position:top; flex-shrink:0; border:2px solid var(--gold); }
   .hr-photo-fallback { width:48px; height:48px; border-radius:50%; background:var(--gold); display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; color:var(--black); flex-shrink:0; }
   .hr-info .hr-name { font-size:14px; font-weight:700; }
   .hr-info .hr-role { font-size:12px; color:var(--text-sub); margin-top:2px; }
+  .hr-online { display:inline-block; width:7px; height:7px; border-radius:50%; background:#22c55e; margin-left:5px; vertical-align:middle; }
 
-  /* INPUT */
+  /* ── INPUT ───────────────────────────────────────────────────────── */
   .input-field { width:100%; padding:14px 16px; border:2px solid transparent; border-radius:12px; background:var(--gray-bg); font-size:16px; color:var(--text); outline:none; transition:all 0.2s; font-family:inherit; }
   .input-field:focus { border-color:var(--gold); background:white; }
   .input-field::placeholder { color:var(--text-sub); }
 
-  /* DATE GRID */
+  /* ── NEAREST SLOT BANNER ─────────────────────────────────────────── */
+  .nearest-banner {
+    background:linear-gradient(135deg,#1e1a12,#2e2810);
+    border-radius:14px; padding:14px 16px; margin-bottom:14px;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:12px; animation:fadeIn 0.3s ease both;
+  }
+  .nearest-banner.hidden { display:none; }
+  .nearest-left { display:flex; align-items:center; gap:10px; }
+  .nearest-icon { font-size:22px; flex-shrink:0; }
+  .nearest-label { font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:rgba(255,255,255,0.4); margin-bottom:3px; }
+  .nearest-val { font-size:14px; font-weight:700; color:white; }
+  .nearest-btn { background:var(--gold); border:none; border-radius:10px; padding:9px 14px; font-size:13px; font-weight:700; color:var(--black); cursor:pointer; white-space:nowrap; font-family:inherit; flex-shrink:0; }
+  .nearest-btn:active { transform:scale(0.95); }
+
+  /* ── DATE GRID ───────────────────────────────────────────────────── */
   .date-grid { display:flex; flex-direction:column; gap:8px; }
   .date-item { background:var(--white); border-radius:12px; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; border:2px solid transparent; transition:all 0.18s; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
   .date-item:active { transform:scale(0.98); }
   .date-item.selected { border-color:var(--gold); background:#fffbf0; }
   .date-left { display:flex; align-items:center; gap:12px; }
-  .date-icon { width:40px; height:40px; background:var(--gray-bg); border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:9px; font-weight:700; text-transform:uppercase; color:var(--text-sub); letter-spacing:0.5px; }
+  .date-icon { width:42px; height:42px; background:var(--gray-bg); border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:9px; font-weight:700; text-transform:uppercase; color:var(--text-sub); letter-spacing:0.5px; }
   .date-icon .day-num { font-size:18px; font-weight:800; color:var(--text); line-height:1; }
   .date-item.selected .date-icon { background:var(--gold); }
-  .date-item.selected .date-icon .day-num { color:var(--black); }
   .date-item.selected .date-icon { color:rgba(0,0,0,0.6); }
-  .date-name { font-size:15px; font-weight:600; }
+  .date-item.selected .date-icon .day-num { color:var(--black); }
+  .date-name  { font-size:15px; font-weight:600; }
   .date-slots { font-size:12px; color:var(--text-sub); margin-top:1px; }
-  .chevron { font-size:18px; color:#ccc; }
+  .chevron    { font-size:18px; color:#ccc; }
 
-  /* TIME GRID */
+  /* ── TIME GRID ───────────────────────────────────────────────────── */
   .time-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
   .time-item { background:var(--white); border-radius:12px; padding:14px 8px; text-align:center; cursor:pointer; border:2px solid transparent; font-size:15px; font-weight:600; transition:all 0.18s; box-shadow:0 1px 4px rgba(0,0,0,0.06); }
   .time-item:active { transform:scale(0.96); }
   .time-item.selected { border-color:var(--gold); background:var(--gold); color:var(--black); }
 
-  /* CONFIRM CARD */
+  /* ── CONFIRM CARD ────────────────────────────────────────────────── */
   .confirm-card { background:#1e1a12; border-radius:var(--radius); padding:20px; color:white; }
   .confirm-detail { background:rgba(255,255,255,0.07); border-radius:10px; padding:14px; display:flex; align-items:center; gap:12px; margin-bottom:8px; }
   .confirm-detail-icon { font-size:20px; flex-shrink:0; }
   .confirm-detail-label { font-size:11px; color:rgba(255,255,255,0.4); font-weight:600; letter-spacing:0.5px; text-transform:uppercase; }
   .confirm-detail-val { font-size:15px; font-weight:700; margin-top:2px; }
 
-  /* BUTTON */
+  /* ── BUTTONS ─────────────────────────────────────────────────────── */
   .btn-main { width:100%; padding:16px; background:var(--gold); border:none; border-radius:14px; font-size:16px; font-weight:700; color:var(--black); cursor:pointer; transition:all 0.18s; font-family:inherit; margin-top:8px; letter-spacing:0.2px; }
   .btn-main:active { transform:scale(0.98); background:var(--gold-dark); }
-  .btn-secondary { width:100%; padding:14px; background:transparent; border:2px solid rgba(0,0,0,0.1); border-radius:14px; font-size:15px; font-weight:600; color:var(--text-sub); cursor:pointer; font-family:inherit; margin-top:8px; }
+  .btn-main:disabled { opacity:0.4; cursor:default; transform:none; }
+  .btn-secondary { width:100%; padding:14px; background:transparent; border:2px solid rgba(0,0,0,0.1); border-radius:14px; font-size:15px; font-weight:600; color:var(--text-sub); cursor:pointer; font-family:inherit; margin-top:8px; transition:all 0.18s; }
+  .btn-secondary:active { background:rgba(0,0,0,0.04); }
 
-  /* SCREENS */
-  .screen { display:none; animation:fadeIn 0.25s ease; }
-  .screen.active { display:block; }
-  @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
-
-  /* SUCCESS */
+  /* ── SUCCESS ─────────────────────────────────────────────────────── */
   .success-anim { text-align:center; padding:20px 0 10px; }
-  .success-circle { width:72px; height:72px; background:var(--gold); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; font-size:32px; color:var(--black); font-weight:800; }
+  .success-circle { width:72px; height:72px; background:var(--gold); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; font-size:32px; color:var(--black); font-weight:800; animation:successPop 0.5s cubic-bezier(.34,1.56,.64,1) both; }
   .success-title { font-size:22px; font-weight:800; }
-  .success-sub { font-size:14px; color:var(--text-sub); margin-top:6px; }
+  .success-sub { font-size:14px; color:var(--text-sub); margin-top:6px; line-height:1.5; }
+  @keyframes successPop { from{transform:scale(0.4);opacity:0} to{transform:scale(1);opacity:1} }
+
+  /* ── NO SLOTS ────────────────────────────────────────────────────── */
+  .noslots-card { background:#1e1a12; border-radius:var(--radius); padding:24px; text-align:center; margin-bottom:10px; }
+
+  /* ── SCREENS ─────────────────────────────────────────────────────── */
+  .screen { display:none; }
+  .screen.active { display:block; animation:fadeIn 0.22s ease both; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
 </style>
 </head>
-<style>
-  /* SPLASH */
-  #splash {
-    position:fixed; inset:0; z-index:9999;
-    background:#FBC148;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    transition:opacity 0.6s ease;
-  }
-  #splash.hidden { opacity:0; pointer-events:none; }
-  .splash-logo { width:90px; height:90px; border-radius:20px; object-fit:contain; margin-bottom:22px; animation:splashPop 0.6s cubic-bezier(.34,1.56,.64,1) both; }
-  .splash-brand { font-size:40px; font-weight:900; color:#1a1600; letter-spacing:4px; animation:splashFade 0.5s 0.3s ease both; }
-  .splash-sub { font-size:11px; font-weight:700; color:rgba(26,22,0,0.5); letter-spacing:3px; text-transform:uppercase; margin-top:8px; animation:splashFade 0.5s 0.45s ease both; }
-  .splash-line { width:55px; height:2px; background:rgba(26,22,0,0.22); border-radius:1px; margin-top:13px; animation:splashFade 0.5s 0.55s ease both; }
-  .splash-dots { display:flex; gap:7px; margin-top:34px; animation:splashFade 0.5s 0.7s ease both; }
-  .splash-dot { width:7px; height:7px; border-radius:50%; background:rgba(26,22,0,0.28); animation:dotBounce 1.2s infinite ease-in-out; }
-  .splash-dot:nth-child(2){animation-delay:0.2s;} .splash-dot:nth-child(3){animation-delay:0.4s;}
-  @keyframes splashPop  { from{transform:scale(0.5);opacity:0} to{transform:scale(1);opacity:1} }
-  @keyframes splashFade { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes dotBounce  { 0%,80%,100%{transform:scale(0.7);opacity:0.4} 40%{transform:scale(1);opacity:1} }
-</style>
 <body>
 
 <!-- SPLASH -->
@@ -161,20 +193,22 @@
   </div>
 </div>
 
-<!-- ══ SCREEN 1: FORMAT + NAME ══════════════════════════════════════ -->
-<div id="screen-format" class="screen active">
+<!-- ══ SCREEN 1: СПЕЦИАЛИЗАЦИЯ ══════════════════════════════════════ -->
+<div id="screen-spec" class="screen active">
   <div class="header">
     <div class="header-top">
       <div class="logo">
         <img src="https://perfect-youth-production-b175.up.railway.app/logo.png" onerror="this.style.display='none'">
         <div class="logo-text"><div class="brand">BECKER</div><div class="sub">Академия</div></div>
       </div>
-      <div class="avatar" id="user-avatar">—</div>
+      <div class="avatar" id="user-avatar-1">—</div>
     </div>
     <div class="header-title">Запись на<br>собеседование</div>
-    <div class="header-sub">кухонная фабрика · Москва</div>
+    <div class="header-sub">шаг 1 из 4 · выбор позиции</div>
   </div>
-  <div class="steps"><div class="step done"></div><div class="step"></div><div class="step"></div><div class="step"></div></div>
+  <div class="steps">
+    <div class="step done"></div><div class="step"></div><div class="step"></div><div class="step"></div>
+  </div>
   <div class="content">
     <div class="card-dark">
       <div class="card-label">О компании · BECKER</div>
@@ -183,50 +217,18 @@
         <div class="stat-item"><div class="stat-num" style="color:#FBC148;">1</div><div class="stat-sub">завод в Москве</div></div>
         <div class="stat-item"><div class="stat-num" style="color:#e84040;">★</div><div class="stat-sub">Премиум</div></div>
       </div>
-      <svg viewBox="0 0 260 36" xmlns="http://www.w3.org/2000/svg" style="width:100%;margin-top:14px;display:block;">
-        <polyline points="0,18 30,18 42,18 50,4 56,32 62,4 68,18 80,18 100,18 108,18 116,10 120,26 124,10 128,18 140,18 180,18 188,12 192,24 196,12 200,18 260,18"
-          fill="none" stroke="#e84040" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>
-      </svg>
     </div>
 
-    <div class="section-label">Формат работы</div>
-    <div class="format-grid">
-      <div class="format-card" id="fmt-office" onclick="selectFormat('office')">
-        <img class="fmt-hr-photo" src="./sonya.jpg" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-        <div class="fmt-hr-fallback">С</div>
-        <div class="fmt-title">В офисе</div>
-        <div class="fmt-sub">Стационарная точка</div>
-        <div class="fmt-hr-name">HR: Софья</div>
-      </div>
-      <div class="format-card" id="fmt-field" onclick="selectFormat('field')">
-        <img class="fmt-hr-photo" src="./yulia.jpg" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-        <div class="fmt-hr-fallback">Ю</div>
-        <div class="fmt-title">Разъездной</div>
-        <div class="fmt-sub">Работа с выездом</div>
-        <div class="fmt-hr-name">HR: Юлия</div>
-      </div>
+    <div class="section-label">На какую позицию?</div>
+    <div class="spec-grid" id="spec-grid">
+      <!-- filled by JS -->
     </div>
-
-    <!-- HR карточка — появляется после выбора формата -->
-    <div class="hr-preview" id="hr-preview-card">
-      <img id="hr-preview-photo" class="hr-photo" src="" onerror="this.style.display='none';document.getElementById('hr-preview-fallback').style.display='flex'">
-      <div id="hr-preview-fallback" class="hr-photo-fallback" style="display:none"></div>
-      <div class="hr-info">
-        <div class="hr-name" id="hr-preview-name"></div>
-        <div class="hr-role" id="hr-preview-role">Проведёт ваше собеседование</div>
-      </div>
-    </div>
-
-    <div class="section-label">Как тебя зовут?</div>
-    <div>
-      <input class="input-field" id="name-input" type="text" placeholder="Имя и фамилия" autocomplete="name" />
-    </div>
-    <button class="btn-main" id="btn-format" onclick="goToDate()">Выбрать день →</button>
+    <button class="btn-main" id="btn-spec" onclick="goToFormat()" disabled>Далее →</button>
   </div>
 </div>
 
-<!-- ══ SCREEN 2: DATE ══════════════════════════════════════════════ -->
-<div id="screen-date" class="screen">
+<!-- ══ SCREEN 2: ФОРМАТ + ИМЯ ═══════════════════════════════════════ -->
+<div id="screen-format" class="screen">
   <div class="header">
     <div class="header-top">
       <div class="logo">
@@ -235,19 +237,81 @@
       </div>
       <div class="avatar" id="user-avatar-2">—</div>
     </div>
-    <div class="header-title" id="header-name-greeting">Выбери день</div>
-    <div class="header-sub">шаг 2 из 4 · выбор даты</div>
+    <div class="header-title">Формат работы</div>
+    <div class="header-sub">шаг 2 из 4 · формат и имя</div>
   </div>
-  <div class="steps"><div class="step done"></div><div class="step done"></div><div class="step"></div><div class="step"></div></div>
+  <div class="steps">
+    <div class="step done"></div><div class="step done"></div><div class="step"></div><div class="step"></div>
+  </div>
   <div class="content">
-    <div class="section-label">Доступные дни</div>
-    <div class="date-grid" id="date-list"></div>
-    <button class="btn-main" id="btn-date" onclick="goToTime()">Выбрать время →</button>
-    <button class="btn-secondary" onclick="goBack('screen-format')">← Назад</button>
+    <div class="section-label">Выбери формат</div>
+    <div class="format-grid">
+      <div class="format-card" id="fmt-office" onclick="selectFormat('office')">
+        <div class="fmt-icon">🏢</div>
+        <div class="fmt-title">В офисе</div>
+        <div class="fmt-sub">Стационарная точка продаж</div>
+      </div>
+      <div class="format-card" id="fmt-field" onclick="selectFormat('field')">
+        <div class="fmt-icon">🚗</div>
+        <div class="fmt-title">Разъездной</div>
+        <div class="fmt-sub">Работа с выездами и встречами</div>
+      </div>
+    </div>
+
+    <!-- HR preview — появляется после выбора формата -->
+    <div class="hr-preview" id="hr-preview-card">
+      <img id="hr-preview-photo" class="hr-photo" src="" onerror="this.style.display='none';document.getElementById('hr-preview-fallback').style.display='flex'">
+      <div id="hr-preview-fallback" class="hr-photo-fallback" style="display:none"></div>
+      <div class="hr-info">
+        <div class="hr-name" id="hr-preview-name"></div>
+        <div class="hr-role" id="hr-preview-role">Проведёт ваше собеседование <span class="hr-online"></span></div>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:14px">Как тебя зовут?</div>
+    <input class="input-field" id="name-input" type="text" placeholder="Имя и фамилия">
+    <button class="btn-main" id="btn-format" onclick="goToDate()">Выбрать день →</button>
+    <button class="btn-secondary" onclick="showScreen('screen-spec')">← Назад</button>
   </div>
 </div>
 
-<!-- ══ SCREEN 3: TIME ══════════════════════════════════════════════ -->
+<!-- ══ SCREEN 3: ДАТА ════════════════════════════════════════════════ -->
+<div id="screen-date" class="screen">
+  <div class="header">
+    <div class="header-top">
+      <div class="logo">
+        <img src="https://perfect-youth-production-b175.up.railway.app/logo.png" onerror="this.style.display='none'">
+        <div class="logo-text"><div class="brand">BECKER</div><div class="sub">Академия</div></div>
+      </div>
+      <div class="avatar" id="user-avatar-3">—</div>
+    </div>
+    <div class="header-title" id="header-name-greeting">Выбери день</div>
+    <div class="header-sub">шаг 3 из 4 · дата встречи</div>
+  </div>
+  <div class="steps">
+    <div class="step done"></div><div class="step done"></div><div class="step done"></div><div class="step"></div>
+  </div>
+  <div class="content">
+    <!-- Ближайший свободный слот -->
+    <div class="nearest-banner hidden" id="nearest-banner">
+      <div class="nearest-left">
+        <div class="nearest-icon">⚡</div>
+        <div>
+          <div class="nearest-label">Ближайший слот</div>
+          <div class="nearest-val" id="nearest-val">—</div>
+        </div>
+      </div>
+      <button class="nearest-btn" onclick="pickNearest()">Выбрать</button>
+    </div>
+
+    <div class="section-label">Доступные дни</div>
+    <div class="date-grid" id="date-list"></div>
+    <button class="btn-main" id="btn-date" onclick="goToTime()" disabled>Выбрать время →</button>
+    <button class="btn-secondary" onclick="showScreen('screen-format')">← Назад</button>
+  </div>
+</div>
+
+<!-- ══ SCREEN 4: ВРЕМЯ ════════════════════════════════════════════════ -->
 <div id="screen-time" class="screen">
   <div class="header">
     <div class="header-top">
@@ -257,18 +321,48 @@
       </div>
     </div>
     <div class="header-title" id="header-date-label">Выбери время</div>
-    <div class="header-sub">шаг 3 из 4 · выбор времени</div>
+    <div class="header-sub">шаг 4 из 4 · время встречи</div>
   </div>
-  <div class="steps"><div class="step done"></div><div class="step done"></div><div class="step done"></div><div class="step"></div></div>
+  <div class="steps">
+    <div class="step done"></div><div class="step done"></div><div class="step done"></div><div class="step done"></div>
+  </div>
   <div class="content">
     <div class="section-label">Свободные слоты</div>
     <div class="time-grid" id="time-list"></div>
-    <button class="btn-main" id="btn-time" onclick="submitBooking()">Записаться ✓</button>
-    <button class="btn-secondary" onclick="goBack('screen-date')">← Назад</button>
+    <button class="btn-main" id="btn-time" onclick="submitBooking()" disabled>Записаться ✓</button>
+    <button class="btn-secondary" onclick="showScreen('screen-date')">← Назад</button>
   </div>
 </div>
 
-<!-- ══ SCREEN 4: SUCCESS ════════════════════════════════════════════ -->
+<!-- ══ SCREEN: НЕТ СЛОТОВ ═══════════════════════════════════════════ -->
+<div id="screen-noslots" class="screen">
+  <div class="header">
+    <div class="header-top">
+      <div class="logo">
+        <img src="https://perfect-youth-production-b175.up.railway.app/logo.png" onerror="this.style.display='none'">
+        <div class="logo-text"><div class="brand">BECKER</div><div class="sub">Академия</div></div>
+      </div>
+    </div>
+    <div class="header-title">Слоты заняты</div>
+    <div class="header-sub">свяжись с HR напрямую</div>
+  </div>
+  <div class="content">
+    <div class="noslots-card">
+      <div style="font-size:36px;margin-bottom:12px;">📅</div>
+      <div style="font-size:17px;font-weight:700;margin-bottom:8px;color:white">Свободных окошек нет</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.5;" id="noslots-text">Напиши HR напрямую — подберём удобное время</div>
+    </div>
+    <div class="section-label">Контакт HR</div>
+    <div class="card" style="display:flex;align-items:center;gap:12px;" id="noslots-contact">
+      <div style="width:44px;height:44px;background:var(--gold);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">💬</div>
+      <div><div style="font-weight:700;" id="noslots-hr-name">HR BECKER</div><div style="color:var(--text-sub);font-size:13px;" id="noslots-hr-tg">—</div></div>
+    </div>
+    <button class="btn-secondary" onclick="showScreen('screen-format')">← Назад</button>
+    <button class="btn-main" onclick="closeApp()">Понятно</button>
+  </div>
+</div>
+
+<!-- ══ SCREEN: УСПЕХ ════════════════════════════════════════════════ -->
 <div id="screen-success" class="screen">
   <div class="header">
     <div class="header-top">
@@ -280,12 +374,14 @@
     <div class="header-title">Готово!</div>
     <div class="header-sub">запись подтверждена</div>
   </div>
-  <div class="steps"><div class="step done"></div><div class="step done"></div><div class="step done"></div><div class="step done"></div></div>
+  <div class="steps">
+    <div class="step done"></div><div class="step done"></div><div class="step done"></div><div class="step done"></div>
+  </div>
   <div class="content">
     <div class="success-anim">
       <div class="success-circle">✓</div>
       <div class="success-title">Записали!</div>
-      <div class="success-sub">Накануне придёт напоминание</div>
+      <div class="success-sub">Накануне придёт напоминание<br>в этот чат 🔔</div>
     </div>
 
     <div class="section-label">Детали встречи</div>
@@ -313,41 +409,8 @@
   </div>
 </div>
 
-<!-- ══ SCREEN: NO SLOTS ═════════════════════════════════════════════ -->
-<div id="screen-noslots" class="screen">
-  <div class="header">
-    <div class="header-top">
-      <div class="logo">
-        <img src="https://perfect-youth-production-b175.up.railway.app/logo.png" onerror="this.style.display='none'">
-        <div class="logo-text"><div class="brand">BECKER</div><div class="sub">Академия</div></div>
-      </div>
-    </div>
-    <div class="header-title">Нет слотов</div>
-    <div class="header-sub">свяжись напрямую</div>
-  </div>
-  <div class="content">
-    <div class="card-dark" style="text-align:center;padding:24px;">
-      <div style="font-size:36px;margin-bottom:12px;">📅</div>
-      <div style="font-size:17px;font-weight:700;margin-bottom:8px;">Слоты сейчас заняты</div>
-      <div style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.5;" id="noslots-text">Напиши HR напрямую — подберём удобное время</div>
-    </div>
-    <div class="section-label">Контакты HR</div>
-    <div class="card" style="display:flex;align-items:center;gap:12px;" id="noslots-contact">
-      <div style="width:44px;height:44px;background:var(--gold);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">💬</div>
-      <div><div style="font-weight:700;" id="noslots-hr-name">HR BECKER</div><div style="color:var(--text-sub);font-size:13px;" id="noslots-hr-tg">—</div></div>
-    </div>
-    <button class="btn-main" onclick="closeApp()">Понятно</button>
-  </div>
-</div>
-
 <script>
-// ── Splash ───────────────────────────────────────────────────────────
-setTimeout(() => {
-  const s = document.getElementById('splash');
-  if (s) { s.classList.add('hidden'); setTimeout(()=>s.remove(),700); }
-}, 1400);
-
-// ── HR profiles ─────────────────────────────────────────────────────
+// ── HR profiles ───────────────────────────────────────────────────────────────
 const HR_PROFILES = {
   office: {
     id:      859413090,
@@ -356,8 +419,7 @@ const HR_PROFILES = {
     photo:   "./sonya.jpg",
     initial: "С",
     tg:      "@sonya_trof",
-    phone:   "+7 (919) 890-41-15",
-    spec:    "Продажи · Офис"
+    phone:   "+7 (919) 890-41-15"
   },
   field: {
     id:      474244647,
@@ -366,85 +428,102 @@ const HR_PROFILES = {
     photo:   "./yulia.jpg",
     initial: "Ю",
     tg:      "@iamjuulis",
-    phone:   "+7 (919) 132-93-45",
-    spec:    "Продажи · Разъезд"
+    phone:   "+7 (919) 132-93-45"
   }
 };
 
-// ── Telegram WebApp init ─────────────────────────────────────────────
+// ── Telegram WebApp ───────────────────────────────────────────────────────────
 const tg = window.Telegram?.WebApp;
-if (tg) {
-  tg.ready(); tg.expand();
-  const user = tg.initDataUnsafe?.user;
-  if (user) {
-    const initials = (user.first_name?.[0] || '') + (user.last_name?.[0] || '');
-    document.querySelectorAll('[id^="user-avatar"]').forEach(el => el.textContent = initials || '?');
-    const ni = document.getElementById('name-input');
-    if (user.first_name) ni.value = (user.first_name + ' ' + (user.last_name || '')).trim();
-  }
+if (tg) { tg.ready(); tg.expand(); }
+
+const tgUser = tg?.initDataUnsafe?.user;
+const TG_ID       = tgUser?.id       || 0;
+const TG_USERNAME = tgUser?.username || "";
+
+if (tgUser) {
+  const initials = (tgUser.first_name?.[0] || '') + (tgUser.last_name?.[0] || '');
+  document.querySelectorAll('[id^="user-avatar"]').forEach(el => el.textContent = initials || '?');
+  const ni = document.getElementById('name-input');
+  if (tgUser.first_name) ni.value = (tgUser.first_name + ' ' + (tgUser.last_name || '')).trim();
 }
 
-// ── State ────────────────────────────────────────────────────────────
-let selectedFormat = null;   // 'office' | 'field'
-let selectedHR     = null;   // HR_PROFILES[selectedFormat]
+// ── State ─────────────────────────────────────────────────────────────────────
+let selectedSpec   = null;
+let selectedFormat = null;
+let selectedHR     = null;
 let selectedDate   = null;
 let selectedTime   = null;
-let availableSlots = {};     // { "2026-06-27": ["11:00", ...] }
+let availableSlots = {};    // { "2026-06-27": ["11:00", ...] }
+let nearestDate    = null;
+let nearestTime    = null;
 
-// ── Format selection ─────────────────────────────────────────────────
+// ── Splash ────────────────────────────────────────────────────────────────────
+setTimeout(() => {
+  const s = document.getElementById('splash');
+  if (s) { s.classList.add('hidden'); setTimeout(() => s.remove(), 700); }
+  loadSpecsAndRender();
+}, 1600);
+
+// ── Load specs from API ───────────────────────────────────────────────────────
+const SPEC_ICONS = {
+  'Продажи':      { icon: '💼', sub: 'Менеджер по продажам' },
+  'Администратор':{ icon: '🗂️', sub: 'Административная работа' },
+  'Конструктор':  { icon: '📐', sub: 'Проектирование и дизайн' },
+  'Другое':       { icon: '✨', sub: 'Иная специализация' }
+};
+
+async function loadSpecsAndRender() {
+  let specs = ['Продажи', 'Администратор', 'Конструктор', 'Другое'];
+  try {
+    const r = await fetch('/api/specs');
+    if (r.ok) specs = await r.json();
+  } catch(e) {}
+
+  const grid = document.getElementById('spec-grid');
+  grid.innerHTML = '';
+  specs.forEach(s => {
+    const meta = SPEC_ICONS[s] || { icon: '📋', sub: '' };
+    const el = document.createElement('div');
+    el.className = 'spec-card';
+    el.innerHTML = `<div class="spec-icon">${meta.icon}</div><div><div class="spec-name">${s}</div>${meta.sub ? `<div class="spec-sub">${meta.sub}</div>` : ''}</div>`;
+    el.addEventListener('click', () => {
+      document.querySelectorAll('.spec-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedSpec = s;
+      document.getElementById('btn-spec').disabled = false;
+    });
+    grid.appendChild(el);
+  });
+}
+
+// ── Spec → Format ─────────────────────────────────────────────────────────────
+function goToFormat() {
+  if (!selectedSpec) return;
+  showScreen('screen-format');
+}
+
+// ── Format selection ──────────────────────────────────────────────────────────
 function selectFormat(fmt) {
   selectedFormat = fmt;
   selectedHR = HR_PROFILES[fmt];
   document.querySelectorAll('.format-card').forEach(c => c.classList.remove('selected'));
   document.getElementById(fmt === 'office' ? 'fmt-office' : 'fmt-field').classList.add('selected');
 
-  // Show HR preview
   const card = document.getElementById('hr-preview-card');
   card.classList.add('visible');
-  const img = document.getElementById('hr-preview-photo');
+
+  const img      = document.getElementById('hr-preview-photo');
   const fallback = document.getElementById('hr-preview-fallback');
   img.src = selectedHR.photo;
   img.style.display = '';
   fallback.style.display = 'none';
   fallback.textContent = selectedHR.initial;
   document.getElementById('hr-preview-name').textContent = selectedHR.name;
+  document.getElementById('hr-preview-role').innerHTML =
+    selectedHR.role + ' <span class="hr-online"></span>';
 }
 
-// ── Load slots for selected HR ───────────────────────────────────────
-async function loadSlots() {
-  if (!selectedHR) return;
-  try {
-    const resp = await fetch(`/api/my-slots?hr_id=${selectedHR.id}`);
-    const raw  = await resp.json();
-    // raw = { "2026-06-27": ["11:00", ...], ... }
-    // Filter out already booked times is done server-side (serve_my_slots_get returns all slots, not free ones)
-    // Use /slots endpoint which returns free slots per HR
-    const resp2 = await fetch('/slots');
-    const allSlots = await resp2.json();
-    // allSlots = { "2026-06-27": [{time, hr_id}, ...] }
-    availableSlots = {};
-    for (const [day, entries] of Object.entries(allSlots)) {
-      const hrTimes = entries.filter(e => e.hr_id === selectedHR.id).map(e => e.time);
-      if (hrTimes.length) availableSlots[day] = hrTimes;
-    }
-  } catch(e) {
-    // fallback demo
-    const today = new Date();
-    for (let i = 1; i <= 7; i++) {
-      const d = new Date(today); d.setDate(today.getDate() + i);
-      const key = d.toISOString().split('T')[0];
-      availableSlots[key] = ["11:00","12:00","13:00","14:00","15:00","16:00","17:00"];
-    }
-  }
-}
-
-// ── Name → Date screen ───────────────────────────────────────────────
-nameInput_keydown();
-function nameInput_keydown() {
-  const ni = document.getElementById('name-input');
-  ni.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); goToDate(); } });
-}
-
+// ── Format → Date ─────────────────────────────────────────────────────────────
 async function goToDate() {
   if (!selectedFormat) {
     document.querySelector('.format-grid').style.outline = '2px solid var(--gold)';
@@ -454,31 +533,73 @@ async function goToDate() {
   const name = document.getElementById('name-input').value.trim();
   if (name.split(' ').filter(w => w.length > 0).length < 2) {
     const ni = document.getElementById('name-input');
-    ni.style.borderColor = 'var(--gold)'; ni.focus();
-    return;
+    ni.style.borderColor = 'var(--gold)'; ni.focus(); return;
   }
 
+  document.getElementById('btn-format').textContent = 'Загружаю...';
+  document.getElementById('btn-format').disabled = true;
   await loadSlots();
+  document.getElementById('btn-format').textContent = 'Выбрать день →';
+  document.getElementById('btn-format').disabled = false;
 
-  document.getElementById('header-name-greeting').textContent = name.split(' ')[0] + ', выбери день';
-  document.getElementById('user-avatar-2').textContent =
-    (name[0] || '') + (name.split(' ')[1]?.[0] || '');
+  // Update greeting
+  const firstName = name.split(' ')[0];
+  document.getElementById('header-name-greeting').textContent = firstName + ', выбери день';
+  const initials2 = (name[0] || '') + (name.split(' ')[1]?.[0] || '');
+  document.querySelectorAll('[id^="user-avatar"]').forEach(el => el.textContent = initials2);
+
+  renderDateScreen();
+}
+
+// ── Load slots ────────────────────────────────────────────────────────────────
+async function loadSlots() {
+  availableSlots = {};
+  nearestDate = null; nearestTime = null;
+  try {
+    const r   = await fetch('/slots');
+    const all = await r.json();
+    // all = { "2026-06-27": [{time, hr_id}, ...] }
+    for (const [day, entries] of Object.entries(all)) {
+      const times = entries
+        .filter(e => e.hr_id === selectedHR.id)
+        .map(e => e.time);
+      if (times.length) {
+        availableSlots[day] = times;
+        if (!nearestDate) { nearestDate = day; nearestTime = times[0]; }
+      }
+    }
+  } catch(e) {
+    // fallback: пустые слоты, покажем «нет слотов»
+  }
+}
+
+// ── Render date screen ────────────────────────────────────────────────────────
+function renderDateScreen() {
+  const banner = document.getElementById('nearest-banner');
+  if (nearestDate && nearestTime) {
+    const nd = new Date(nearestDate + 'T12:00:00');
+    document.getElementById('nearest-val').textContent =
+      formatDate(nd) + ' · ' + nearestTime;
+    banner.classList.remove('hidden');
+  } else {
+    banner.classList.add('hidden');
+  }
 
   const container = document.getElementById('date-list');
   container.innerHTML = '';
   const days   = ['вс','пн','вт','ср','чт','пт','сб'];
   const months = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
-  const today  = new Date();
   let hasSlots = false;
 
-  for (let i = 1; i <= 7; i++) {
-    const d = new Date(today); d.setDate(today.getDate() + i);
-    const key = d.toISOString().split('T')[0];
+  const sortedDays = Object.keys(availableSlots).sort();
+  for (const key of sortedDays) {
     const slots = availableSlots[key];
-    if (!slots || slots.length === 0) continue;
+    if (!slots || !slots.length) continue;
     hasSlots = true;
+    const d = new Date(key + 'T12:00:00');
     const item = document.createElement('div');
-    item.className = 'date-item'; item.dataset.date = key;
+    item.className = 'date-item';
+    item.dataset.date = key;
     item.innerHTML = `
       <div class="date-left">
         <div class="date-icon">
@@ -498,13 +619,35 @@ async function goToDate() {
 
   if (!hasSlots) {
     document.getElementById('noslots-text').textContent =
-      `Напиши ${selectedHR.name} напрямую — подберём удобное время`;
+      'Напиши ' + selectedHR.name + ' напрямую — подберём удобное время';
     document.getElementById('noslots-hr-name').textContent = selectedHR.name;
     document.getElementById('noslots-hr-tg').textContent = selectedHR.tg;
-    showScreen('screen-noslots'); return;
+    showScreen('screen-noslots');
+    return;
   }
+
   document.getElementById('btn-date').disabled = true;
   showScreen('screen-date');
+}
+
+// ── Nearest slot quick pick ───────────────────────────────────────────────────
+function pickNearest() {
+  if (!nearestDate || !nearestTime) return;
+  // Select the date item
+  const item = document.querySelector(`.date-item[data-date="${nearestDate}"]`);
+  if (item) {
+    document.querySelectorAll('.date-item').forEach(i => i.classList.remove('selected'));
+    item.classList.add('selected');
+    selectedDate = nearestDate;
+    document.getElementById('btn-date').disabled = false;
+  }
+  goToTime();
+  // Pre-select time
+  setTimeout(() => {
+    const tItem = Array.from(document.querySelectorAll('.time-item'))
+      .find(el => el.textContent === nearestTime);
+    if (tItem) selectTime(nearestTime, tItem);
+  }, 100);
 }
 
 function selectDate(dateKey, el) {
@@ -523,7 +666,8 @@ function goToTime() {
   container.innerHTML = '';
   slots.forEach(t => {
     const item = document.createElement('div');
-    item.className = 'time-item'; item.textContent = t;
+    item.className = 'time-item';
+    item.textContent = t;
     item.addEventListener('click', () => selectTime(t, item));
     container.appendChild(item);
   });
@@ -534,46 +678,78 @@ function goToTime() {
 
 function selectTime(time, el) {
   document.querySelectorAll('.time-item').forEach(i => i.classList.remove('selected'));
-  el.classList.add('selected'); selectedTime = time;
+  el.classList.add('selected');
+  selectedTime = time;
   document.getElementById('btn-time').disabled = false;
 }
 
+// ── Submit booking ────────────────────────────────────────────────────────────
 async function submitBooking() {
   if (!selectedTime) return;
-  const name = document.getElementById('name-input').value.trim();
-  const d = new Date(selectedDate + 'T12:00:00');
-  document.getElementById('confirm-datetime').textContent = formatDate(d) + ' · ' + selectedTime;
 
-  // Set HR contact on success screen
-  const hrPhoto = document.getElementById('confirm-hr-photo');
-  const hrFallback = document.getElementById('confirm-hr-fallback');
-  hrPhoto.src = selectedHR.photo;
-  hrFallback.textContent = selectedHR.initial;
-  document.getElementById('confirm-hr-name').textContent = selectedHR.name;
-  const contact = [selectedHR.tg, selectedHR.phone].filter(Boolean).join('  ·  ');
-  document.getElementById('confirm-hr-contact').textContent = contact;
+  const btnTime = document.getElementById('btn-time');
+  btnTime.textContent = 'Записываю...';
+  btnTime.disabled = true;
+
+  const name = document.getElementById('name-input').value.trim();
+  const spec = selectedSpec || 'Продажи';
 
   const payload = {
-    name, spec: selectedHR.spec,
-    date: selectedDate, time: selectedTime,
-    hr_id: selectedHR.id,
-    init_data: tg?.initData || ''
+    name,
+    spec,
+    date:     selectedDate,
+    time:     selectedTime,
+    hr_id:    selectedHR.id,
+    tg_id:    TG_ID,
+    username: TG_USERNAME,
+    phone:    ''
   };
 
+  let ok = false;
   try {
-    await fetch('/book', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
-  } catch(e) {}
+    const r = await fetch('/book', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const res = await r.json();
+    if (res.ok) {
+      ok = true;
+    } else if (res.error === 'slot_taken') {
+      // Slot was taken by someone else — reload slots
+      btnTime.textContent = 'Записаться ✓';
+      btnTime.disabled = false;
+      if (tg) tg.showAlert('Этот слот только что заняли. Выбери другое время.');
+      await loadSlots();
+      renderDateScreen();
+      return;
+    }
+  } catch(e) {
+    // network error — still show success (data may have saved)
+    ok = true;
+  }
 
-  if (tg) tg.sendData(JSON.stringify(payload));
-  showScreen('screen-success');
+  if (ok) {
+    const d = new Date(selectedDate + 'T12:00:00');
+    document.getElementById('confirm-datetime').textContent = formatDate(d) + ' · ' + selectedTime;
+
+    const hrPhoto = document.getElementById('confirm-hr-photo');
+    const hrFallback = document.getElementById('confirm-hr-fallback');
+    hrPhoto.src = selectedHR.photo;
+    hrFallback.textContent = selectedHR.initial;
+    document.getElementById('confirm-hr-name').textContent = selectedHR.name;
+    const contact = [selectedHR.tg, selectedHR.phone].filter(Boolean).join('  ·  ');
+    document.getElementById('confirm-hr-contact').textContent = contact;
+
+    showScreen('screen-success');
+  } else {
+    btnTime.textContent = 'Записаться ✓';
+    btnTime.disabled = false;
+    if (tg) tg.showAlert('Не удалось записать. Попробуй ещё раз.');
+  }
 }
 
 function closeApp() { if (tg) tg.close(); }
-
-function goBack(screenId) {
-  selectedDate = null; selectedTime = null;
-  showScreen(screenId);
-}
 
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -581,7 +757,7 @@ function showScreen(id) {
   window.scrollTo(0, 0);
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function formatDate(d) {
   const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
   const days   = ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];

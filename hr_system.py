@@ -13,6 +13,9 @@ PORT         = int(os.environ.get("PORT", 8080))
 WEBAPP_DIR   = os.path.join(os.path.dirname(os.path.abspath(__file__)), "webapp")
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 
+# Глобальная ссылка на бот (устанавливается после инициализации)
+_bot = None
+
 # ── Настройки ────────────────────────────────────────────────────────────────
 HR_IDS = {
     859413090: "Софья",    # @sonya_trof
@@ -1546,12 +1549,108 @@ async def serve_notifications_get(request):
     return web.Response(text=json.dumps(notifs[:50], ensure_ascii=False),
                         content_type="application/json", headers=CORS)
 
+async def serve_book(request):
+    """Кандидат бронирует слот через мини-приложение (HTTP API)."""
+    global _bot
+    try:
+        body      = await request.json()
+        name      = body.get("name", "").strip()
+        spec      = body.get("spec", "—")
+        day_str   = body.get("date", "")
+        time_str  = body.get("time", "")
+        hr_id_raw = body.get("hr_id")
+        tg_id     = int(body.get("tg_id", 0) or 0)
+        username  = (body.get("username") or "").strip()
+        phone     = (body.get("phone") or "").strip()
+
+        if not (name and day_str and time_str):
+            return web.Response(text='{"ok":false,"error":"missing_fields"}',
+                                content_type="application/json", headers=CORS)
+
+        booked_hr = int(hr_id_raw) if hr_id_raw else HR_ID
+        is_shared = booked_hr not in HR_IDS   # на всякий случай
+
+        data = load()
+
+        # Проверить что слот ещё свободен
+        free = get_free_slots(data, day_str, booked_hr)
+        if time_str not in free:
+            return web.Response(text='{"ok":false,"error":"slot_taken"}',
+                                content_type="application/json", headers=CORS)
+
+        # Сохранить кандидата
+        key = str(tg_id) if tg_id else f"web_{name.replace(' ','_')}_{day_str}_{time_str}"
+        data["candidates"][key] = {
+            "name":           name,
+            "spec":           spec,
+            "telegram_id":    tg_id,
+            "username":       username,
+            "phone":          phone,
+            "interview_date": day_str,
+            "interview_time": time_str,
+            "hr_id":          booked_hr,
+            "shared":         is_shared,
+            "status":         "scheduled",
+            "created_at":     datetime.now().isoformat()
+        }
+
+        # Уведомление HR в списке
+        notifs = data.setdefault("notifications", {})
+        notifs.setdefault(str(booked_hr), []).insert(0, {
+            "type": "new", "name": name, "spec": spec,
+            "date": day_str, "time": time_str,
+            "ts": datetime.now().isoformat(), "read": False
+        })
+        save(data)
+
+        # Telegram-уведомление HR
+        if _bot:
+            try:
+                d_fmt = datetime.strptime(day_str, "%Y-%m-%d").strftime("%-d %B")
+                hr_text = (
+                    f"🆕 <b>Новая запись!</b>\n"
+                    f"👤 {name}\n"
+                    f"💼 {spec}\n"
+                    f"📅 {d_fmt} в {time_str}\n"
+                )
+                if username:
+                    hr_text += f"💬 @{username}\n"
+                if phone:
+                    hr_text += f"📱 {phone}\n"
+                await _bot.send_message(chat_id=booked_hr, text=hr_text, parse_mode="HTML")
+            except Exception as e:
+                print(f"[BOOK] HR notify error: {e}")
+
+            # Telegram-подтверждение кандидату
+            if tg_id:
+                try:
+                    first  = name.split()[0]
+                    d_fmt2 = datetime.strptime(day_str, "%Y-%m-%d").strftime("%-d %B")
+                    hr_name = HR_IDS.get(booked_hr, "HR BECKER")
+                    cand_text = (
+                        f"✅ <b>Записали, {first}!</b>\n\n"
+                        f"📅 <b>{d_fmt2} в {time_str}</b>\n"
+                        f"📍 {COMPANY_ADDR}\n"
+                        f"👤 Ваш HR: {hr_name}\n\n"
+                        f"Накануне я пришлю напоминание 🔔"
+                    )
+                    await _bot.send_message(chat_id=tg_id, text=cand_text, parse_mode="HTML")
+                except Exception as e:
+                    print(f"[BOOK] candidate confirm error: {e}")
+
+        return web.Response(text='{"ok":true}', content_type="application/json", headers=CORS)
+    except Exception as e:
+        print(f"[BOOK] error: {e}")
+        return web.Response(text=json.dumps({"ok": False, "error": str(e)}),
+                            content_type="application/json", headers=CORS)
+
+
 async def serve_specs_get(request):
     """Список специализаций (базовые + добавленные HR)."""
-    data = load()
-    base = ["Продажи · Офис", "Продажи · Разъезд", "Администратор", "Конструктор"]
-    custom = data.get("custom_specs", [])
-    return web.Response(text=json.dumps(base + custom, ensure_ascii=False),
+    data   = load()
+    base   = ["Продажи", "Администратор", "Конструктор"]
+    custom = [s for s in data.get("custom_specs", []) if s not in base and s != "Другое"]
+    return web.Response(text=json.dumps(base + custom + ["Другое"], ensure_ascii=False),
                         content_type="application/json", headers=CORS)
 
 async def serve_specs_post(request):
@@ -1633,6 +1732,7 @@ async def run_webserver():
     app_web.router.add_get("/api/candidates",       serve_candidates_api)
     app_web.router.add_get("/api/my-slots",         serve_my_slots_get)
     app_web.router.add_post("/api/my-slots",        serve_my_slots_post)
+    app_web.router.add_post("/book",                serve_book)
     app_web.router.add_post("/api/book-manual",     serve_book_manual)
     app_web.router.add_get("/api/notifications",    serve_notifications_get)
     app_web.router.add_post("/api/notifications/read", serve_notifications_read)
@@ -1714,6 +1814,8 @@ if __name__ == "__main__":
 
         app = build_app()
         await app.initialize()
+        global _bot
+        _bot = app.bot   # доступен для serve_book и прочих web-хендлеров
         await app.start()
         await app.updater.start_polling(drop_pending_updates=True)
         print("🤖 Бот запущен, жду сообщений...")
