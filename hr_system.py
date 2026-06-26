@@ -1496,6 +1496,32 @@ async def serve_notifications_get(request):
     return web.Response(text=json.dumps(notifs[:50], ensure_ascii=False),
                         content_type="application/json", headers=CORS)
 
+async def serve_specs_get(request):
+    """Список специализаций (базовые + добавленные HR)."""
+    data = load()
+    base = ["Продажи · Офис", "Продажи · Разъезд", "Администратор", "Конструктор"]
+    custom = data.get("custom_specs", [])
+    return web.Response(text=json.dumps(base + custom, ensure_ascii=False),
+                        content_type="application/json", headers=CORS)
+
+async def serve_specs_post(request):
+    """HR добавляет новую специализацию."""
+    try:
+        body = await request.json()
+        spec = body.get("spec", "").strip()
+        if not spec:
+            return web.Response(text='{"ok":false,"error":"empty"}',
+                                content_type="application/json", headers=CORS)
+        data = load()
+        custom = data.setdefault("custom_specs", [])
+        if spec not in custom:
+            custom.append(spec)
+            save(data)
+        return web.Response(text='{"ok":true}', content_type="application/json", headers=CORS)
+    except Exception as e:
+        return web.Response(text=json.dumps({"ok": False, "error": str(e)}),
+                            content_type="application/json", headers=CORS)
+
 async def serve_notifications_read(request):
     try:
         body  = await request.json()
@@ -1528,6 +1554,8 @@ async def run_webserver():
     app_web.router.add_get("/api/notifications",    serve_notifications_get)
     app_web.router.add_post("/api/notifications/read", serve_notifications_read)
     app_web.router.add_post("/api/update-status",      serve_update_status)
+    app_web.router.add_get("/api/specs",               serve_specs_get)
+    app_web.router.add_post("/api/specs",              serve_specs_post)
     app_web.router.add_get("/{filename}",           serve_static)
     runner = web.AppRunner(app_web)
     await runner.setup()

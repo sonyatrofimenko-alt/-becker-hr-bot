@@ -239,7 +239,15 @@
 
 <!-- TODAY -->
 <div class="section active" id="sec-today">
-  <div class="sec-head"><div class="sec-line"></div><div class="sec-text">Сегодня</div></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 14px 8px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="sec-line"></div><div class="sec-text">Сегодня</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="openManualEntry()" style="background:rgba(251,193,72,0.18);border:1.5px solid rgba(251,193,72,0.4);border-radius:10px;padding:7px 12px;font-size:11px;font-weight:800;color:var(--dark);cursor:pointer;font-family:inherit;transition:transform 0.1s" onmousedown="this.style.transform='scale(0.93)'" onmouseup="this.style.transform='scale(1)'">+ Запись</button>
+      <button onclick="nav('slots',null)" style="background:rgba(26,22,0,0.07);border:1.5px solid rgba(26,22,0,0.1);border-radius:10px;padding:7px 12px;font-size:11px;font-weight:800;color:var(--dark);cursor:pointer;font-family:inherit;transition:transform 0.1s" onmousedown="this.style.transform='scale(0.93)'" onmouseup="this.style.transform='scale(1)'">📅 Расписание</button>
+    </div>
+  </div>
   <div style="padding:0 14px">
     <div id="reminder-block" style="display:none;background:rgba(251,193,72,0.12);border:1.5px solid rgba(251,193,72,0.4);border-radius:14px;padding:14px;margin-bottom:12px">
       <div style="font-size:12px;font-weight:800;color:var(--dark);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px">📝 Нужно написать</div>
@@ -303,11 +311,13 @@
     </div>
     <input id="m-name"  class="modal-input" placeholder="Имя и фамилия *">
     <input id="m-phone" class="modal-input" placeholder="Телефон">
-    <select id="m-spec" class="modal-input" style="-webkit-appearance:none">
-      <option value="Продажи · Офис">Продажи · Офис</option>
-      <option value="Продажи · Разъезд">Продажи · Разъезд</option>
-      <option value="Другое">Другое</option>
+    <select id="m-spec" class="modal-input" style="-webkit-appearance:none" onchange="onSpecChange(this)">
+      <option value="">Загружаю...</option>
     </select>
+    <div id="new-spec-row" style="display:none;display:flex;gap:8px;margin-top:-4px;margin-bottom:10px">
+      <input id="m-newspec" class="modal-input" placeholder="Название специализации" style="margin-bottom:0;flex:1">
+      <button onclick="addNewSpec()" style="padding:13px 14px;background:var(--gold);border:none;border-radius:12px;font-weight:800;cursor:pointer;font-size:13px;font-family:inherit;white-space:nowrap;transition:transform 0.1s" onmousedown="this.style.transform='scale(0.93)'" onmouseup="this.style.transform='scale(1)'">+ Добавить</button>
+    </div>
     <input id="m-date" type="date" class="modal-input">
     <select id="m-time" class="modal-input" style="-webkit-appearance:none">
       <option value="">Выбери время</option>
@@ -326,13 +336,33 @@
 <div class="section" id="sec-cands">
   <div class="sec-head"><div class="sec-line"></div><div class="sec-text">Кандидаты</div></div>
   <div style="padding:0 14px">
-    <div class="filter-row">
-      <div class="chip on"  onclick="filterCands(this,'all')">Все</div>
-      <div class="chip"     onclick="filterCands(this,'scheduled')">📅 Записаны</div>
-      <div class="chip"     onclick="filterCands(this,'approved_pending')">✅ Приняты</div>
-      <div class="chip"     onclick="filterCands(this,'no_show')">👻 Не пришли</div>
-      <div class="chip"     onclick="filterCands(this,'rejected_pending')">❌ Отказы</div>
+
+    <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Период</div>
+    <div class="filter-row" id="week-filters">
+      <div class="chip on"  onclick="setWeekFilter(this,'all')">Все</div>
+      <div class="chip"     onclick="setWeekFilter(this,'this_week')">Эта неделя</div>
+      <div class="chip"     onclick="setWeekFilter(this,'next_week')">Следующая</div>
+      <div class="chip"     onclick="setWeekFilter(this,'past')">Прошедшие</div>
     </div>
+
+    <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin:10px 0 6px">Специализация</div>
+    <div class="filter-row" id="spec-filters">
+      <div class="chip on"  onclick="setSpecFilter(this,'all')">Все</div>
+      <div class="chip"     onclick="setSpecFilter(this,'sales')">💼 Продажи</div>
+      <div class="chip"     onclick="setSpecFilter(this,'admin')">🗂 Администраторы</div>
+      <div class="chip"     onclick="setSpecFilter(this,'design')">📐 Конструкторы</div>
+      <div class="chip"     onclick="setSpecFilter(this,'other')">✦ Другое</div>
+    </div>
+
+    <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin:10px 0 6px">Статус</div>
+    <div class="filter-row" id="status-filters">
+      <div class="chip on"  onclick="setStatusFilter(this,'all')">Все</div>
+      <div class="chip"     onclick="setStatusFilter(this,'scheduled')">📅 Записаны</div>
+      <div class="chip"     onclick="setStatusFilter(this,'approved_pending')">✅ Приняты</div>
+      <div class="chip"     onclick="setStatusFilter(this,'no_show')">👻 Не пришли</div>
+      <div class="chip"     onclick="setStatusFilter(this,'rejected_pending')">❌ Отказы</div>
+    </div>
+
     <div id="cands-list"><div class="loading">⏳</div></div>
   </div>
 </div>
@@ -349,9 +379,6 @@
 <div class="bot-nav">
   <div class="nav-btn on" onclick="nav('today',this)">
     <div class="ico-wrap">📋</div>Сегодня
-  </div>
-  <div class="nav-btn" onclick="nav('slots',this)">
-    <div class="ico-wrap">📅</div>Слоты
   </div>
   <div class="nav-btn" onclick="nav('cands',this)">
     <div class="ico-wrap">👥</div>Кандидаты
@@ -422,7 +449,7 @@ function nav(name, el) {
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
   document.getElementById('sec-'+name).classList.add('active');
-  el.classList.add('on');
+  if (el) el.classList.add('on');
 }
 
 function fmtDate(s) {
@@ -607,26 +634,110 @@ async function saveSlots() {
   } catch(e){tg.showAlert('Ошибка соединения');}
 }
 
-function filterCands(el,f) { document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on')); el.classList.add('on'); renderCandidates(f); }
-function renderCandidates(filter) {
-  let list=[...candidates].sort((a,b)=>(b.interview_date||'').localeCompare(a.interview_date||'')||(b.interview_time||'').localeCompare(a.interview_time||''));
-  if (filter!=='all') list=list.filter(c=>c.status===filter);
-  const el=document.getElementById('cands-list');
-  if (!list.length){el.innerHTML=`<div class="empty"><div class="e">🔍</div>Кандидатов нет</div>`;return;}
-  el.innerHTML=list.map(c=>{
-    const u=c.username?`@${c.username}`:`ID:${c.telegram_id}`;
-    const dl=c.interview_date?fmtDate(c.interview_date):'—';
-    return `<div class="card ${cardBorder(c.status)}">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-        <div><div class="cand-name">${c.name}</div>
-        <div class="cand-meta">${c.spec||'—'} · ${u}</div>
-        <div class="cand-meta" style="margin-top:3px">${dl} · ${c.interview_time||'—'}</div>
-        ${badge(c.status)}</div>
-        <button onclick="openCandModal(JSON.parse(decodeURIComponent('${encodeURIComponent(JSON.stringify(c))}')))" style="background:rgba(251,193,72,0.15);border:1.5px solid rgba(251,193,72,0.4);border-radius:10px;padding:8px 11px;font-size:12px;font-weight:700;color:var(--dark);cursor:pointer;white-space:nowrap;font-family:inherit;transition:transform 0.1s;flex-shrink:0" onmousedown="this.style.transform='scale(0.93)'" onmouseup="this.style.transform='scale(1)'">✏️</button>
-      </div>
-    </div>`;
-  }).join('');
+// ── Candidate filter state ───────────────────────────────────────────
+let _fWeek   = 'all';
+let _fSpec   = 'all';
+let _fStatus = 'all';
+
+function getWeekRange(offset=0) {
+  const now = new Date(TODAY+'T00:00:00');
+  const day = now.getDay(); // 0=sun
+  const mon = new Date(now); mon.setDate(now.getDate() - (day===0?6:day-1) + offset*7);
+  const sun = new Date(mon); sun.setDate(mon.getDate()+6);
+  return [mon.toISOString().split('T')[0], sun.toISOString().split('T')[0]];
 }
+
+function specCategory(spec) {
+  const s = (spec||'').toLowerCase();
+  if (s.includes('продаж') || s.includes('офис') || s.includes('разъезд') || s.includes('менеджер')) return 'sales';
+  if (s.includes('администр')) return 'admin';
+  if (s.includes('констр') || s.includes('дизайн') || s.includes('проект')) return 'design';
+  return 'other';
+}
+
+const SPEC_LABELS = {
+  sales:  '💼 Менеджеры по продажам',
+  admin:  '🗂 Администраторы',
+  design: '📐 Конструкторы',
+  other:  '✦ Другое',
+};
+
+function setWeekFilter(el,v) {
+  document.querySelectorAll('#week-filters .chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on'); _fWeek=v; renderCandidatesFull();
+}
+function setSpecFilter(el,v) {
+  document.querySelectorAll('#spec-filters .chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on'); _fSpec=v; renderCandidatesFull();
+}
+function setStatusFilter(el,v) {
+  document.querySelectorAll('#status-filters .chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on'); _fStatus=v; renderCandidatesFull();
+}
+
+// legacy alias for old calls
+function filterCands(el,f) { setStatusFilter(el,f); }
+
+function renderCandidatesFull() {
+  let list = [...candidates];
+
+  // Week filter
+  if (_fWeek !== 'all') {
+    if (_fWeek === 'past') {
+      list = list.filter(c => c.interview_date && c.interview_date < TODAY);
+    } else {
+      const offset = _fWeek === 'next_week' ? 1 : 0;
+      const [wMon, wSun] = getWeekRange(offset);
+      list = list.filter(c => c.interview_date >= wMon && c.interview_date <= wSun);
+    }
+  }
+  // Spec filter
+  if (_fSpec !== 'all') list = list.filter(c => specCategory(c.spec) === _fSpec);
+  // Status filter
+  if (_fStatus !== 'all') list = list.filter(c => c.status === _fStatus);
+
+  list.sort((a,b)=>(b.interview_date||'').localeCompare(a.interview_date||'')||(b.interview_time||'').localeCompare(a.interview_time||''));
+
+  const el = document.getElementById('cands-list');
+  if (!list.length) { el.innerHTML=`<div class="empty"><div class="e">🔍</div>Кандидатов нет</div>`; return; }
+
+  // Group by spec category
+  const groups = {};
+  list.forEach(c => {
+    const cat = specCategory(c.spec);
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(c);
+  });
+
+  const catOrder = ['sales','admin','design','other'];
+  let html = '';
+  for (const cat of catOrder) {
+    if (!groups[cat]) continue;
+    if (_fSpec === 'all') {
+      html += `<div style="display:flex;align-items:center;gap:10px;margin:14px 0 8px">
+        <div class="sec-line"></div>
+        <div style="font-size:10px;font-weight:800;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase">${SPEC_LABELS[cat]}</div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted);margin-left:auto">${groups[cat].length}</div>
+      </div>`;
+    }
+    html += groups[cat].map(c => {
+      const u = c.username ? `@${c.username}` : `ID:${c.telegram_id}`;
+      const dl = c.interview_date ? fmtDate(c.interview_date) : '—';
+      return `<div class="card ${cardBorder(c.status)}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div><div class="cand-name">${c.name}</div>
+          <div class="cand-meta">${c.spec||'—'} · ${u}</div>
+          <div class="cand-meta" style="margin-top:3px">${dl} · ${c.interview_time||'—'}</div>
+          ${badge(c.status)}</div>
+          <button onclick="openCandModal(JSON.parse(decodeURIComponent('${encodeURIComponent(JSON.stringify(c))}')))" style="background:rgba(251,193,72,0.15);border:1.5px solid rgba(251,193,72,0.4);border-radius:10px;padding:8px 11px;font-size:12px;font-weight:700;color:var(--dark);cursor:pointer;white-space:nowrap;font-family:inherit;transition:transform 0.1s;flex-shrink:0" onmousedown="this.style.transform='scale(0.93)'" onmouseup="this.style.transform='scale(1)'">✏️</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  el.innerHTML = html;
+}
+
+function renderCandidates(filter) { renderCandidatesFull(); }
 
 function renderStats() {
   const total=candidates.length,
@@ -717,12 +828,47 @@ async function toggleNotifs() {
 }
 function closeNotifs(e) { if (!e||e.target===document.getElementById('notif-panel')) document.getElementById('notif-panel').style.display='none'; }
 
+let _specs = ["Продажи · Офис","Продажи · Разъезд","Администратор","Конструктор"];
+
+async function loadSpecs() {
+  try {
+    const r = await fetch('/api/specs');
+    _specs = await r.json();
+  } catch(e) {}
+  const sel = document.getElementById('m-spec');
+  sel.innerHTML = _specs.map(s=>`<option value="${s}">${s}</option>`).join('') +
+    `<option value="__new__">+ Добавить специализацию...</option>`;
+}
+
+function onSpecChange(sel) {
+  const row = document.getElementById('new-spec-row');
+  row.style.display = sel.value === '__new__' ? 'flex' : 'none';
+}
+
+async function addNewSpec() {
+  const val = document.getElementById('m-newspec').value.trim();
+  if (!val) return;
+  try {
+    await fetch('/api/specs', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({spec:val})});
+    _specs.push(val);
+    const sel = document.getElementById('m-spec');
+    const opt = document.createElement('option');
+    opt.value = val; opt.textContent = val;
+    sel.insertBefore(opt, sel.lastElementChild);
+    sel.value = val;
+    document.getElementById('new-spec-row').style.display = 'none';
+    document.getElementById('m-newspec').value = '';
+  } catch(e) { tg.showAlert('Ошибка сохранения'); }
+}
+
 function openManualEntry() {
   const def=new Date(); def.setDate(def.getDate()+1);
   document.getElementById('m-date').value=def.toISOString().split('T')[0];
   document.getElementById('m-name').value='';
   document.getElementById('m-phone').value='';
   document.getElementById('m-time').value='';
+  document.getElementById('new-spec-row').style.display='none';
+  loadSpecs();
   document.getElementById('manual-modal').style.display='flex';
 }
 function closeManual(e) { if (!e||e.target===document.getElementById('manual-modal')) document.getElementById('manual-modal').style.display='none'; }
