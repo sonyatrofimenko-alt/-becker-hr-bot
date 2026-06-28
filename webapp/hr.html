@@ -161,14 +161,48 @@ body::before{content:'BECKER';position:fixed;bottom:50px;left:50%;transform:tran
 .anim-bar{height:100%;width:0;border-radius:3px;transition:width .8s var(--ease)}
 
 /* BOTTOM NAV */
-.bot-nav{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:20;width:calc(100% - 40px);max-width:360px}
-.bot-nav-inner{background:rgba(255,255,255,.6);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-radius:26px;border:1px solid rgba(255,255,255,.65);display:flex;padding:8px;box-shadow:0 8px 32px rgba(0,0,0,.12)}
-[data-theme="dark"] .bot-nav-inner{background:rgba(30,25,0,.75);border-color:rgba(245,166,35,.12)}
-.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:8px 4px 6px;color:var(--mid);font-size:9px;font-weight:700;letter-spacing:.4px;border-radius:18px;transition:color .18s,transform .12s}
-.nav-btn:active{transform:scale(.88)}
+.bot-nav{
+  position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
+  z-index:20;width:calc(100% - 56px);max-width:300px;
+}
+.bot-nav-inner{
+  background:rgba(255,255,255,0.78);
+  backdrop-filter:blur(48px) saturate(200%);
+  -webkit-backdrop-filter:blur(48px) saturate(200%);
+  border-radius:100px;
+  border:1px solid rgba(255,255,255,0.9);
+  display:flex;padding:5px;
+  box-shadow:0 16px 48px rgba(0,0,0,0.12),0 2px 8px rgba(0,0,0,0.05),
+             inset 0 1px 0 rgba(255,255,255,0.95);
+}
+[data-theme="dark"] .bot-nav-inner{
+  background:rgba(16,12,0,0.88);
+  border-color:rgba(245,166,35,0.14);
+  box-shadow:0 16px 48px rgba(0,0,0,0.55),inset 0 1px 0 rgba(245,166,35,0.07);
+}
+.nav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+  cursor:pointer;padding:8px 4px 7px;
+  color:var(--light);font-size:9px;font-weight:700;letter-spacing:.3px;
+  border-radius:80px;transition:color .2s,transform .12s;
+}
+.nav-btn:active{transform:scale(.86)}
 .nav-btn.on{color:var(--dark)}
-.nav-ico{width:36px;height:36px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:19px;transition:background .2s,transform .2s}
-.nav-btn.on .nav-ico{background:var(--amber);transform:scale(1.08)}
+[data-theme="dark"] .nav-btn.on{color:var(--amber)}
+.nav-ico{
+  width:40px;height:40px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;position:relative;
+  transition:background .22s var(--spring),transform .28s var(--spring),box-shadow .22s;
+}
+.nav-btn.on .nav-ico{
+  background:var(--amber);
+  transform:scale(1.12) translateY(-2px);
+  box-shadow:0 6px 20px rgba(245,166,35,0.38);
+}
+[data-theme="dark"] .nav-btn.on .nav-ico{
+  box-shadow:0 6px 24px rgba(245,166,35,0.52);
+}
 
 /* MODALS */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:flex-end}
@@ -373,9 +407,9 @@ body::before{content:'BECKER';position:fixed;bottom:50px;left:50%;transform:tran
 <!-- BOTTOM NAV -->
 <div class="bot-nav">
   <div class="bot-nav-inner">
-    <div class="nav-btn on" onclick="navTo('today',this)"><div class="nav-ico">📋</div>Сегодня</div>
-    <div class="nav-btn"    onclick="navTo('cands',this)"><div class="nav-ico" style="position:relative">👥<span class="nav-badge" id="cands-badge"></span></div>Кандидаты</div>
-    <div class="nav-btn"    onclick="navTo('stats',this)"><div class="nav-ico">📊</div>Статистика</div>
+    <div class="nav-btn on" onclick="navTo('today',this)"><div class="nav-ico">🗓</div>Сегодня</div>
+    <div class="nav-btn"    onclick="navTo('cands',this)"><div class="nav-ico" style="position:relative">🫂<span class="nav-badge" id="cands-badge"></span></div>Кандидаты</div>
+    <div class="nav-btn"    onclick="navTo('stats',this)"><div class="nav-ico">📈</div>Аналитика</div>
   </div>
 </div>
 
