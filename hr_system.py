@@ -183,14 +183,27 @@ async def menu_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     status_block = "\n".join(status_lines) + "\n\n" if status_lines else ""
 
     if WEBAPP_URL:
-        webapp_kb = InlineKeyboardMarkup([[
-            InlineKeyboardButton("📱 Открыть HR-панель", web_app=WebAppInfo(url=WEBAPP_URL + "/hr"))
-        ]])
+        # Персистентная большая кнопка внизу чата
+        hr_kb = ReplyKeyboardMarkup(
+            [[KeyboardButton("🗂 Открыть HR-кабинет", web_app=WebAppInfo(url=WEBAPP_URL + "/hr"))]],
+            resize_keyboard=True
+        )
+        # Кнопка меню (в поле ввода) — для этого конкретного HR
+        try:
+            await update.message.get_bot().set_chat_menu_button(
+                chat_id=uid,
+                menu_button=MenuButtonWebApp(
+                    text="HR-кабинет",
+                    web_app=WebAppInfo(url=WEBAPP_URL + "/hr")
+                )
+            )
+        except Exception:
+            pass
         await update.message.reply_text(
             f"👋 Привет, <b>{hr_name(uid)}</b>!\n\n"
             f"{status_block}"
-            f"Нажми, чтобы открыть панель:",
-            reply_markup=webapp_kb,
+            f"Нажми кнопку ниже, чтобы открыть HR-кабинет 👇",
+            reply_markup=hr_kb,
             parse_mode="HTML"
         )
     else:
@@ -214,7 +227,22 @@ async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         await menu_cmd(update, ctx)
         return ConversationHandler.END
     if WEBAPP_URL:
-        # Кандидат использует мини-приложение
+        # Кандидат — персистентная большая кнопка внизу чата
+        cand_kb = ReplyKeyboardMarkup(
+            [[KeyboardButton("📅 Записаться на собеседование", web_app=WebAppInfo(url=WEBAPP_URL))]],
+            resize_keyboard=True
+        )
+        # Кнопка меню (в поле ввода) — для этого кандидата
+        try:
+            await update.message.get_bot().set_chat_menu_button(
+                chat_id=update.effective_user.id,
+                menu_button=MenuButtonWebApp(
+                    text="Записаться",
+                    web_app=WebAppInfo(url=WEBAPP_URL)
+                )
+            )
+        except Exception:
+            pass
         await update.message.reply_photo(
             photo=f"{WEBAPP_URL}/welcome.jpg",
             caption=(
@@ -223,9 +251,7 @@ async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
                 f"Или напиши напрямую: {HR_TELEGRAM}"
             ),
             parse_mode="HTML",
-            reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton("📅 Записаться на собеседование", web_app=WebAppInfo(url=WEBAPP_URL))
-            ]])
+            reply_markup=cand_kb
         )
         return ConversationHandler.END
 
@@ -2152,19 +2178,6 @@ if __name__ == "__main__":
         _job_queue = app.job_queue
         await app.start()
         await app.updater.start_polling(drop_pending_updates=True)
-
-        # Большая кнопка в поле ввода (открывает мини-приложение без /start)
-        if WEBAPP_URL:
-            try:
-                await _bot.set_chat_menu_button(
-                    menu_button=MenuButtonWebApp(
-                        text="📅 Записаться",
-                        web_app=WebAppInfo(url=WEBAPP_URL)
-                    )
-                )
-                print("✅ Кнопка меню установлена")
-            except Exception as e:
-                print(f"[MENU] Ошибка установки кнопки: {e}")
 
         print("🤖 Бот запущен, жду сообщений...")
         await asyncio.Event().wait()   # работаем вечно

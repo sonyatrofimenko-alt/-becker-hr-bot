@@ -546,8 +546,8 @@ body::before{
   <div class="divider"></div>
 
   <div class="inp-wrap">
-    <label class="inp-label" for="name-inp">Как тебя зовут?</label>
-    <input class="inp" id="name-inp" type="text" placeholder="Имя и фамилия" autocomplete="name" enterkeyhint="next">
+    <label class="inp-label" for="name-inp">Имя и фамилия</label>
+    <input class="inp" id="name-inp" type="text" placeholder="Например: Анна Иванова" autocomplete="name" enterkeyhint="next">
   </div>
 
   <div class="inp-wrap">
@@ -1046,11 +1046,12 @@ async function goToDate() {
     return;
   }
   const name = document.getElementById('name-inp').value.trim();
-  if (!name) {
+  if (!name || name.split(/\s+/).filter(Boolean).length < 2) {
     const ni = document.getElementById('name-inp');
     ni.classList.add('err');
+    ni.placeholder = 'Укажите имя И фамилию';
     ni.focus();
-    setTimeout(() => ni.classList.remove('err'), 600);
+    setTimeout(() => { ni.classList.remove('err'); ni.placeholder = 'Например: Анна Иванова'; }, 1800);
     return;
   }
   const phoneRaw = document.getElementById('phone-inp').value.trim();
