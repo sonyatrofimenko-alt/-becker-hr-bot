@@ -718,14 +718,21 @@ const TG_ID  = tgUser?.id || 0;
 const TG_UN  = tgUser?.username || '';
 
 // ── STATE ─────────────────────────────────────────────────────────────
-let selectedSpec   = null;
-let selectedFormat = null;
-let selectedHR     = null;
-let selectedDate   = null;
-let selectedTime   = null;
-let availSlots     = {};
-let nearDate       = null;
-let nearTime       = null;
+let selectedSpec      = null;
+let selectedFormat    = null;
+let selectedHR        = null;   // null для не-Продажи (shared-режим)
+let selectedDate      = null;
+let selectedTime      = null;
+let selectedSlotHrId  = null;   // hr_id конкретного выбранного слота
+let availSlots        = {};     // { "2026-06-28": [{time, hr_id}, ...] }
+let nearDate          = null;
+let nearTime          = null;
+let nearHrId          = null;
+
+// Вернуть объект HR-профиля по числовому id
+function getHRById(id) {
+  return Object.values(HR).find(h => Number(h.id) === Number(id)) || null;
+}
 
 // ── INIT AVATAR ───────────────────────────────────────────────────────
 function initAvatar() {
@@ -800,6 +807,15 @@ function showScreen(id) {
 
 function goToFormat() {
   if (!selectedSpec) return;
+  const isSales = (selectedSpec === 'Продажи');
+  // Для не-Продажи: прячем карточки формата и превью HR, авто-выставляем shared
+  document.querySelector('.fmt-grid').style.display = isSales ? '' : 'none';
+  document.getElementById('hr-prev').style.display  = isSales ? '' : 'none';
+  if (!isSales) {
+    selectedFormat   = 'shared';
+    selectedHR       = null;
+    selectedSlotHrId = null;
+  }
   showScreen('scr-format');
 }
 
@@ -823,6 +839,7 @@ function selectFormat(fmt) {
 }
 
 async function goToDate() {
+  // Для Продажи нужен явный выбор формата; для остальных selectedFormat='shared' уже выставлен
   if (!selectedFormat) {
     document.querySelector('.fmt-grid').style.outline = '2px solid var(--gold)';
     document.querySelector('.fmt-grid').style.borderRadius = '14px';
@@ -861,22 +878,33 @@ async function goToDate() {
 }
 
 // ── LOAD SLOTS ────────────────────────────────────────────────────────
+// availSlots: { "2026-06-28": [{time:"11:00", hr_id:859413090}, ...] }
+// Для Продажи — только слоты выбранного HR.
+// Для остальных (shared) — все слоты всех HR, дедупликация по времени.
 async function loadSlots() {
   availSlots = {};
-  nearDate = null;
-  nearTime = null;
+  nearDate   = null;
+  nearTime   = null;
+  nearHrId   = null;
   try {
     const r   = await fetch('/slots');
     const all = await r.json();
-    // { "2026-06-27": [{time, hr_id}, ...] }
     const sorted = Object.keys(all).sort();
     for (const day of sorted) {
-      const times = all[day]
-        .filter(e => Number(e.hr_id) === Number(selectedHR.id))
-        .map(e => e.time);
-      if (times.length) {
-        availSlots[day] = times;
-        if (!nearDate) { nearDate = day; nearTime = times[0]; }
+      let entries = all[day];   // [{time, hr_id}, ...]
+      if (selectedHR) {
+        // Продажи: фильтруем по конкретному HR
+        entries = entries.filter(e => Number(e.hr_id) === Number(selectedHR.id));
+      }
+      // Дедупликация по времени (оставляем первую запись для каждого времени)
+      const seen = new Set();
+      const unique = [];
+      for (const e of entries) {
+        if (!seen.has(e.time)) { seen.add(e.time); unique.push(e); }
+      }
+      if (unique.length) {
+        availSlots[day] = unique;
+        if (!nearDate) { nearDate = day; nearTime = unique[0].time; nearHrId = unique[0].hr_id; }
       }
     }
   } catch(e) { /* пустые слоты — покажем noslots */ }
@@ -925,10 +953,10 @@ function renderDateScreen() {
   }
 
   if (!has) {
-    document.getElementById('noslots-sub').textContent =
-      'Напиши ' + selectedHR.name + ' напрямую — подберём удобное время';
-    document.getElementById('noslots-name').textContent = selectedHR.name;
-    document.getElementById('noslots-tg').textContent   = selectedHR.tg;
+    const noHR = selectedHR || HR.office;  // fallback на Софью для shared-режима
+    document.getElementById('noslots-sub').textContent  = 'Напиши ' + noHR.name + ' напрямую — подберём удобное время';
+    document.getElementById('noslots-name').textContent = noHR.name;
+    document.getElementById('noslots-tg').textContent   = noHR.tg;
     showScreen('scr-noslots');
     return;
   }
@@ -950,7 +978,7 @@ function pickNearest() {
   setTimeout(() => {
     const tItem = Array.from(document.querySelectorAll('.time-item'))
       .find(el => el.textContent.trim() === nearTime);
-    if (tItem) selectTime(nearTime, tItem);
+    if (tItem) selectTime(nearTime, nearHrId, tItem);
   }, 120);
 }
 
@@ -966,25 +994,27 @@ function goToTime() {
   const d = new Date(selectedDate + 'T12:00:00');
   document.getElementById('hero-date-lbl').innerHTML = `${fmtDate(d).split(',')[0]},<br><span>${fmtDate(d).split(',')[1]?.trim() || ''}</span>`;
 
-  const slots = availSlots[selectedDate] || [];
+  const slots = availSlots[selectedDate] || [];   // [{time, hr_id}]
   const list  = document.getElementById('time-list');
   list.innerHTML = '';
-  slots.forEach(t => {
+  slots.forEach(slot => {
     const el = document.createElement('div');
     el.className = 'time-item rpl';
-    el.textContent = t;
-    el.addEventListener('click', () => selectTime(t, el));
+    el.textContent = slot.time;
+    el.addEventListener('click', () => selectTime(slot.time, slot.hr_id, el));
     list.appendChild(el);
   });
-  selectedTime = null;
+  selectedTime      = null;
+  selectedSlotHrId  = null;
   document.getElementById('btn-time').disabled = true;
   showScreen('scr-time');
 }
 
-function selectTime(time, el) {
+function selectTime(time, hrId, el) {
   document.querySelectorAll('.time-item').forEach(i => i.classList.remove('sel'));
   el.classList.add('sel');
-  selectedTime = time;
+  selectedTime     = time;
+  selectedSlotHrId = hrId;
   document.getElementById('btn-time').disabled = false;
 }
 
@@ -997,10 +1027,12 @@ async function submitBooking() {
   btn.disabled = true;
 
   const name = document.getElementById('name-inp').value.trim();
+  // Для Продажи: hr_id из selectedHR; для shared: hr_id из выбранного слота
+  const effectiveHrId = selectedHR ? selectedHR.id : (selectedSlotHrId || 0);
   const payload = {
     name, spec: selectedSpec || 'Продажи',
     date: selectedDate, time: selectedTime,
-    hr_id: selectedHR.id,
+    hr_id: effectiveHrId,
     tg_id: TG_ID, username: TG_UN, phone: ''
   };
 
@@ -1046,14 +1078,18 @@ function showSuccess() {
   const d = new Date(selectedDate + 'T12:00:00');
   document.getElementById('conf-dt').textContent = fmtDate(d) + ' · ' + selectedTime;
 
+  // Для Продажи — selectedHR; для shared — HR по id забронированного слота
+  const displayHR = selectedHR || getHRById(selectedSlotHrId) || HR.office;
   const img = document.getElementById('conf-hr-img');
   const fb  = document.getElementById('conf-hr-fb');
-  img.src = selectedHR.photo;
+  fb.textContent    = displayHR.initial;
+  fb.style.display  = 'none';
+  img.src           = displayHR.photo;
   img.style.display = 'block';
-  fb.textContent = selectedHR.initial;
-  document.getElementById('conf-hr-name').textContent = selectedHR.name;
+  img.onerror = () => { img.style.display = 'none'; fb.style.display = 'flex'; };
+  document.getElementById('conf-hr-name').textContent    = displayHR.name;
   document.getElementById('conf-hr-contact').textContent =
-    [selectedHR.tg, selectedHR.phone].filter(Boolean).join('  ·  ');
+    [displayHR.tg, displayHR.phone].filter(Boolean).join('  ·  ');
 
   showScreen('scr-success');
 }

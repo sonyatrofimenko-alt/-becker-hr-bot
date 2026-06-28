@@ -1,5 +1,6 @@
 import json, os, asyncio
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, time as dtime
+from zoneinfo import ZoneInfo
 from aiohttp import web
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton, WebAppInfo
 from telegram.ext import (
@@ -504,11 +505,12 @@ async def daily_check(ctx: ContextTypes.DEFAULT_TYPE):
     today_str = date.today().strftime("%Y-%m-%d")
     data = load()
 
-    # Утреннее напоминание кандидатам с СОБЕСЕДОВАНИЕМ сегодня
-    # (только тем, кто записался заранее — не сегодня, иначе будет 2h-reminder)
+    # Утреннее напоминание — только real Telegram-пользователям (не ручные записи)
     all_today = [
         c for c in data["candidates"].values()
-        if c.get("interview_date") == today_str and c.get("status") == "scheduled"
+        if c.get("interview_date") == today_str
+        and c.get("status") == "scheduled"
+        and c.get("telegram_id")          # пропускаем manual (telegram_id=0)
     ]
     for c in all_today:
         # Если запись создана сегодня — её покроет 2h-reminder, пропускаем
@@ -532,21 +534,22 @@ async def daily_check(ctx: ContextTypes.DEFAULT_TYPE):
             parse_mode="HTML"
         )
 
-    # Карточки HR — только свои кандидаты
+    # Карточки HR — итерируем по .items(), используем реальный ключ в callback_data
     for hr_id in HR_IDS:
         my_today = [
-            c for c in data["candidates"].values()
+            (key, c) for key, c in data["candidates"].items()
             if c.get("interview_date") == today_str
             and c.get("hr_id") == hr_id
             and c.get("status") == "scheduled"
         ]
-        for c in my_today:
+        for key, c in my_today:
             confirmed = c.get("confirmed")
             confirm_label = "✅ Подтвердил(а)" if confirmed is True else ("❌ Отказал(ась) вчера" if confirmed is False else "❓ Не отвечал(а)")
             spec_line = f"💼  {c['spec']}\n" if c.get("spec") and c["spec"] != "—" else ""
+            # Используем реальный ключ словаря — корректно работает и для manual-кандидатов
             kb = InlineKeyboardMarkup([
-                [InlineKeyboardButton("✅ СОБЕСЕДОВАНИЕ было",  callback_data=f"hr_met_{c['telegram_id']}"),
-                 InlineKeyboardButton("👻 Не пришёл(а)",        callback_data=f"hr_noshow_{c['telegram_id']}")],
+                [InlineKeyboardButton("✅ СОБЕСЕДОВАНИЕ было",  callback_data=f"hr_met_{key}"),
+                 InlineKeyboardButton("👻 Не пришёл(а)",        callback_data=f"hr_noshow_{key}")],
             ])
             await ctx.bot.send_message(
                 chat_id=hr_id,
@@ -568,17 +571,19 @@ async def hr_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if not is_hr(q.from_user.id):
         return
 
-    parts = q.data.split("_")
+    # split("_", 2) чтобы корректно обрабатывать ключи вида "m_abc12345"
+    parts = q.data.split("_", 2)
     action = parts[1]
-    cand_id = parts[2] if len(parts) > 2 else None
+    cand_key = parts[2] if len(parts) > 2 else None
 
     data = load()
-    cand = data["candidates"].get(str(cand_id)) if cand_id else None
+    cand = data["candidates"].get(cand_key) if cand_key else None
+    tg_id = cand.get("telegram_id", 0) if cand else 0
 
     if action == "met" and cand:
         kb = InlineKeyboardMarkup([[
-            InlineKeyboardButton("👍 Берём",  callback_data=f"hr_approved_{cand_id}"),
-            InlineKeyboardButton("👎 Отказ",  callback_data=f"hr_rejected_{cand_id}")
+            InlineKeyboardButton("👍 Берём",  callback_data=f"hr_approved_{cand_key}"),
+            InlineKeyboardButton("👎 Отказ",  callback_data=f"hr_rejected_{cand_key}")
         ]])
         await q.edit_message_text(
             f"👤 <b>{cand['name']}</b> — СОБЕСЕДОВАНИЕ прошло.\n\nКакой результат?",
@@ -592,17 +597,18 @@ async def hr_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             f"👻 <b>{cand['name']}</b> — отмечен(а) как не пришедший(ая).",
             parse_mode="HTML"
         )
-        first = cand["name"].split()[0]
-        await ctx.bot.send_message(
-            chat_id=int(cand_id),
-            text=f"{first}, сегодня ждали тебя на СОБЕСЕДОВАНИЕ — что-то пошло не так?\n\n"
-                 f"Вакансия открыта — можем перенести:",
-            reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton("Да, перенесём",  callback_data="reschedule_yes"),
-                InlineKeyboardButton("Нет, спасибо",   callback_data="reschedule_no")
-            ]]),
-            parse_mode="HTML"
-        )
+        if tg_id:   # manual-кандидатам сообщение не отправляем
+            first = cand["name"].split()[0]
+            await ctx.bot.send_message(
+                chat_id=tg_id,
+                text=f"{first}, сегодня ждали тебя на СОБЕСЕДОВАНИЕ — что-то пошло не так?\n\n"
+                     f"Вакансия открыта — можем перенести:",
+                reply_markup=InlineKeyboardMarkup([[
+                    InlineKeyboardButton("Да, перенесём",  callback_data="reschedule_yes"),
+                    InlineKeyboardButton("Нет, спасибо",   callback_data="reschedule_no")
+                ]]),
+                parse_mode="HTML"
+            )
 
     elif action == "approved" and cand:
         cand["status"] = "approved_pending"
@@ -611,14 +617,15 @@ async def hr_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             f"✅ <b>{cand['name']}</b> — одобрен(а)!\nВ 18:00 придёт напоминание написать кандидату.",
             parse_mode="HTML"
         )
-        first = cand["name"].split()[0]
-        await ctx.bot.send_message(
-            chat_id=int(cand_id),
-            text=f"{first}, спасибо, что нашёл(ла) время!\n\n"
-                 f"Рады были познакомиться. Наш HR напишет тебе <b>завтра до обеда</b>.\n\n"
-                 f"Если есть вопросы — {HR_TELEGRAM}",
-            parse_mode="HTML"
-        )
+        if tg_id:
+            first = cand["name"].split()[0]
+            await ctx.bot.send_message(
+                chat_id=tg_id,
+                text=f"{first}, спасибо, что нашёл(ла) время!\n\n"
+                     f"Рады были познакомиться. Наш HR напишет тебе <b>завтра до обеда</b>.\n\n"
+                     f"Если есть вопросы — {HR_TELEGRAM}",
+                parse_mode="HTML"
+            )
 
     elif action == "rejected" and cand:
         cand["status"] = "rejected_pending"
@@ -627,19 +634,15 @@ async def hr_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             f"👎 <b>{cand['name']}</b> — отказ уйдёт кандидату автоматически в 18:00.",
             parse_mode="HTML"
         )
-        first = cand["name"].split()[0]
-        await ctx.bot.send_message(
-            chat_id=int(cand_id),
-            text=f"{first}, спасибо, что нашёл(ла) время!\n\n"
-                 f"Рады были познакомиться. Наш HR напишет тебе <b>завтра до обеда</b>.\n\n"
-                 f"Если есть вопросы — {HR_TELEGRAM}",
-            parse_mode="HTML"
-        )
-        ctx.job_queue.run_once(
-            send_final_rejection,
-            when=_delay_to_18(),
-            data={"user_id": int(cand_id), "name": cand["name"]}
-        )
+        if tg_id:
+            first = cand["name"].split()[0]
+            await ctx.bot.send_message(
+                chat_id=tg_id,
+                text=f"{first}, спасибо, что нашёл(ла) время!\n\n"
+                     f"Рады были познакомиться. Наш HR напишет тебе <b>завтра до обеда</b>.\n\n"
+                     f"Если есть вопросы — {HR_TELEGRAM}",
+                parse_mode="HTML"
+            )
 
 # ── Ответ кандидата на «хотите перенести?» ────────────────────────────────────
 async def reschedule_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
@@ -670,10 +673,38 @@ def _delay_to_18() -> int:
         target += timedelta(days=1)
     return int((target - now).total_seconds())
 
-# ── 18:00 — напоминание HR написать одобренным ───────────────────────────────
+# ── 18:00 — напоминание HR написать одобренным + авто-отказ rejected_pending ──
 async def daily_18_check(ctx: ContextTypes.DEFAULT_TYPE):
     data = load()
-    # Каждый HR получает только своих
+    changed = False
+
+    # Авто-отказ: отправляем кандидатам с rejected_pending (независимо от того,
+    # как был выставлен статус — через бот или webapp)
+    for c in data["candidates"].values():
+        if c.get("status") == "rejected_pending" and not c.get("rejection_sent"):
+            tg_id = c.get("telegram_id", 0)
+            if tg_id:
+                first = c["name"].split()[0]
+                try:
+                    await ctx.bot.send_message(
+                        chat_id=tg_id,
+                        text=f"{first}, спасибо, что пришёл(ла) и уделил(а) нам время.\n\n"
+                             f"По итогам встречи мы пока не готовы сделать предложение — "
+                             f"но если ситуация изменится, обязательно напишем.\n\n"
+                             f"Удачи в поиске!\n\n"
+                             f"<b>Софья, HR BECKER</b>  ·  {HR_TELEGRAM}",
+                        parse_mode="HTML"
+                    )
+                except Exception as e:
+                    print(f"[18:00] rejection send error: {e}")
+            c["rejection_sent"] = True
+            changed = True
+
+    if changed:
+        save(data)
+        data = load()
+
+    # Каждый HR получает только своих одобренных
     for hr_id in HR_IDS:
         approved = [
             c for c in data["candidates"].values()
@@ -699,9 +730,17 @@ async def daily_18_check(ctx: ContextTypes.DEFAULT_TYPE):
 
 async def send_final_rejection(ctx: ContextTypes.DEFAULT_TYPE):
     d = ctx.job.data
+    tg_id = d.get("user_id", 0)
+    if not tg_id:
+        return
+    # Проверяем флаг — daily_18_check мог уже отправить
+    data = load()
+    cand = data["candidates"].get(str(tg_id))
+    if cand and cand.get("rejection_sent"):
+        return
     first = d["name"].split()[0]
     await ctx.bot.send_message(
-        chat_id=d["user_id"],
+        chat_id=tg_id,
         text=f"{first}, спасибо, что пришёл(ла) и уделил(а) нам время.\n\n"
              f"По итогам встречи мы пока не готовы сделать предложение — "
              f"но если ситуация изменится, обязательно напишем.\n\n"
@@ -709,12 +748,17 @@ async def send_final_rejection(ctx: ContextTypes.DEFAULT_TYPE):
              f"<b>Софья, HR BECKER</b>  ·  {HR_TELEGRAM}",
         parse_mode="HTML"
     )
+    if cand:
+        cand["rejection_sent"] = True
+        save(data)
 
 # ── 17:00 — напоминание кандидатам накануне ──────────────────────────────────
 async def evening_reminder(ctx: ContextTypes.DEFAULT_TYPE):
     tomorrow_str = (date.today() + timedelta(days=1)).strftime("%Y-%m-%d")
     data = load()
     for c in data["candidates"].values():
+        if not c.get("telegram_id"):      # пропускаем manual-кандидатов
+            continue
         if c.get("interview_date") == tomorrow_str and c.get("status") == "scheduled":
             first = c["name"].split()[0]
             await ctx.bot.send_message(
@@ -750,10 +794,12 @@ async def candidate_confirm_callback(update: Update, ctx: ContextTypes.DEFAULT_T
     if action == "confirm":
         cand["confirmed"] = True
         save(data)
+        is_today = cand.get("interview_date") == date.today().strftime("%Y-%m-%d")
+        when_word = "Сегодня" if is_today else "Завтра"
         await q.edit_message_text(
             f"Отлично, ждём!\n"
             f"━━━━━━━━━━━━━━━━━━\n"
-            f"Завтра в <b>{cand['interview_time']}</b>\n"
+            f"{when_word} в <b>{cand['interview_time']}</b>\n"
             f"{COMPANY_ADDR}\n"
             f"━━━━━━━━━━━━━━━━━━\n"
             f"Если что-то изменится — {HR_TELEGRAM}",
@@ -761,7 +807,7 @@ async def candidate_confirm_callback(update: Update, ctx: ContextTypes.DEFAULT_T
         )
         await ctx.bot.send_message(
             chat_id=booked_hr,
-            text=f"✅ <b>{cand['name']}</b> подтвердил(а) визит\nЗавтра в {cand['interview_time']}",
+            text=f"✅ <b>{cand['name']}</b> подтвердил(а) визит\n{when_word} в {cand['interview_time']}",
             parse_mode="HTML"
         )
     else:
@@ -785,8 +831,9 @@ async def changed_plans_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE)
     await q.edit_message_text(
         "Понятно! Что случилось?",
         reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("🔄 Хочу перенести", callback_data="cp_reschedule")],
-            [InlineKeyboardButton("🤔 Передумал(а)",   callback_data="cp_changed_mind")],
+            [InlineKeyboardButton("🔄 Хочу перенести",    callback_data="cp_reschedule")],
+            [InlineKeyboardButton("🤔 Передумал(а)",      callback_data="cp_changed_mind")],
+            [InlineKeyboardButton("📭 Вакансия не актуальна", callback_data="cp_not_relevant")],
         ])
     )
 
@@ -1475,6 +1522,27 @@ async def serve_update_status(request):
                                 content_type="application/json", headers=CORS)
         cand["status"] = status
         save(data)
+
+        # Telegram-уведомление HR о смене статуса через webapp
+        if _bot:
+            STATUS_RU = {
+                "no_show":          "👻 Не пришёл(а)",
+                "approved_pending": "✅ Принят(а)",
+                "rejected_pending": "❌ Отказ",
+                "scheduled":        "📅 Сброс статуса",
+            }
+            notify_hr = cand.get("hr_id", hr_id)
+            try:
+                await _bot.send_message(
+                    chat_id=notify_hr,
+                    text=f"📋 <b>{cand['name']}</b> — статус изменён\n"
+                         f"{STATUS_RU.get(status, status)}\n"
+                         f"(через панель HR)",
+                    parse_mode="HTML"
+                )
+            except Exception:
+                pass
+
         return web.Response(text='{"ok":true}', content_type="application/json", headers=CORS)
     except Exception as e:
         return web.Response(text=json.dumps({"ok": False, "error": str(e)}),
@@ -1506,7 +1574,6 @@ async def serve_my_slots_post(request):
 async def serve_book_manual(request):
     """HR вносит кандидата вручную из мини-приложения."""
     try:
-        import re as _re
         body     = await request.json()
         hr_id    = int(body.get("hr_id", 0))
         name     = body.get("name", "").strip()
@@ -1519,7 +1586,8 @@ async def serve_book_manual(request):
             return web.Response(text='{"ok":false,"error":"missing fields"}',
                                 content_type="application/json", headers=CORS)
 
-        key = f"manual_{_re.sub(r'[^a-zA-Zа-яА-ЯёЁ0-9]', '_', name)}_{day_str}_{time_str}"
+        # Короткий ключ (8 hex символов) — умещается в Telegram callback_data (64 байт)
+        key = f"m_{os.urandom(4).hex()}"
         data = load()
         data["candidates"][key] = {
             "name": name, "spec": spec,
@@ -1568,7 +1636,7 @@ async def serve_book(request):
                                 content_type="application/json", headers=CORS)
 
         booked_hr = int(hr_id_raw) if hr_id_raw else HR_ID
-        is_shared = booked_hr not in HR_IDS   # на всякий случай
+        is_shared = (spec == "Другое")
 
         data = load()
 
@@ -1752,9 +1820,10 @@ async def run_webserver():
 def build_app():
     app = ApplicationBuilder().token(TOKEN).connect_timeout(30).read_timeout(30).build()
 
-    app.job_queue.run_daily(daily_check,      time=datetime.strptime("09:00", "%H:%M").time())
-    app.job_queue.run_daily(evening_reminder, time=datetime.strptime("17:00", "%H:%M").time())
-    app.job_queue.run_daily(daily_18_check,   time=datetime.strptime("18:00", "%H:%M").time())
+    _msk = ZoneInfo("Europe/Moscow")
+    app.job_queue.run_daily(daily_check,      time=dtime(9,  0, tzinfo=_msk))
+    app.job_queue.run_daily(evening_reminder, time=dtime(17, 0, tzinfo=_msk))
+    app.job_queue.run_daily(daily_18_check,   time=dtime(18, 0, tzinfo=_msk))
 
     conv = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
@@ -1773,6 +1842,7 @@ def build_app():
     app.add_handler(CommandHandler("slots",   slots_cmd))
     app.add_handler(CommandHandler("week",    week_cmd))
     app.add_handler(CommandHandler("list",    list_cmd))
+    app.add_handler(CommandHandler("stats",   stats_cmd))
     app.add_handler(CommandHandler("preview", preview_cmd))
     app.add_handler(MessageHandler(
         filters.TEXT & ~filters.COMMAND & filters.User(list(HR_IDS.keys())),
