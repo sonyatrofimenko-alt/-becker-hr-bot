@@ -1,410 +1,354 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>BECKER HR</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    :root {
-      --gold:   #FBC148;
-      --dark:   #1a1600;
-      --bg:     #f5f2ea;
-      --card:   #ffffff;
-      --muted:  #9e8e6e;
-      --teal:   #4ecdc4;
-      --red:    #e84040;
-      --border: rgba(0,0,0,0.08);
-      --shadow: 0 2px 14px rgba(0,0,0,0.07);
-    }
-    * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
-    body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--dark); min-height:100vh; padding-bottom:100px; overscroll-behavior:none; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>BECKER HR</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --amber:#F5A623;--amber-dk:#C17D0A;--amber-lt:rgba(245,166,35,0.13);
+  --bg:#F0E8D8;--bg2:#E2D8C8;--card:#FFFFFF;
+  --dark:#1C1C1E;--dark2:#2C2C2E;--mid:#717171;--light:#B0B0B0;
+  --teal:#26C6B0;--red:#E84040;
+  --shadow:0 2px 10px rgba(0,0,0,0.06);
+  --hdr-bg:#F5A623;--hdr-text:#1C1C1E;
+  --r:16px;--rs:12px;
+  --spring:cubic-bezier(.34,1.56,.64,1);--ease:cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"]{
+  --bg:#0D0B00;--bg2:#1A1600;--card:#1E1900;
+  --dark:#F5F0E0;--dark2:#D4CDB0;--mid:#8A8470;--light:#5A5448;
+  --shadow:0 2px 12px rgba(0,0,0,0.35);
+  --hdr-bg:#1A1200;--hdr-text:#F5A623;
+}
+html,body{height:100%;background:var(--bg);color:var(--dark);font-family:'Inter',-apple-system,sans-serif;overflow-x:hidden;transition:background .3s,color .3s}
+body{padding-bottom:100px;min-height:100vh;position:relative}
+body::before{content:'BECKER';position:fixed;bottom:50px;left:50%;transform:translateX(-50%);font-size:88px;font-weight:900;letter-spacing:10px;color:rgba(245,166,35,0.06);pointer-events:none;z-index:0;white-space:nowrap}
 
-    /* ── SPLASH ── */
-    #splash {
-      position:fixed; inset:0; z-index:9999;
-      background:var(--gold);
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
-      transition:opacity 0.6s ease;
-    }
-    #splash.hidden { opacity:0; pointer-events:none; }
-    .splash-logo { width:100px; height:100px; border-radius:22px; object-fit:contain; margin-bottom:24px; animation:splashPop 0.6s cubic-bezier(.34,1.56,.64,1) both; }
-    .splash-brand { font-size:42px; font-weight:900; color:var(--dark); letter-spacing:4px; animation:splashFade 0.5s 0.3s ease both; }
-    .splash-sub { font-size:12px; font-weight:700; color:rgba(26,22,0,0.55); letter-spacing:3px; text-transform:uppercase; margin-top:8px; animation:splashFade 0.5s 0.45s ease both; }
-    .splash-line { width:60px; height:2px; background:rgba(26,22,0,0.25); border-radius:1px; margin-top:14px; animation:splashFade 0.5s 0.55s ease both; }
-    .splash-dots { display:flex; gap:7px; margin-top:36px; animation:splashFade 0.5s 0.7s ease both; }
-    .splash-dot { width:7px; height:7px; border-radius:50%; background:rgba(26,22,0,0.3); animation:dotPulse 1.2s infinite ease-in-out; }
-    .splash-dot:nth-child(2) { animation-delay:0.2s; }
-    .splash-dot:nth-child(3) { animation-delay:0.4s; }
-    @keyframes splashPop  { from { transform:scale(0.6); opacity:0; } to { transform:scale(1); opacity:1; } }
-    @keyframes splashFade { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-    @keyframes dotPulse   { 0%,80%,100% { transform:scale(0.7); opacity:0.4; } 40% { transform:scale(1); opacity:1; } }
+/* RIPPLE */
+.rpl{position:relative;overflow:hidden}
+.rpl::after{content:'';position:absolute;border-radius:50%;background:rgba(245,166,35,0.22);transform:scale(0);pointer-events:none}
+.rpl.rippling::after{width:200px;height:200px;margin:-100px 0 0 -100px;top:var(--ry,50%);left:var(--rx,50%);animation:ripple .55s ease-out forwards}
+@keyframes ripple{to{transform:scale(4);opacity:0}}
 
-    /* ── CARD ENTRANCE ── */
-    @keyframes cardIn { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
-    .card-in { animation:cardIn 0.32s ease both; }
-    @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+/* SPLASH */
+#splash{position:fixed;inset:0;z-index:9999;background:var(--amber);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s var(--ease)}
+#splash.out{opacity:0;pointer-events:none}
+.sp-brand{font-size:42px;font-weight:900;color:var(--dark);letter-spacing:4px;animation:spFade .5s .2s ease both}
+.sp-sub{font-size:11px;font-weight:700;color:rgba(28,28,30,.5);letter-spacing:3px;text-transform:uppercase;margin-top:8px;animation:spFade .5s .35s ease both}
+.sp-dots{display:flex;gap:7px;margin-top:36px;animation:spFade .5s .5s ease both}
+.sp-dot{width:7px;height:7px;border-radius:50%;background:rgba(28,28,30,.25);animation:spDot 1.2s infinite ease-in-out}
+.sp-dot:nth-child(2){animation-delay:.2s}.sp-dot:nth-child(3){animation-delay:.4s}
+@keyframes spFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spDot{0%,80%,100%{transform:scale(.7);opacity:.3}40%{transform:scale(1);opacity:1}}
 
-    /* ── SECTION FADE ── */
-    .section.active { animation:fadeIn 0.22s ease both; }
+/* SECTIONS */
+.sec-wrap{display:none;position:relative;z-index:1}
+.sec-wrap.active{display:block;animation:secIn .32s var(--ease) both}
+@keyframes secIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
 
-    /* ── PULSE NUMBER COUNT ── */
-    @keyframes numPop { 0%{transform:scale(0.5);opacity:0} 70%{transform:scale(1.15)} 100%{transform:scale(1);opacity:1} }
-    .num-anim { animation:numPop 0.5s cubic-bezier(.34,1.56,.64,1) both; }
+/* HEADER */
+.hdr{background:var(--hdr-bg);border-radius:0 0 24px 24px;padding-bottom:18px;position:sticky;top:0;z-index:10;transition:background .3s;animation:hdrIn .4s var(--ease) both}
+@keyframes hdrIn{from{transform:translateY(-8px);opacity:0}to{transform:translateY(0);opacity:1}}
+.hdr-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 8px}
+.hdr-logo-area{display:flex;align-items:center;gap:9px}
+.hdr-logo-img{width:32px;height:32px;object-fit:contain}
+.hdr-brand-name{font-size:14px;font-weight:900;letter-spacing:.5px;color:var(--hdr-text);transition:color .3s}
+.hdr-brand-sub{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(28,28,30,.5);margin-top:1px}
+[data-theme="dark"] .hdr-brand-sub{color:rgba(245,166,35,.5)}
+.hdr-controls{display:flex;align-items:center;gap:8px}
+.hdr-ico-btn{width:34px;height:34px;border-radius:50%;background:rgba(28,28,30,.1);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .22s var(--spring);position:relative}
+.hdr-ico-btn:active{transform:scale(.88) rotate(15deg)}
+[data-theme="dark"] .hdr-ico-btn{background:rgba(245,166,35,.15)}
+.bell-badge{display:none;position:absolute;top:1px;right:1px;background:var(--red);color:#fff;font-size:8px;font-weight:800;border-radius:50%;width:14px;height:14px;align-items:center;justify-content:center;border:2px solid var(--hdr-bg)}
+.hdr-avatar{width:34px;height:34px;border-radius:50%;background:var(--dark);color:var(--amber);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;overflow:hidden;border:2px solid rgba(28,28,30,.15);flex-shrink:0}
+.hdr-avatar img{width:100%;height:100%;object-fit:cover;object-position:top;display:none}
+.hdr-body{padding:0 18px}
+.hdr-title{font-size:26px;font-weight:900;color:var(--hdr-text);line-height:1.1;margin-bottom:4px;transition:color .3s}
+.hdr-sub{font-size:12px;color:var(--hdr-text);opacity:.55;transition:opacity .3s}
 
-    /* ── EKG DRAW ── */
-    .ekg-line { stroke-dasharray:600; stroke-dashoffset:600; animation:ekgDraw 2s 0.8s ease forwards; }
-    @keyframes ekgDraw { to { stroke-dashoffset:0; } }
+/* HR STRIP */
+.hr-strip{background:rgba(28,28,30,.06);border-radius:var(--r);margin:14px 14px 0;padding:12px 14px;display:flex;align-items:center;gap:12px}
+[data-theme="dark"] .hr-strip{background:rgba(245,166,35,.07)}
+.hr-strip-photo{width:50px;height:50px;border-radius:50%;object-fit:cover;object-position:top;border:2px solid var(--dark);flex-shrink:0;display:none}
+.hr-strip-fb{width:50px;height:50px;border-radius:50%;background:var(--dark);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:var(--amber);flex-shrink:0}
+.hr-strip-name{font-size:15px;font-weight:800;color:var(--dark)}
+.hr-strip-role{font-size:11px;color:var(--mid);margin-top:2px}
+.hr-online{display:inline-block;width:6px;height:6px;border-radius:50%;background:#22c55e;margin-left:5px;vertical-align:middle;animation:onlinePulse 2s ease-in-out infinite}
+@keyframes onlinePulse{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.4)}50%{box-shadow:0 0 0 4px rgba(34,197,94,0)}}
 
-    /* ── BUTTON RIPPLE ── */
-    .card, .slot-btn, .chip, .nav-btn { transition:transform 0.12s, opacity 0.12s; }
-    .card:active, .slot-btn:active { transform:scale(0.97); opacity:0.85; }
-    .chip:active { transform:scale(0.92); }
-    .nav-btn:active { transform:scale(0.88); }
+/* PULSE CARD */
+.pulse-card{background:var(--dark);border-radius:var(--r);margin:14px 14px 0;padding:18px 20px;transition:background .3s}
+.pulse-label{font-size:9px;font-weight:800;color:rgba(245,246,247,.3);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px}
+.pulse-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.pulse-stat .pnum{font-size:34px;font-weight:900;line-height:1}
+.pulse-stat .plbl{font-size:8px;font-weight:700;color:rgba(245,246,247,.3);letter-spacing:1.5px;text-transform:uppercase;margin-top:4px}
+.pulse-ekg{width:100%;margin-top:14px;opacity:.5}
+.ekg-line{stroke-dasharray:600;stroke-dashoffset:600;animation:ekgDraw 2.2s .8s ease forwards}
+@keyframes ekgDraw{to{stroke-dashoffset:0}}
+@keyframes numPop{0%{transform:scale(.5);opacity:0}70%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+.num-anim{animation:numPop .5s var(--spring) both}
 
-    /* ── HEADER ── */
-    .app-header { background:var(--gold); padding:14px 18px 22px; position:sticky; top:0; z-index:10; }
-    .hdr-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
-    .hdr-brand { display:flex; align-items:center; gap:10px; }
-    .hdr-logo { width:34px; height:34px; border-radius:8px; object-fit:contain; background:rgba(26,22,0,0.1); }
-    .hdr-brand-text .name { font-size:16px; font-weight:900; color:var(--dark); letter-spacing:1px; }
-    .hdr-brand-text .sub  { font-size:9px;  font-weight:700; color:rgba(26,22,0,0.5); letter-spacing:2px; text-transform:uppercase; }
-    .hdr-actions { display:flex; align-items:center; gap:8px; }
-    .bell-btn { position:relative; width:38px; height:38px; border-radius:50%; background:rgba(26,22,0,0.1); display:flex; align-items:center; justify-content:center; font-size:18px; cursor:pointer; transition:transform 0.15s; }
-    .bell-btn:active { transform:scale(0.9); }
-    #bell-badge { display:none; position:absolute; top:2px; right:2px; background:var(--red); color:white; font-size:8px; font-weight:800; border-radius:50%; width:15px; height:15px; align-items:center; justify-content:center; border:2px solid var(--gold); }
-    .hr-avatar { width:44px; height:44px; border-radius:50%; background:var(--dark); display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:800; color:var(--gold); overflow:hidden; border:2.5px solid rgba(26,22,0,0.25); flex-shrink:0; }
-    .hr-avatar img { width:100%; height:100%; object-fit:cover; object-position:top; display:none; }
+/* SECTION LABEL */
+.sec-lbl{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber-dk);padding:16px 16px 10px;display:flex;align-items:center;gap:8px}
+.sec-lbl::before{content:'—';color:var(--amber);font-size:14px;letter-spacing:0;font-weight:900}
+.sec-lbl-right{margin-left:auto;display:flex;gap:6px}
 
-    /* HR Profile Strip */
-    .hr-profile-strip { display:flex; align-items:center; gap:14px; background:rgba(26,22,0,0.06); border-radius:14px; padding:12px 14px; margin:10px 14px 0; }
-    .hr-profile-photo { width:54px; height:54px; border-radius:50%; object-fit:cover; object-position:top; border:2.5px solid var(--dark); flex-shrink:0; display:none; }
-    .hr-profile-fallback { width:54px; height:54px; border-radius:50%; background:var(--dark); display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:900; color:var(--gold); flex-shrink:0; border:2.5px solid rgba(26,22,0,0.2); }
-    .hr-profile-info .pname { font-size:15px; font-weight:800; color:var(--dark); }
-    .hr-profile-info .prole { font-size:11px; color:rgba(26,22,0,0.5); margin-top:2px; font-weight:500; }
-    .hr-online { display:inline-block; width:7px; height:7px; border-radius:50%; background:#22c55e; margin-left:6px; vertical-align:middle; }
-    .hdr-title { font-size:28px; font-weight:900; color:var(--dark); line-height:1; }
-    .hdr-subtitle { font-size:12px; color:rgba(26,22,0,0.55); margin-top:5px; font-weight:500; }
+/* CARDS */
+.card{background:var(--card);border-radius:var(--r);padding:15px;margin-bottom:10px;box-shadow:var(--shadow);cursor:pointer;transition:transform .12s,box-shadow .12s}
+.card:active{transform:scale(.98);box-shadow:none}
+.card.b-amber{border-left:3px solid var(--amber)}
+.card.b-teal{border-left:3px solid var(--teal)}
+.card.b-red{border-left:3px solid var(--red)}
+.cand-time{font-size:26px;font-weight:900;color:var(--amber);line-height:1}
+.cand-name{font-size:15px;font-weight:700;color:var(--dark);margin-top:5px}
+.cand-meta{font-size:12px;color:var(--mid);margin-top:2px}
+.cand-confirm{font-size:11px;color:var(--mid);margin-top:4px}
+.badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;margin-top:7px}
+.card-action-btn{background:var(--amber-lt);border:1.5px solid rgba(245,166,35,.35);border-radius:10px;padding:8px 11px;font-size:12px;font-weight:700;color:var(--dark);cursor:pointer;white-space:nowrap;font-family:inherit;transition:all .15s;flex-shrink:0}
+.card-action-btn:active{transform:scale(.93)}
 
-    /* ── PULSE CARD ── */
-    .pulse-card { background:var(--dark); border-radius:20px; margin:0 14px 6px; padding:18px 20px; }
-    .pulse-label { font-size:9px; font-weight:800; color:rgba(255,255,255,0.35); letter-spacing:2px; text-transform:uppercase; margin-bottom:14px; }
-    .pulse-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
-    .pulse-stat .num { font-size:36px; font-weight:900; line-height:1; }
-    .pulse-stat .lbl { font-size:8px; font-weight:700; color:rgba(255,255,255,0.35); letter-spacing:1.5px; text-transform:uppercase; margin-top:4px; }
-    .pulse-ekg { width:100%; margin-top:14px; opacity:0.5; }
+/* STAGGER */
+.stagger>.card{animation:cardIn .32s var(--spring) both}
+.stagger>.card:nth-child(1){animation-delay:.04s}.stagger>.card:nth-child(2){animation-delay:.08s}
+.stagger>.card:nth-child(3){animation-delay:.12s}.stagger>.card:nth-child(4){animation-delay:.16s}
+.stagger>.card:nth-child(5){animation-delay:.2s}.stagger>.card:nth-child(6){animation-delay:.24s}
+@keyframes cardIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 
-    /* ── SECTION HEADER ── */
-    .sec-head { display:flex; align-items:center; gap:10px; padding:16px 14px 8px; }
-    .sec-line { width:22px; height:2.5px; background:var(--gold); border-radius:2px; flex-shrink:0; }
-    .sec-text { font-size:11px; font-weight:800; color:var(--dark); letter-spacing:1.5px; text-transform:uppercase; }
+/* SLOTS */
+.day-label{font-size:10px;font-weight:800;color:var(--mid);text-transform:uppercase;letter-spacing:.8px;margin:14px 16px 8px}
+.today-tag{color:var(--amber)}
+.slots-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:0 16px;margin-bottom:8px}
+.slot-btn{padding:10px 0;border-radius:12px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--bg2);background:var(--card);color:var(--mid);transition:all .18s var(--ease)}
+.slot-btn:active{transform:scale(.92)}
+.slot-btn.on{background:var(--amber-lt);border-color:var(--amber);color:var(--dark);font-weight:700}
+.slot-btn.booked{background:var(--amber);border-color:var(--amber-dk);color:var(--dark);font-weight:700}
+.day-actions{display:flex;gap:8px;padding:0 16px;margin-bottom:4px}
+.day-act-btn{flex:1;padding:9px 0;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:inherit;transition:all .12s}
+.day-act-btn:active{transform:scale(.95)}
+.save-btn{width:calc(100% - 28px);margin:16px 14px;padding:16px;background:var(--amber);color:var(--dark);font-size:15px;font-weight:800;border:none;border-radius:14px;cursor:pointer;font-family:inherit;transition:all .15s;box-shadow:0 4px 18px rgba(245,166,35,.35)}
+.save-btn:active{transform:scale(.97)}
 
-    /* ── CARDS ── */
-    .card { background:var(--card); border-radius:16px; padding:15px; margin-bottom:10px; box-shadow:var(--shadow); transition:transform 0.1s; }
-    .card:active { transform:scale(0.98); }
-    .card.gold-l { border-left:3px solid var(--gold); }
-    .card.teal-l { border-left:3px solid var(--teal); }
-    .card.red-l  { border-left:3px solid var(--red); }
-    .cand-time { font-size:26px; font-weight:900; color:var(--gold); line-height:1; }
-    .cand-name { font-size:15px; font-weight:700; margin-top:5px; }
-    .cand-meta { font-size:12px; color:var(--muted); margin-top:2px; }
-    .cand-confirm { font-size:11px; color:var(--muted); margin-top:4px; }
-    .badge { display:inline-block; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; margin-top:7px; }
+/* FILTERS */
+.filter-label{font-size:10px;font-weight:700;color:var(--mid);letter-spacing:1px;text-transform:uppercase;margin:8px 16px 6px}
+.filter-row{display:flex;gap:6px;overflow-x:auto;padding:0 16px 4px;margin-bottom:8px}
+.filter-row::-webkit-scrollbar{display:none}
+.chip{padding:7px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;background:var(--card);color:var(--mid);border:1.5px solid var(--bg2);transition:all .15s}
+.chip:active{transform:scale(.93)}
+.chip.on{background:var(--amber);color:var(--dark);border-color:var(--amber);font-weight:700}
 
-    /* ── SLOTS ── */
-    .day-label { font-size:11px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:0.8px; margin:14px 0 8px; }
-    .day-label .today-tag { color:var(--gold); }
-    .slots-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:7px; margin-bottom:8px; }
-    .slot-btn {
-      padding:10px 0; border-radius:12px; text-align:center;
-      font-size:13px; font-weight:600; cursor:pointer;
-      border:1.5px solid var(--border); background:var(--card); color:var(--muted);
-      transition:transform 0.1s, background 0.15s, border-color 0.15s;
-      box-shadow:0 1px 4px rgba(0,0,0,0.04); user-select:none;
-    }
-    .slot-btn:active { transform:scale(0.92); }
-    .slot-btn.on { background:rgba(251,193,72,0.2); border-color:var(--gold); color:var(--dark); font-weight:700; }
-    .slot-btn.booked { background:rgba(251,193,72,0.12); border-color:rgba(251,193,72,0.5); color:var(--dark); cursor:default; }
-    .day-actions { display:flex; gap:8px; margin-bottom:4px; }
-    .day-act-btn { flex:1; padding:9px 0; border-radius:10px; font-size:12px; font-weight:700; cursor:pointer; border:none; transition:transform 0.1s, opacity 0.1s; }
-    .day-act-btn:active { transform:scale(0.95); opacity:0.8; }
+/* SEARCH */
+.search-wrap{padding:0 16px;margin-bottom:12px}
+.search-inp{width:100%;padding:13px 16px;background:var(--card);border:1.5px solid var(--bg2);border-radius:12px;font-size:15px;color:var(--dark);outline:none;font-family:inherit;box-shadow:var(--shadow);transition:border-color .2s}
+.search-inp:focus{border-color:var(--amber)}
+.search-inp::placeholder{color:var(--light)}
 
-    /* ── SAVE BUTTON ── */
-    .save-btn { width:100%; padding:16px; background:var(--gold); color:var(--dark); font-size:15px; font-weight:800; border:none; border-radius:14px; cursor:pointer; margin-top:16px; transition:transform 0.1s; box-shadow:0 4px 16px rgba(251,193,72,0.4); font-family:inherit; }
-    .save-btn:active { transform:scale(0.97); }
+/* REMINDER */
+.reminder-block{background:var(--amber-lt);border:1.5px solid rgba(245,166,35,.35);border-radius:var(--rs);padding:14px;margin:0 14px 12px;display:none}
+.reminder-block.show{display:block}
+.reminder-title{font-size:11px;font-weight:800;color:var(--dark);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px}
+.reminder-item{padding:8px 0;border-bottom:1px solid rgba(245,166,35,.2)}
+.reminder-item:last-child{border-bottom:none}
 
-    /* ── FILTERS ── */
-    .filter-row { display:flex; gap:6px; margin-bottom:12px; overflow-x:auto; padding-bottom:2px; }
-    .filter-row::-webkit-scrollbar { display:none; }
-    .chip { padding:7px 14px; border-radius:20px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; background:var(--card); color:var(--muted); border:1.5px solid var(--border); transition:transform 0.1s, background 0.15s, color 0.15s; box-shadow:0 1px 4px rgba(0,0,0,0.04); }
-    .chip:active { transform:scale(0.93); }
-    .chip.on { background:var(--gold); color:var(--dark); border-color:var(--gold); font-weight:700; }
+/* STATS */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.stat-mini{background:var(--card);border-radius:var(--r);padding:16px;text-align:center;box-shadow:var(--shadow)}
+.stat-mini .snum{font-size:36px;font-weight:900;line-height:1}
+.stat-mini .slbl{font-size:9px;color:var(--mid);text-transform:uppercase;letter-spacing:1px;margin-top:4px;font-weight:700}
+.anim-bar{height:100%;width:0;border-radius:3px;transition:width .8s var(--ease)}
 
-    /* ── EMPTY ── */
-    .empty { text-align:center; padding:40px 20px; color:var(--muted); }
-    .empty .e { font-size:40px; margin-bottom:12px; }
+/* BOTTOM NAV */
+.bot-nav{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:20;width:calc(100% - 40px);max-width:360px}
+.bot-nav-inner{background:rgba(255,255,255,.6);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-radius:26px;border:1px solid rgba(255,255,255,.65);display:flex;padding:8px;box-shadow:0 8px 32px rgba(0,0,0,.12)}
+[data-theme="dark"] .bot-nav-inner{background:rgba(30,25,0,.75);border-color:rgba(245,166,35,.12)}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:8px 4px 6px;color:var(--mid);font-size:9px;font-weight:700;letter-spacing:.4px;border-radius:18px;transition:color .18s,transform .12s}
+.nav-btn:active{transform:scale(.88)}
+.nav-btn.on{color:var(--dark)}
+.nav-ico{width:36px;height:36px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:19px;transition:background .2s,transform .2s}
+.nav-btn.on .nav-ico{background:var(--amber);transform:scale(1.08)}
 
-    /* ── BOTTOM NAV ── */
-    .bot-nav { position:fixed; bottom:16px; left:50%; transform:translateX(-50%); z-index:20; width:calc(100% - 40px); max-width:360px; pointer-events:none; }
-    .bot-nav-inner { background:rgba(255,255,255,0.55); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); border-radius:26px; border:1px solid rgba(255,255,255,0.6); display:flex; padding:8px 8px; box-shadow:0 8px 32px rgba(0,0,0,0.12); pointer-events:all; }
-    .nav-btn { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; padding:8px 4px 6px; color:var(--muted); font-size:9px; font-weight:700; letter-spacing:0.4px; border-radius:18px; transition:color 0.18s, transform 0.12s; }
-    .nav-btn:active { transform:scale(0.88); }
-    .nav-btn.on { color:var(--dark); }
-    .ico-wrap { width:36px; height:36px; border-radius:13px; display:flex; align-items:center; justify-content:center; font-size:19px; transition:background 0.2s, transform 0.2s; }
-    .nav-btn.on .ico-wrap { background:var(--gold); transform:scale(1.08); }
+/* MODALS */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:flex-end}
+.modal-overlay.open{display:flex;animation:fadeBg .2s ease both}
+@keyframes fadeBg{from{opacity:0}to{opacity:1}}
+.modal-sheet{background:var(--card);border-radius:24px 24px 0 0;padding:22px;width:100%;box-shadow:0 -8px 32px rgba(0,0,0,.12);animation:sheetUp .3s var(--spring) both}
+@keyframes sheetUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-handle{width:36px;height:4px;background:var(--bg2);border-radius:2px;margin:0 auto 18px}
+.modal-title{font-size:17px;font-weight:800;color:var(--dark);margin-bottom:4px}
+.modal-close{font-size:22px;cursor:pointer;color:var(--mid);line-height:1}
+.modal-input{padding:13px 15px;border-radius:12px;border:1.5px solid var(--bg2);background:var(--bg);color:var(--dark);font-size:15px;font-family:inherit;outline:none;width:100%;margin-bottom:10px;transition:border-color .15s}
+.modal-input:focus{border-color:var(--amber)}
+.status-btn{padding:13px;border:1.5px solid var(--bg2);border-radius:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;text-align:left;background:var(--bg);color:var(--dark);transition:all .15s;display:block;width:100%;margin-bottom:8px}
+.status-btn:active{transform:scale(.97)}
+.status-btn.s-teal{background:rgba(38,198,176,.08);border-color:rgba(38,198,176,.3);color:#1a7a74}
+.status-btn.s-red{background:rgba(232,64,64,.06);border-color:rgba(232,64,64,.2);color:var(--red)}
+.status-btn.s-amber{background:var(--amber-lt);border-color:rgba(245,166,35,.3);color:var(--amber-dk)}
 
-    /* ── MODAL ── */
-    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:200; align-items:flex-end; }
-    .modal-sheet { background:var(--card); border-radius:24px 24px 0 0; padding:22px; width:100%; box-shadow:0 -8px 32px rgba(0,0,0,0.12); }
-    .modal-handle { width:36px; height:4px; background:var(--border); border-radius:2px; margin:0 auto 18px; }
-    .modal-title { font-size:17px; font-weight:800; margin-bottom:18px; }
-    .modal-input { padding:13px 15px; border-radius:12px; border:1.5px solid var(--border); background:var(--bg); color:var(--dark); font-size:15px; font-family:inherit; outline:none; width:100%; margin-bottom:10px; transition:border-color 0.15s; }
-    .modal-input:focus { border-color:var(--gold); }
+/* NOTIF PANEL */
+#notif-panel{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100}
+.notif-sheet{position:absolute;top:0;left:0;right:0;background:var(--card);border-radius:0 0 24px 24px;padding:18px;max-height:75vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.12)}
 
-    .loading { text-align:center; padding:40px; color:var(--muted); }
+/* BACK BTN */
+.back-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(28,28,30,.07);border:1.5px solid rgba(28,28,30,.1);border-radius:10px;padding:7px 13px;font-size:12px;font-weight:800;color:var(--dark);cursor:pointer;font-family:inherit;transition:transform .1s}
+.back-btn:active{transform:scale(.92)}
 
-    /* ── SECTIONS ── */
-    .section { display:none; }
-    .section.active { display:block; }
+/* EMPTY */
+.empty{text-align:center;padding:40px 20px;color:var(--mid)}
+.empty .e{font-size:40px;margin-bottom:12px}
 
-    /* ── BACK BUTTON ── */
-    .back-btn { display:flex; align-items:center; gap:6px; background:rgba(26,22,0,0.07); border:1.5px solid rgba(26,22,0,0.1); border-radius:10px; padding:7px 13px; font-size:12px; font-weight:800; color:var(--dark); cursor:pointer; font-family:inherit; transition:transform 0.1s; }
-    .back-btn:active { transform:scale(0.92); }
-
-    /* ── NOTIF PANEL ── */
-    #notif-panel { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:100; }
-    .notif-sheet { position:absolute; top:0; left:0; right:0; background:var(--card); border-radius:0 0 24px 24px; padding:18px; max-height:75vh; overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,0.12); }
-
-    /* ── STATS ── */
-    .anim-bar { height:100%; width:0; border-radius:3px; transition:width 0.8s cubic-bezier(.4,0,.2,1); }
-  </style>
+/* MINI BUTTON */
+.mini-btn{background:rgba(245,166,35,.18);border:1.5px solid rgba(245,166,35,.4);border-radius:10px;padding:7px 12px;font-size:11px;font-weight:800;color:var(--dark);cursor:pointer;font-family:inherit;transition:transform .1s}
+.mini-btn:active{transform:scale(.93)}
+</style>
 </head>
 <body>
 
 <!-- SPLASH -->
 <div id="splash">
-  <img class="splash-logo" src="https://perfect-youth-production-b175.up.railway.app/logo.png" onerror="this.style.opacity='0'">
-  <div class="splash-brand">BECKER</div>
-  <div class="splash-sub">Академия продаж</div>
-  <div class="splash-line"></div>
-  <div class="splash-dots">
-    <div class="splash-dot"></div>
-    <div class="splash-dot"></div>
-    <div class="splash-dot"></div>
+  <div class="sp-brand">BECKER</div>
+  <div class="sp-sub">Кабинет HR</div>
+  <div class="sp-dots">
+    <div class="sp-dot"></div><div class="sp-dot"></div><div class="sp-dot"></div>
   </div>
 </div>
 
 <!-- HEADER -->
-<div class="app-header">
-  <div class="hdr-top">
-    <div class="hdr-brand">
-      <img class="hdr-logo" src="https://perfect-youth-production-b175.up.railway.app/logo.png" onerror="this.style.display='none'">
-      <div class="hdr-brand-text">
-        <div class="name">BECKER</div>
-        <div class="sub">Академия</div>
+<div class="hdr">
+  <div class="hdr-bar">
+    <div class="hdr-logo-area">
+      <img class="hdr-logo-img" src="https://perfect-youth-production-b175.up.railway.app/logo.png" onerror="this.style.display='none'">
+      <div>
+        <div class="hdr-brand-name">BECKER</div>
+        <div class="hdr-brand-sub">Академия</div>
       </div>
     </div>
-    <div class="hdr-actions">
-      <div class="bell-btn" onclick="toggleNotifs()">
-        🔔
-        <span id="bell-badge"></span>
-      </div>
-      <div class="hr-avatar" id="hdr-avatar">
-        <img id="hdr-avatar-img" src="" onerror="this.style.display='none'">
-        <span id="hdr-avatar-init"></span>
+    <div class="hdr-controls">
+      <button class="hdr-ico-btn" id="theme-btn" onclick="toggleTheme()">🌙</button>
+      <button class="hdr-ico-btn rpl" onclick="toggleNotifs()">
+        🔔<span class="bell-badge" id="bell-badge"></span>
+      </button>
+      <div class="hdr-avatar" id="hdr-avatar">
+        <img id="hdr-av-img" src="" onerror="this.style.display='none'">
+        <span id="hdr-av-init"></span>
       </div>
     </div>
   </div>
-  <div class="hdr-title" id="hdr-title">Кабинет HR</div>
-  <div class="hdr-subtitle" id="hdr-sub">кадры · собеседования · аналитика</div>
-</div>
-
-<!-- HR PROFILE STRIP -->
-<div class="hr-profile-strip" id="hr-strip">
-  <img class="hr-profile-photo" id="strip-photo" src="" onerror="this.style.display='none';document.getElementById('strip-fallback').style.display='flex'">
-  <div class="hr-profile-fallback" id="strip-fallback"></div>
-  <div class="hr-profile-info">
-    <div class="pname" id="strip-name">— <span class="hr-online"></span></div>
-    <div class="prole" id="strip-role">—</div>
+  <div class="hdr-body">
+    <div class="hdr-title" id="hdr-title">Кабинет HR</div>
+    <div class="hdr-sub" id="hdr-sub">кадры · собеседования · аналитика</div>
   </div>
 </div>
 
-<!-- PULSE CARD (always visible) -->
+<!-- HR STRIP -->
+<div class="hr-strip">
+  <img class="hr-strip-photo" id="strip-photo" src="" onerror="this.style.display='none';document.getElementById('strip-fb').style.display='flex'">
+  <div class="hr-strip-fb" id="strip-fb" style="display:none"></div>
+  <div>
+    <div class="hr-strip-name" id="strip-name">— <span class="hr-online"></span></div>
+    <div class="hr-strip-role" id="strip-role">—</div>
+  </div>
+</div>
+
+<!-- PULSE CARD -->
 <div class="pulse-card">
-  <div class="pulse-label">Пульс · этот месяц</div>
+  <div class="pulse-label">Пульс · сводка</div>
   <div class="pulse-stats">
-    <div class="pulse-stat">
-      <div class="num" style="color:var(--teal)" id="s-today">—</div>
-      <div class="lbl">Сегодня</div>
-    </div>
-    <div class="pulse-stat">
-      <div class="num" style="color:var(--red)" id="s-week">—</div>
-      <div class="lbl">Неделя</div>
-    </div>
-    <div class="pulse-stat">
-      <div class="num" style="color:var(--gold)" id="s-conv">—</div>
-      <div class="lbl">Конверсия</div>
-    </div>
+    <div class="pulse-stat"><div class="pnum" style="color:var(--teal)" id="s-today">—</div><div class="plbl">Сегодня</div></div>
+    <div class="pulse-stat"><div class="pnum" style="color:var(--amber)" id="s-week">—</div><div class="plbl">Неделя</div></div>
+    <div class="pulse-stat"><div class="pnum" style="color:var(--amber)" id="s-conv">—</div><div class="plbl">Конверсия</div></div>
   </div>
   <svg class="pulse-ekg" viewBox="0 0 260 32" xmlns="http://www.w3.org/2000/svg">
     <polyline class="ekg-line" points="0,16 30,16 42,16 50,3 56,29 62,3 68,16 80,16 100,16 108,16 116,9 120,23 124,9 128,16 140,16 180,16 188,10 192,22 196,10 200,16 260,16"
-      fill="none" stroke="#e84040" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+      fill="none" stroke="#F5A623" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
   </svg>
 </div>
 
-<!-- NOTIFICATIONS PANEL -->
+<!-- NOTIF PANEL -->
 <div id="notif-panel" onclick="closeNotifs(event)">
   <div class="notif-sheet" onclick="event.stopPropagation()">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <div style="font-size:16px;font-weight:800">🔔 Уведомления</div>
-      <div onclick="closeNotifs(null)" style="font-size:22px;cursor:pointer;color:var(--muted);line-height:1">✕</div>
+      <div style="font-size:16px;font-weight:800;color:var(--dark)">🔔 Уведомления</div>
+      <div class="modal-close" onclick="closeNotifs(null)">✕</div>
     </div>
-    <div id="notif-list"><div class="loading">Загружаю...</div></div>
+    <div id="notif-list"><div style="text-align:center;padding:24px;color:var(--mid)">Загружаю...</div></div>
   </div>
 </div>
 
-<!-- TODAY -->
-<div class="section active" id="sec-today">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 14px 8px">
-    <div style="display:flex;align-items:center;gap:10px">
-      <div class="sec-line"></div><div class="sec-text">Сегодня</div>
-    </div>
-    <div style="display:flex;gap:8px">
-      <button onclick="openManualEntry()" style="background:rgba(251,193,72,0.18);border:1.5px solid rgba(251,193,72,0.4);border-radius:10px;padding:7px 12px;font-size:11px;font-weight:800;color:var(--dark);cursor:pointer;font-family:inherit;transition:transform 0.1s" onmousedown="this.style.transform='scale(0.93)'" onmouseup="this.style.transform='scale(1)'">+ Запись</button>
-      <button onclick="nav('slots',null)" style="background:rgba(26,22,0,0.07);border:1.5px solid rgba(26,22,0,0.1);border-radius:10px;padding:7px 12px;font-size:11px;font-weight:800;color:var(--dark);cursor:pointer;font-family:inherit;transition:transform 0.1s" onmousedown="this.style.transform='scale(0.93)'" onmouseup="this.style.transform='scale(1)'">📅 Расписание</button>
+<!-- ══ СЕГОДНЯ ══ -->
+<div class="sec-wrap active" id="sec-today">
+  <div class="sec-lbl">
+    Сегодня
+    <div class="sec-lbl-right">
+      <button class="mini-btn rpl" onclick="openManualEntry()">+ Запись</button>
+      <button class="back-btn" onclick="navToSlots()">📅 Расписание</button>
     </div>
   </div>
   <div style="padding:0 14px">
-    <div id="reminder-block" style="display:none;background:rgba(251,193,72,0.12);border:1.5px solid rgba(251,193,72,0.4);border-radius:14px;padding:14px;margin-bottom:12px">
-      <div style="font-size:12px;font-weight:800;color:var(--dark);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px">📝 Нужно написать</div>
+    <div class="reminder-block" id="reminder-block">
+      <div class="reminder-title">📝 Нужно написать</div>
       <div id="reminder-list"></div>
     </div>
-    <div id="today-list"><div class="loading">⏳</div></div>
+    <div id="today-list" class="stagger"><div style="text-align:center;padding:28px;color:var(--mid)">⏳</div></div>
   </div>
 </div>
 
-<!-- SLOTS -->
-<div class="section" id="sec-slots">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 14px 8px">
-    <button class="back-btn" onclick="navBack()" onmousedown="this.style.transform='scale(0.92)'" onmouseup="this.style.transform='scale(1)'">← Назад</button>
-    <div style="display:flex;align-items:center;gap:8px">
-      <div style="font-size:13px;font-weight:800;color:var(--dark)">📅 Расписание</div>
-      <button onclick="openManualEntry()" style="background:var(--gold);color:var(--dark);border:none;border-radius:12px;padding:9px 14px;font-size:12px;font-weight:800;cursor:pointer;transition:transform 0.1s;font-family:inherit;" onmousedown="this.style.transform='scale(0.93)'" onmouseup="this.style.transform='scale(1)'">+ Запись</button>
+<!-- ══ РАСПИСАНИЕ ══ -->
+<div class="sec-wrap" id="sec-slots">
+  <div class="sec-lbl">
+    <button class="back-btn" onclick="navBack()">← Назад</button>
+    Расписание
+    <div class="sec-lbl-right">
+      <button class="mini-btn rpl" onclick="openManualEntry()">+ Запись</button>
     </div>
   </div>
+  <div id="slots-wrap"><div style="text-align:center;padding:28px;color:var(--mid)">⏳</div></div>
+  <button class="save-btn rpl" onclick="saveSlots()">💾 Сохранить расписание</button>
+</div>
+
+<!-- ══ КАНДИДАТЫ ══ -->
+<div class="sec-wrap" id="sec-cands">
+  <div class="sec-lbl">Кандидаты</div>
+  <div class="search-wrap">
+    <input id="cand-search" class="search-inp" placeholder="🔍  Поиск по имени, телефону, @никнейму..." oninput="renderCandidatesFull()">
+  </div>
+  <div class="filter-label">Период</div>
+  <div class="filter-row" id="week-filters">
+    <div class="chip on" onclick="setWeekFilter(this,'all')">Все</div>
+    <div class="chip"    onclick="setWeekFilter(this,'this_week')">Эта неделя</div>
+    <div class="chip"    onclick="setWeekFilter(this,'next_week')">Следующая</div>
+    <div class="chip"    onclick="setWeekFilter(this,'past')">Прошедшие</div>
+  </div>
+  <div class="filter-label">Специализация</div>
+  <div class="filter-row" id="spec-filters">
+    <div class="chip on" onclick="setSpecFilter(this,'all')">Все</div>
+    <div class="chip"    onclick="setSpecFilter(this,'sales')">💼 Продажи</div>
+    <div class="chip"    onclick="setSpecFilter(this,'admin')">🗂 Администраторы</div>
+    <div class="chip"    onclick="setSpecFilter(this,'design')">📐 Конструкторы</div>
+    <div class="chip"    onclick="setSpecFilter(this,'other')">✦ Другое</div>
+  </div>
+  <div class="filter-label">Статус</div>
+  <div class="filter-row" id="status-filters">
+    <div class="chip on" onclick="setStatusFilter(this,'all')">Все</div>
+    <div class="chip"    onclick="setStatusFilter(this,'scheduled')">📅 Записаны</div>
+    <div class="chip"    onclick="setStatusFilter(this,'approved_pending')">✅ Приняты</div>
+    <div class="chip"    onclick="setStatusFilter(this,'no_show')">👻 Не пришли</div>
+    <div class="chip"    onclick="setStatusFilter(this,'rejected_pending')">❌ Отказы</div>
+  </div>
+  <div id="cands-list" style="padding:0 14px" class="stagger"><div style="text-align:center;padding:28px;color:var(--mid)">⏳</div></div>
+</div>
+
+<!-- ══ СТАТИСТИКА ══ -->
+<div class="sec-wrap" id="sec-stats">
+  <div class="sec-lbl">Статистика</div>
   <div style="padding:0 14px">
-    <div id="slots-wrap"><div class="loading">⏳</div></div>
-    <button class="save-btn" onclick="saveSlots()">💾 Сохранить расписание</button>
-  </div>
-</div>
-
-<!-- CANDIDATE STATUS MODAL -->
-<div id="cand-modal" class="modal-overlay" onclick="closeCandModal(event)">
-  <div class="modal-sheet" onclick="event.stopPropagation()">
-    <div class="modal-handle"></div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-      <div class="modal-title" id="cm-name">—</div>
-      <div onclick="closeCandModal(null)" style="font-size:22px;cursor:pointer;color:var(--muted);line-height:1">✕</div>
-    </div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:4px" id="cm-meta">—</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:18px" id="cm-contact">—</div>
-
-    <div style="font-size:11px;font-weight:800;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Отметить результат</div>
-    <div style="display:grid;gap:8px">
-      <button onclick="setStatus('no_show')" style="padding:13px;background:rgba(0,0,0,0.04);border:1.5px solid var(--border);border-radius:13px;font-size:14px;font-weight:700;cursor:pointer;transition:transform 0.1s;font-family:inherit;text-align:left;color:var(--dark)" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
-        👻&nbsp;&nbsp;Не пришёл(а)
-      </button>
-      <button onclick="setStatus('approved_pending')" style="padding:13px;background:rgba(78,205,196,0.08);border:1.5px solid rgba(78,205,196,0.3);border-radius:13px;font-size:14px;font-weight:700;cursor:pointer;transition:transform 0.1s;font-family:inherit;text-align:left;color:#1a7a74" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
-        ✅&nbsp;&nbsp;Принят(а) — написать оффер
-      </button>
-      <button onclick="setStatus('rejected_pending')" style="padding:13px;background:rgba(232,64,64,0.06);border:1.5px solid rgba(232,64,64,0.2);border-radius:13px;font-size:14px;font-weight:700;cursor:pointer;transition:transform 0.1s;font-family:inherit;text-align:left;color:var(--red)" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
-        ❌&nbsp;&nbsp;Отказ
-      </button>
-      <button onclick="setStatus('scheduled')" style="padding:13px;background:rgba(251,193,72,0.1);border:1.5px solid rgba(251,193,72,0.3);border-radius:13px;font-size:14px;font-weight:700;cursor:pointer;transition:transform 0.1s;font-family:inherit;text-align:left;color:#8a5e00" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
-        📅&nbsp;&nbsp;Записан(а) — сбросить статус
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- MANUAL ENTRY MODAL -->
-<div id="manual-modal" class="modal-overlay" onclick="closeManual(event)">
-  <div class="modal-sheet" onclick="event.stopPropagation()">
-    <div class="modal-handle"></div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
-      <div class="modal-title">✏️ Добавить собеседование</div>
-      <div onclick="closeManual(null)" style="font-size:22px;cursor:pointer;color:var(--muted);line-height:1">✕</div>
-    </div>
-    <input id="m-name"  class="modal-input" placeholder="Имя и фамилия *">
-    <input id="m-phone" class="modal-input" placeholder="Телефон">
-    <select id="m-spec" class="modal-input" style="-webkit-appearance:none" onchange="onSpecChange(this)">
-      <option value="">Загружаю...</option>
-    </select>
-    <div id="new-spec-row" style="display:none;gap:8px;margin-top:-4px;margin-bottom:10px">
-      <input id="m-newspec" class="modal-input" placeholder="Название специализации" style="margin-bottom:0;flex:1">
-      <button onclick="addNewSpec()" style="padding:13px 14px;background:var(--gold);border:none;border-radius:12px;font-weight:800;cursor:pointer;font-size:13px;font-family:inherit;white-space:nowrap;transition:transform 0.1s" onmousedown="this.style.transform='scale(0.93)'" onmouseup="this.style.transform='scale(1)'">+ Добавить</button>
-    </div>
-    <input id="m-date" type="date" class="modal-input">
-    <select id="m-time" class="modal-input" style="-webkit-appearance:none">
-      <option value="">Выбери время</option>
-      <option value="09:00">09:00</option><option value="10:00">10:00</option>
-      <option value="11:00">11:00</option><option value="12:00">12:00</option>
-      <option value="13:00">13:00</option><option value="14:00">14:00</option>
-      <option value="15:00">15:00</option><option value="16:00">16:00</option>
-      <option value="17:00">17:00</option><option value="17:30">17:30</option>
-      <option value="18:00">18:00</option>
-    </select>
-    <button onclick="submitManual()" style="width:100%;margin-top:8px;padding:15px;background:var(--gold);color:var(--dark);border:none;border-radius:14px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;transition:transform 0.1s;" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">Сохранить</button>
-  </div>
-</div>
-
-<!-- CANDIDATES -->
-<div class="section" id="sec-cands">
-  <div class="sec-head"><div class="sec-line"></div><div class="sec-text">Кандидаты</div></div>
-  <div style="padding:0 14px">
-
-    <input id="cand-search" class="modal-input" placeholder="🔍  Поиск по имени, телефону, @юзернейму..." oninput="renderCandidatesFull()" style="margin-bottom:14px;background:var(--card)">
-
-    <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Период</div>
-    <div class="filter-row" id="week-filters">
-      <div class="chip on"  onclick="setWeekFilter(this,'all')">Все</div>
-      <div class="chip"     onclick="setWeekFilter(this,'this_week')">Эта неделя</div>
-      <div class="chip"     onclick="setWeekFilter(this,'next_week')">Следующая</div>
-      <div class="chip"     onclick="setWeekFilter(this,'past')">Прошедшие</div>
-    </div>
-
-    <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin:10px 0 6px">Специализация</div>
-    <div class="filter-row" id="spec-filters">
-      <div class="chip on"  onclick="setSpecFilter(this,'all')">Все</div>
-      <div class="chip"     onclick="setSpecFilter(this,'sales')">💼 Продажи</div>
-      <div class="chip"     onclick="setSpecFilter(this,'admin')">🗂 Администраторы</div>
-      <div class="chip"     onclick="setSpecFilter(this,'design')">📐 Конструкторы</div>
-      <div class="chip"     onclick="setSpecFilter(this,'other')">✦ Другое</div>
-    </div>
-
-    <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin:10px 0 6px">Статус</div>
-    <div class="filter-row" id="status-filters">
-      <div class="chip on"  onclick="setStatusFilter(this,'all')">Все</div>
-      <div class="chip"     onclick="setStatusFilter(this,'scheduled')">📅 Записаны</div>
-      <div class="chip"     onclick="setStatusFilter(this,'approved_pending')">✅ Приняты</div>
-      <div class="chip"     onclick="setStatusFilter(this,'no_show')">👻 Не пришли</div>
-      <div class="chip"     onclick="setStatusFilter(this,'rejected_pending')">❌ Отказы</div>
-    </div>
-
-    <div id="cands-list"><div class="loading">⏳</div></div>
-  </div>
-</div>
-
-<!-- STATS -->
-<div class="section" id="sec-stats">
-  <div class="sec-head"><div class="sec-line"></div><div class="sec-text">Статистика</div></div>
-  <div style="padding:0 14px">
-    <div id="stats-wrap"><div class="loading">⏳</div></div>
-    <div style="margin-top:24px;padding-top:18px;border-top:1.5px solid var(--border)">
-      <div style="font-size:10px;font-weight:800;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:10px">Резервная копия данных</div>
-      <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px">Скачай файл с данными всех кандидатов перед обновлением приложения, чтобы ничего не потерялось.</div>
-      <button onclick="exportData()" style="width:100%;padding:13px;background:var(--dark);color:var(--gold);border:none;border-radius:13px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;transition:transform 0.1s;display:flex;align-items:center;justify-content:center;gap:8px" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">💾&nbsp; Скачать резервную копию</button>
+    <div id="stats-wrap"><div style="text-align:center;padding:28px;color:var(--mid)">⏳</div></div>
+    <div style="margin-top:24px;padding-top:18px;border-top:1.5px solid var(--bg2)">
+      <div class="filter-label" style="margin:0 0 6px">Резервная копия</div>
+      <div style="font-size:12px;color:var(--mid);line-height:1.5;margin-bottom:12px">Скачай данные всех кандидатов перед обновлением приложения.</div>
+      <button onclick="exportData()" class="save-btn rpl" style="margin:0;width:100%;background:var(--dark);color:var(--amber);display:flex;align-items:center;justify-content:center;gap:8px">💾 Скачать резервную копию</button>
     </div>
   </div>
 </div>
@@ -412,235 +356,289 @@
 <!-- BOTTOM NAV -->
 <div class="bot-nav">
   <div class="bot-nav-inner">
-    <div class="nav-btn on" onclick="nav('today',this)">
-      <div class="ico-wrap">📋</div>Сегодня
+    <div class="nav-btn on" onclick="navTo('today',this)"><div class="nav-ico">📋</div>Сегодня</div>
+    <div class="nav-btn"    onclick="navTo('cands',this)"><div class="nav-ico">👥</div>Кандидаты</div>
+    <div class="nav-btn"    onclick="navTo('stats',this)"><div class="nav-ico">📊</div>Статистика</div>
+  </div>
+</div>
+
+<!-- MODAL: СТАТУС -->
+<div id="cand-modal" class="modal-overlay" onclick="closeCandModal(event)">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <div class="modal-title" id="cm-name">—</div>
+      <div class="modal-close" onclick="closeCandModal(null)">✕</div>
     </div>
-    <div class="nav-btn" onclick="nav('cands',this)">
-      <div class="ico-wrap">👥</div>Кандидаты
+    <div style="font-size:13px;color:var(--mid);margin-bottom:4px" id="cm-meta">—</div>
+    <div style="font-size:12px;color:var(--mid);margin-bottom:18px" id="cm-contact">—</div>
+    <div class="filter-label" style="margin:0 0 10px">Отметить результат</div>
+    <button onclick="setStatus('no_show')"          class="status-btn">👻 Не пришёл(а)</button>
+    <button onclick="setStatus('approved_pending')" class="status-btn s-teal">✅ Принят(а) — написать оффер</button>
+    <button onclick="setStatus('rejected_pending')" class="status-btn s-red">❌ Отказ</button>
+    <button onclick="setStatus('scheduled')"        class="status-btn s-amber">📅 Записан(а) — сбросить статус</button>
+  </div>
+</div>
+
+<!-- MODAL: РУЧНАЯ ЗАПИСЬ -->
+<div id="manual-modal" class="modal-overlay" onclick="closeManual(event)">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div class="modal-title">✏️ Добавить собеседование</div>
+      <div class="modal-close" onclick="closeManual(null)">✕</div>
     </div>
-    <div class="nav-btn" onclick="nav('stats',this)">
-      <div class="ico-wrap">📊</div>Статистика
+    <input id="m-name"  class="modal-input" placeholder="Имя и фамилия *">
+    <input id="m-phone" class="modal-input" placeholder="Телефон">
+    <select id="m-spec" class="modal-input" style="-webkit-appearance:none" onchange="onSpecChange(this)">
+      <option value="">Загружаю...</option>
+    </select>
+    <div id="new-spec-row" style="display:none;flex-direction:row;gap:8px;margin:-4px 0 10px">
+      <input id="m-newspec" class="modal-input" placeholder="Название специализации" style="margin-bottom:0;flex:1">
+      <button onclick="addNewSpec()" class="mini-btn rpl" style="padding:13px 14px;font-size:13px;border-radius:12px;font-weight:800">+ Добавить</button>
     </div>
+    <input id="m-date" type="date" class="modal-input">
+    <select id="m-time" class="modal-input" style="-webkit-appearance:none">
+      <option value="">Выбери время</option>
+      <option>11:00</option><option>11:30</option>
+      <option>12:00</option><option>12:30</option>
+      <option>13:00</option><option>13:30</option>
+      <option>14:00</option><option>14:30</option>
+      <option>15:00</option><option>15:30</option>
+      <option>16:00</option><option>16:30</option>
+      <option>17:00</option><option>17:30</option>
+    </select>
+    <button onclick="submitManual()" class="save-btn rpl" style="margin:8px 0 0">Сохранить</button>
   </div>
 </div>
 
 <script>
-const tg = window.Telegram.WebApp;
-tg.expand();
-tg.setHeaderColor    && tg.setHeaderColor('#FBC148');
-tg.setBackgroundColor && tg.setBackgroundColor('#f5f2ea');
-
-const HR_ID = tg.initDataUnsafe?.user?.id || 0;
+// ─── INIT ─────────────────────────────────────────────────────────────
+const tg = window.Telegram?.WebApp;
+if (tg) { tg.expand(); tg.setHeaderColor?.('#F5A623'); tg.setBackgroundColor?.('#F0E8D8'); }
+const _alert = (msg) => tg ? tg.showAlert(msg) : alert(msg);
+const HR_ID = tg?.initDataUnsafe?.user?.id || 0;
 
 const HR_PROFILES = {
-  859413090: { name:"Софья Трофименко", short:"Софья", avatar:"./sonya.jpg", initial:"С", role:"HR · офисные продажи" },
-  474244647: { name:"Юлия Лукоянова",  short:"Юлия",  avatar:"./yulia.jpg", initial:"Ю", role:"HR · разъездные продажи" },
+  859413090: { name:"Софья Трофименко", short:"Софья", photo:"./sonya.jpg", initial:"С", role:"HR · офисные продажи" },
+  474244647: { name:"Юлия Лукоянова",  short:"Юлия",  photo:"./yulia.jpg", initial:"Ю", role:"HR · разъездные продажи" },
 };
-const me = HR_PROFILES[HR_ID] || { name:"HR", short:"HR", avatar:null, initial:"H", role:"Панель HR" };
+const me = HR_PROFILES[HR_ID] || { name:"HR", short:"HR", photo:null, initial:"H", role:"Панель HR" };
 
-// Setup header avatar (small circle)
-const avatarImg  = document.getElementById('hdr-avatar-img');
-const avatarInit = document.getElementById('hdr-avatar-init');
-avatarInit.textContent = me.initial;
-if (me.avatar) {
-  avatarImg.style.display = 'block';
-  avatarImg.src = me.avatar;
-  avatarImg.onload  = () => { avatarInit.style.display = 'none'; };
-  avatarImg.onerror = () => { avatarImg.style.display = 'none'; avatarInit.style.display = 'flex'; };
+// ─── THEME ────────────────────────────────────────────────────────────
+const _savedTheme = localStorage.getItem('becker_theme') || 'light';
+if (_savedTheme === 'dark') document.documentElement.dataset.theme = 'dark';
+document.getElementById('theme-btn').textContent = _savedTheme === 'dark' ? '☀️' : '🌙';
+function toggleTheme() {
+  const isDark = document.documentElement.dataset.theme === 'dark';
+  document.documentElement.dataset.theme = isDark ? '' : 'dark';
+  localStorage.setItem('becker_theme', isDark ? 'light' : 'dark');
+  document.getElementById('theme-btn').textContent = isDark ? '🌙' : '☀️';
 }
 
-// Setup profile strip (large photo below header)
-const stripPhoto    = document.getElementById('strip-photo');
-const stripFallback = document.getElementById('strip-fallback');
+// ─── AVATAR ───────────────────────────────────────────────────────────
+document.getElementById('hdr-av-init').textContent = me.initial;
+if (me.photo) {
+  const img = document.getElementById('hdr-av-img');
+  img.src = me.photo;
+  img.onload  = () => { img.style.display='block'; document.getElementById('hdr-av-init').style.display='none'; };
+  img.onerror = () => {};
+}
+const stripPhoto = document.getElementById('strip-photo');
+const stripFb    = document.getElementById('strip-fb');
 document.getElementById('strip-name').innerHTML = me.name + ' <span class="hr-online"></span>';
 document.getElementById('strip-role').textContent = me.role;
-stripFallback.textContent = me.initial;
-if (me.avatar) {
-  stripPhoto.src = me.avatar;
-  stripPhoto.onload  = () => { stripPhoto.style.display = 'block'; stripFallback.style.display = 'none'; };
-  stripPhoto.onerror = () => { stripPhoto.style.display = 'none'; stripFallback.style.display = 'flex'; };
+stripFb.textContent = me.initial;
+if (me.photo) {
+  stripPhoto.src    = me.photo;
+  stripPhoto.onload  = () => { stripPhoto.style.display='block'; stripFb.style.display='none'; };
+  stripPhoto.onerror = () => { stripPhoto.style.display='none'; stripFb.style.display='flex'; };
 } else {
-  stripFallback.style.display = 'flex';
+  stripFb.style.display = 'flex';
 }
+document.getElementById('hdr-title').textContent = 'Кабинет — ' + me.short;
 
-document.getElementById('hdr-title').textContent = 'Кабинет HR — ' + me.short;
-
-const TODAY = (() => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-})();
-const DEFAULT_SLOTS = ["11:00","12:00","13:00","14:00","15:00","16:00","17:00","17:30"];
+// ─── CONSTANTS ────────────────────────────────────────────────────────
+const DEFAULT_SLOTS = [
+  "11:00","11:30","12:00","12:30","13:00","13:30",
+  "14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30"
+];
 const MONTHS = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
 const DAYS   = ['вс','пн','вт','ср','чт','пт','сб'];
-let candidates = [], mySlots = {};
+const TODAY  = (() => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })();
 
-// Splash — minimum 2.5s + data must be loaded
-let _splashMinDone = false;
-let _dataLoaded    = false;
-setTimeout(() => { _splashMinDone = true; if (_dataLoaded) _doHideSplash(); }, 2500);
+// ─── STATE ────────────────────────────────────────────────────────────
+let candidates = [], mySlots = {}, _candMap = {};
 
-function hideSplash() { _dataLoaded = true; if (_splashMinDone) _doHideSplash(); }
-function _doHideSplash() {
+// ─── RIPPLE ───────────────────────────────────────────────────────────
+document.addEventListener('click', e => {
+  const el = e.target.closest('.rpl');
+  if (!el) return;
+  const r = el.getBoundingClientRect();
+  el.style.setProperty('--rx', (e.clientX - r.left) + 'px');
+  el.style.setProperty('--ry', (e.clientY - r.top)  + 'px');
+  el.classList.remove('rippling'); void el.offsetWidth; el.classList.add('rippling');
+  setTimeout(() => el.classList.remove('rippling'), 600);
+});
+
+// ─── SPLASH ───────────────────────────────────────────────────────────
+let _minDone = false, _dataLoaded = false;
+setTimeout(() => { _minDone = true; if (_dataLoaded) _doHide(); }, 2200);
+function hideSplash() { _dataLoaded = true; if (_minDone) _doHide(); }
+function _doHide() {
   const s = document.getElementById('splash');
   if (!s) return;
-  s.classList.add('hidden');
-  setTimeout(() => {
-    if (s.parentNode) s.remove();
-    _postSplashAnimate();
-  }, 650);
+  s.classList.add('out');
+  setTimeout(() => { s.remove(); _restartEkg(); setTimeout(renderPulse, 100); }, 550);
 }
-
 function _restartEkg() {
-  // Most reliable way: clone the element to fully reset all animation state
-  const ekg = document.querySelector('.ekg-line');
-  if (!ekg) return;
-  const clone = ekg.cloneNode(true);
-  ekg.parentNode.replaceChild(clone, ekg);
+  const el = document.querySelector('.ekg-line');
+  if (!el) return;
+  const c = el.cloneNode(true);
+  el.parentNode.replaceChild(c, el);
 }
 
-function _postSplashAnimate() {
-  // Restart EKG by replacing element (resets CSS animation from scratch)
-  _restartEkg();
-  // Re-trigger pulse count-up so numbers animate visibly after splash
-  setTimeout(() => renderPulse(), 100);
-  // Animate currently visible cards with stagger
-  setTimeout(() => {
-    document.querySelectorAll('.section.active .card').forEach((c, i) => {
-      c.style.animation = 'none';
-      void c.getBoundingClientRect();
-      c.style.animation = `cardIn 0.32s ease ${i * 60}ms both`;
-    });
-  }, 150);
-}
-
-// Count-up animation for a number element
-function animateCount(el, target, duration=700) {
+// ─── COUNT-UP ─────────────────────────────────────────────────────────
+function animateCount(el, target, dur=700) {
   if (typeof target !== 'number') { el.textContent = target; return; }
-  const start = performance.now();
-  function step(now) {
-    const p = Math.min((now - start) / duration, 1);
-    const ease = 1 - Math.pow(1 - p, 3);
-    el.textContent = Math.round(ease * target);
+  const t0 = performance.now();
+  (function step(now) {
+    const p = Math.min((now - t0) / dur, 1);
+    el.textContent = Math.round((1 - Math.pow(1-p, 3)) * target);
     if (p < 1) requestAnimationFrame(step);
-  }
-  requestAnimationFrame(step);
+  })(t0);
 }
 
-let _prevSection = 'today';
-function nav(name, el) {
-  const cur = document.querySelector('.section.active');
-  if (cur && cur.id !== 'sec-'+name) _prevSection = cur.id.replace('sec-','');
-  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
+// ─── NAV ──────────────────────────────────────────────────────────────
+let _prev = 'today';
+function navTo(name, el) {
+  const cur = document.querySelector('.sec-wrap.active');
+  if (cur) _prev = cur.id.replace('sec-','');
+  document.querySelectorAll('.sec-wrap').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('on'));
   document.getElementById('sec-'+name).classList.add('active');
   if (el) el.classList.add('on');
-  // animate cards in newly visible section
-  setTimeout(() => {
-    document.querySelectorAll('#sec-'+name+' .card').forEach((c, i) => {
-      c.style.animation = 'none';
-      void c.getBoundingClientRect();
-      c.style.animation = `cardIn 0.32s ease ${i * 55}ms both`;
-    });
-  }, 30);
+  window.scrollTo({top:0, behavior:'smooth'});
 }
-function navBack() { nav(_prevSection, document.querySelector(`.nav-btn[onclick*="${_prevSection}"]`)); }
+function navToSlots() {
+  const cur = document.querySelector('.sec-wrap.active');
+  if (cur) _prev = cur.id.replace('sec-','');
+  document.querySelectorAll('.sec-wrap').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('on'));
+  document.getElementById('sec-slots').classList.add('active');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function navBack() {
+  const navEl = document.querySelector(`.nav-btn[onclick*="${_prev}"]`);
+  navTo(_prev, navEl);
+}
 
 function fmtDate(s) {
-  const d = new Date(s+'T00:00:00');
+  const d = new Date(s+'T12:00:00');
   return `${d.getDate()} ${MONTHS[d.getMonth()]}, ${DAYS[d.getDay()]}`;
 }
 
+// ─── STATUS ───────────────────────────────────────────────────────────
 const STATUS_MAP = {
-  scheduled:        {lbl:'📅 Записан',    color:'#8a5e00', bg:'rgba(251,193,72,0.15)'},
-  approved_pending: {lbl:'✅ Принят',      color:'#1a7a74', bg:'rgba(78,205,196,0.12)'},
-  approved:         {lbl:'✅ Принят',      color:'#1a7a74', bg:'rgba(78,205,196,0.12)'},
-  rejected_pending: {lbl:'❌ Отказ',       color:'#c0392b', bg:'rgba(232,64,64,0.1)' },
-  rejected:         {lbl:'❌ Отказ',       color:'#c0392b', bg:'rgba(232,64,64,0.1)' },
-  no_show:          {lbl:'👻 Не пришёл',   color:'#888',    bg:'rgba(0,0,0,0.06)'    },
+  scheduled:        {lbl:'📅 Записан',   color:'#8a5e00', bg:'rgba(245,166,35,0.15)'},
+  approved_pending: {lbl:'✅ Принят',     color:'#1a7a74', bg:'rgba(38,198,176,0.12)'},
+  approved:         {lbl:'✅ Принят',     color:'#1a7a74', bg:'rgba(38,198,176,0.12)'},
+  rejected_pending: {lbl:'❌ Отказ',      color:'#c0392b', bg:'rgba(232,64,64,0.1)'},
+  rejected:         {lbl:'❌ Отказ',      color:'#c0392b', bg:'rgba(232,64,64,0.1)'},
+  no_show:          {lbl:'👻 Не пришёл', color:'#888',    bg:'rgba(0,0,0,0.06)'},
 };
 function badge(st) {
-  const s = STATUS_MAP[st] || {lbl:st, color:'#888', bg:'rgba(0,0,0,0.06)'};
+  const s = STATUS_MAP[st] || {lbl:st, color:'var(--mid)', bg:'rgba(0,0,0,0.06)'};
   return `<span class="badge" style="background:${s.bg};color:${s.color}">${s.lbl}</span>`;
 }
 function cardBorder(st) {
-  if (['approved','approved_pending'].includes(st)) return 'teal-l';
-  if (['rejected','rejected_pending','no_show'].includes(st)) return 'red-l';
-  return 'gold-l';
+  if (['approved','approved_pending'].includes(st)) return 'b-teal';
+  if (['rejected','rejected_pending','no_show'].includes(st)) return 'b-red';
+  return 'b-amber';
 }
 
+// ─── LOAD ALL ─────────────────────────────────────────────────────────
 async function loadAll() {
   try {
-    const [r1,r2,r3] = await Promise.all([
+    const [r1,r2,r3] = await Promise.allSettled([
       fetch(`/api/candidates?hr_id=${HR_ID}`),
       fetch(`/api/my-slots?hr_id=${HR_ID}`),
-      fetch(`/api/notifications?hr_id=${HR_ID}`)
+      fetch(`/api/notifications?hr_id=${HR_ID}`),
     ]);
-    candidates = await r1.json();
-    mySlots    = await r2.json();
-    const notifs = await r3.json();
-    renderReminders();
-    renderToday();
-    renderSlots();
-    renderCandidates('all');
-    renderStats();
-    renderNotifBadge(notifs);
-    renderNotifList(notifs);
-    const todayCnt = candidates.filter(c=>c.interview_date===TODAY&&c.status==='scheduled').length;
+    if (r1.status==='fulfilled' && r1.value.ok) candidates = await r1.value.json();
+    if (r2.status==='fulfilled' && r2.value.ok) mySlots    = await r2.value.json();
+    const notifs = (r3.status==='fulfilled' && r3.value.ok) ? await r3.value.json() : [];
+
+    _candMap = {};
+    candidates.forEach(c => { if (c._key) _candMap[c._key] = c; });
+
+    renderReminders(); renderToday(); renderSlots();
+    renderCandidatesFull(); renderStats();
+    const safeNotifs = Array.isArray(notifs) ? notifs : [];
+    renderNotifBadge(safeNotifs); renderNotifList(safeNotifs);
+
+    const todayCnt = candidates.filter(c => c.interview_date===TODAY && c.status==='scheduled').length;
     document.getElementById('hdr-sub').textContent = todayCnt ? `${todayCnt} собеседований сегодня` : me.role;
-  } catch(e) { console.error(e); }
+  } catch(e) { console.error('loadAll:', e); }
   setTimeout(hideSplash, 400);
 }
 
+// ─── PULSE ────────────────────────────────────────────────────────────
 function renderPulse() {
-  const todayCnt = candidates.filter(c=>c.interview_date===TODAY&&c.status==='scheduled').length;
-  const we = new Date(TODAY+'T00:00:00'); we.setDate(we.getDate()+7);
-  const weekCnt  = candidates.filter(c=>{
-    const d=new Date(c.interview_date+'T00:00:00');
-    return d>=new Date(TODAY+'T00:00:00')&&d<=we&&c.status==='scheduled';
+  const todayCnt = candidates.filter(c => c.interview_date===TODAY && c.status==='scheduled').length;
+  const wEnd = new Date(TODAY+'T12:00:00'); wEnd.setDate(wEnd.getDate()+7);
+  const weekCnt  = candidates.filter(c => {
+    const d = new Date(c.interview_date+'T12:00:00');
+    return d >= new Date(TODAY+'T12:00:00') && d <= wEnd && c.status==='scheduled';
   }).length;
-  const came    = candidates.filter(c=>['approved','approved_pending','rejected','rejected_pending'].includes(c.status)).length;
-  const approved= candidates.filter(c=>['approved','approved_pending'].includes(c.status)).length;
-  const convNum = came>0 ? Math.round(approved/came*100) : null;
-  const convStr = convNum !== null ? convNum+'%' : '—';
+  const came     = candidates.filter(c => ['approved','approved_pending','rejected','rejected_pending'].includes(c.status)).length;
+  const approved = candidates.filter(c => ['approved','approved_pending'].includes(c.status)).length;
+  const convNum  = came>0 ? Math.round(approved/came*100) : null;
 
-  // Count-up animations with stagger
-  const eToday = document.getElementById('s-today');
-  const eWeek  = document.getElementById('s-week');
-  const eConv  = document.getElementById('s-conv');
-  [eToday, eWeek, eConv].forEach(el => { el.classList.remove('num-anim'); void el.offsetWidth; el.classList.add('num-anim'); });
-  setTimeout(()=>animateCount(eToday, todayCnt, 600), 200);
-  setTimeout(()=>animateCount(eWeek,  weekCnt,  600), 350);
-  setTimeout(()=>{ if (convNum !== null) animateCount(eConv, convNum, 700); else eConv.textContent = '—'; }, 500);
-  // suffix for conv
-  if (convNum !== null) setTimeout(()=>{ eConv.textContent = convNum+'%'; }, 900);
+  ['s-today','s-week','s-conv'].forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.remove('num-anim'); void el.offsetWidth; el.classList.add('num-anim');
+  });
+  setTimeout(() => animateCount(document.getElementById('s-today'), todayCnt, 600), 200);
+  setTimeout(() => animateCount(document.getElementById('s-week'),  weekCnt,  600), 350);
+  setTimeout(() => {
+    const el = document.getElementById('s-conv');
+    if (convNum !== null) {
+      animateCount(el, convNum, 700);
+      setTimeout(() => { el.textContent = convNum+'%'; }, 850);
+    } else { el.textContent = '—'; }
+  }, 500);
 }
 
+// ─── REMINDERS ────────────────────────────────────────────────────────
 function renderReminders() {
-  const pending = candidates.filter(c=>c.status==='approved_pending'||c.status==='rejected_pending');
+  const pending = candidates.filter(c => c.status==='approved_pending' || c.status==='rejected_pending');
   const block = document.getElementById('reminder-block');
-  if (!pending.length) { block.style.display='none'; return; }
-  block.style.display = 'block';
+  if (!pending.length) { block.classList.remove('show'); return; }
+  block.classList.add('show');
   document.getElementById('reminder-list').innerHTML = pending.map(c => {
-    const u = c.username?`@${c.username}`:(c.phone||`ID:${c.telegram_id}`);
-    const a = c.status==='approved_pending'?'✅ Написать об оффере':'❌ Уведомить об отказе';
-    const col = c.status==='approved_pending'?'var(--teal)':'var(--red)';
-    return `<div style="padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.05)">
-      <div style="font-size:13px;font-weight:700">${c.name}</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:2px">${u}</div>
-      <div style="font-size:11px;color:${col};font-weight:600;margin-top:3px">${a}</div>
+    const u   = c.username ? `@${c.username}` : (c.phone || `ID:${c.telegram_id}`);
+    const act = c.status==='approved_pending' ? '✅ Написать об оффере' : '❌ Уведомить об отказе';
+    const col = c.status==='approved_pending' ? 'var(--teal)' : 'var(--red)';
+    return `<div class="reminder-item">
+      <div style="font-size:13px;font-weight:700;color:var(--dark)">${c.name}</div>
+      <div style="font-size:11px;color:var(--mid);margin-top:2px">${u}</div>
+      <div style="font-size:11px;font-weight:600;margin-top:3px;color:${col}">${act}</div>
     </div>`;
   }).join('');
 }
 
+// ─── TODAY ────────────────────────────────────────────────────────────
 function renderToday() {
-  const list = candidates.filter(c=>c.interview_date===TODAY).sort((a,b)=>(a.interview_time||'').localeCompare(b.interview_time||''));
+  const list = candidates.filter(c => c.interview_date===TODAY)
+    .sort((a,b) => (a.interview_time||'').localeCompare(b.interview_time||''));
   const el = document.getElementById('today-list');
   if (!list.length) { el.innerHTML=`<div class="empty"><div class="e">☀️</div>Сегодня собеседований нет</div>`; return; }
-  el.innerHTML = list.map((c,i) => {
-    const u = c.username?`@${c.username}`:`ID:${c.telegram_id}`;
-    const conf = c.confirmed===true?'✅ Подтвердил(а)':c.confirmed===false?'❌ Отказал(ась)':'❓ Без ответа';
-    const enc = encodeURIComponent(JSON.stringify(c));
-    return `<div class="card ${cardBorder(c.status)} card-in" style="cursor:pointer;animation-delay:${i*60}ms" onclick="openCandModal(${enc.replace(/'/g,'&#39;')},event)">
+  el.innerHTML = list.map(c => {
+    const u    = c.username ? `@${c.username}` : `ID:${c.telegram_id}`;
+    const conf = c.confirmed===true ? '✅ Подтвердил(а)' : c.confirmed===false ? '❌ Отказал(ась)' : '❓ Без ответа';
+    const key  = c._key || '';
+    return `<div class="card ${cardBorder(c.status)}" onclick="openCandModal('${key}')">
       <div style="display:flex;align-items:flex-start;justify-content:space-between">
         <div>
           <div class="cand-time">${c.interview_time||'—'}</div>
@@ -649,211 +647,173 @@ function renderToday() {
           <div class="cand-confirm">${conf}</div>
           ${badge(c.status)}
         </div>
-        <button onclick="event.stopPropagation();openCandModal(JSON.parse(decodeURIComponent('${enc}')))" style="background:rgba(251,193,72,0.15);border:1.5px solid rgba(251,193,72,0.4);border-radius:10px;padding:8px 11px;font-size:12px;font-weight:700;color:var(--dark);cursor:pointer;white-space:nowrap;font-family:inherit;transition:transform 0.1s;margin-top:2px" onmousedown="this.style.transform='scale(0.93)'" onmouseup="this.style.transform='scale(1)'">✏️ Статус</button>
+        <button class="card-action-btn rpl" onclick="event.stopPropagation();openCandModal('${key}')">✏️ Статус</button>
       </div>
     </div>`;
   }).join('');
 }
 
+// ─── SLOTS ────────────────────────────────────────────────────────────
 function renderSlots() {
-  let html='';
-  for (let i=0;i<7;i++) {
-    const d=new Date(TODAY+'T00:00:00'); d.setDate(d.getDate()+i);
-    const ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    const active=mySlots[ds]||[];
-    const bm={};
-    candidates.filter(c=>c.interview_date===ds&&c.status==='scheduled').forEach(c=>{bm[c.interview_time]=c;});
-    html+=`<div class="day-label">${ds===TODAY?'<span class="today-tag">📍 Сегодня</span> · ':''}${fmtDate(ds)}</div>`;
-    html+=`<div class="slots-grid" data-date="${ds}">`;
+  const hasExplicit = Object.values(mySlots).some(s => s.length > 0);
+  let html = '';
+  for (let i=0; i<7; i++) {
+    const d  = new Date(TODAY+'T12:00:00'); d.setDate(d.getDate()+i);
+    const ds = d.toISOString().split('T')[0];
+    const explicit = mySlots[ds];
+    const active = (explicit && explicit.length > 0)
+      ? explicit
+      : (!hasExplicit ? DEFAULT_SLOTS : (explicit || []));
+    const bm = {};
+    candidates.filter(c => c.interview_date===ds && c.status==='scheduled').forEach(c => { bm[c.interview_time]=c; });
+
+    const lbl = ds===TODAY ? `<span class="today-tag">📍 Сегодня</span> · ${fmtDate(ds)}` : fmtDate(ds);
+    html += `<div class="day-label">${lbl}</div><div class="slots-grid" data-date="${ds}">`;
     for (const t of DEFAULT_SLOTS) {
       const cand=bm[t], isOn=active.includes(t);
       if (cand) {
-        const fn=cand.name.split(' ')[0];
-        html+=`<div class="slot-btn booked" data-time="${t}" data-date="${ds}" onclick="openCandModal(JSON.parse(decodeURIComponent('${encodeURIComponent(JSON.stringify(cand))}')))" style="cursor:pointer">
+        const fn  = cand.name.split(' ')[0];
+        const key = cand._key || '';
+        html += `<div class="slot-btn booked" data-time="${t}" data-date="${ds}" onclick="openCandModal('${key}')">
           <span style="font-size:12px;font-weight:800">${t}</span><br>
-          <span style="font-size:9px;color:var(--dark);font-weight:700">${fn}</span>
+          <span style="font-size:9px;font-weight:700">${fn}</span>
         </div>`;
       } else {
-        html+=`<div class="slot-btn ${isOn?'on':''}" data-time="${t}" data-date="${ds}" onclick="toggleSlot(this)">${t}</div>`;
+        html += `<div class="slot-btn ${isOn?'on':''}" data-time="${t}" data-date="${ds}" onclick="toggleSlot(this)">${t}</div>`;
       }
     }
-    html+=`</div><div class="day-actions">
-      <button class="day-act-btn" style="background:rgba(251,193,72,0.15);color:var(--dark);border:1.5px solid rgba(251,193,72,0.3)" onclick="fillDay('${ds}')">⚡ Заполнить</button>
-      <button class="day-act-btn" style="background:rgba(232,64,64,0.08);color:var(--red);border:1.5px solid rgba(232,64,64,0.15)" onclick="clearDay('${ds}')">🗑 Очистить</button>
+    html += `</div><div class="day-actions">
+      <button class="day-act-btn rpl" style="background:var(--amber-lt);color:var(--dark);border:1.5px solid rgba(245,166,35,.3)" onclick="fillDay('${ds}')">⚡ Заполнить</button>
+      <button class="day-act-btn rpl" style="background:rgba(232,64,64,.08);color:var(--red);border:1.5px solid rgba(232,64,64,.15)" onclick="clearDay('${ds}')">🗑 Очистить</button>
     </div>`;
   }
   document.getElementById('slots-wrap').innerHTML = html;
 }
 
-let _activeCand = null;
-
-function openCandModal(c) {
-  _activeCand = c;
-  const u = c.username ? `@${c.username}` : (c.phone || (c.telegram_id ? `ID:${c.telegram_id}` : '—'));
-  document.getElementById('cm-name').textContent    = c.name;
-  document.getElementById('cm-meta').textContent    = `${c.spec||'—'}  ·  ${c.interview_date||'—'} ${c.interview_time||''}`;
-  document.getElementById('cm-contact').textContent = u;
-  document.getElementById('cand-modal').style.display = 'flex';
-}
-function closeCandModal(e) {
-  if (!e || e.target === document.getElementById('cand-modal'))
-    document.getElementById('cand-modal').style.display = 'none';
-}
-async function setStatus(status) {
-  if (!_activeCand) return;
-  const key = _activeCand._key;
-  if (!key) { tg.showAlert('Нет ключа кандидата'); return; }
-  try {
-    const r = await fetch('/api/update-status', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({hr_id: HR_ID, key, status})
-    });
-    const j = await r.json();
-    if (j.ok) {
-      closeCandModal(null);
-      tg.showAlert(STATUS_MAP[status]?.lbl ? `${STATUS_MAP[status].lbl} — сохранено!` : 'Сохранено!');
-      await loadAll();
-    } else { tg.showAlert('Ошибка: ' + (j.error||'')); }
-  } catch(e) { tg.showAlert('Ошибка соединения'); }
-}
-
-function showCandPopup(enc) {
-  const c = JSON.parse(decodeURIComponent(enc));
-  openCandModal(c);
-}
 function toggleSlot(el) { el.classList.toggle('on'); }
 function fillDay(ds)  { document.querySelectorAll(`.slots-grid[data-date="${ds}"] .slot-btn:not(.booked)`).forEach(b=>b.classList.add('on')); }
 function clearDay(ds) { document.querySelectorAll(`.slots-grid[data-date="${ds}"] .slot-btn:not(.booked)`).forEach(b=>b.classList.remove('on')); }
 
 async function saveSlots() {
   const slots={};
-  document.querySelectorAll('.slots-grid').forEach(g=>{slots[g.dataset.date]=[...g.querySelectorAll('.slot-btn.on')].map(b=>b.dataset.time);});
+  document.querySelectorAll('.slots-grid').forEach(g => {
+    slots[g.dataset.date] = [...g.querySelectorAll('.slot-btn.on')].map(b=>b.dataset.time);
+  });
   try {
-    const r=await fetch('/api/my-slots',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hr_id:HR_ID,slots})});
-    const j=await r.json();
-    tg.showAlert(j.ok?'✅ Расписание сохранено!':'Ошибка: '+(j.error||''));
-  } catch(e){tg.showAlert('Ошибка соединения');}
+    const r = await fetch('/api/my-slots',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hr_id:HR_ID,slots})});
+    const j = await r.json();
+    if (j.ok) { mySlots = slots; _alert('✅ Расписание сохранено!'); }
+    else _alert('Ошибка: '+(j.error||''));
+  } catch(e) { _alert('Ошибка соединения'); }
 }
 
-// ── Candidate filter state ───────────────────────────────────────────
-let _fWeek   = 'all';
-let _fSpec   = 'all';
-let _fStatus = 'all';
+// ─── CAND MODAL ───────────────────────────────────────────────────────
+let _activeCand = null;
+function openCandModal(keyOrCand) {
+  const c = (typeof keyOrCand==='string') ? _candMap[keyOrCand] : keyOrCand;
+  if (!c) return;
+  _activeCand = c;
+  const u = c.username ? `@${c.username}` : (c.phone || (c.telegram_id ? `ID:${c.telegram_id}` : '—'));
+  document.getElementById('cm-name').textContent    = c.name;
+  document.getElementById('cm-meta').textContent    = `${c.spec||'—'}  ·  ${c.interview_date||'—'} ${c.interview_time||''}`;
+  document.getElementById('cm-contact').textContent = u;
+  document.getElementById('cand-modal').classList.add('open');
+}
+function closeCandModal(e) {
+  if (!e || e.target===document.getElementById('cand-modal'))
+    document.getElementById('cand-modal').classList.remove('open');
+}
+async function setStatus(status) {
+  if (!_activeCand) return;
+  const key = _activeCand._key;
+  if (!key) { _alert('Нет ключа кандидата'); return; }
+  try {
+    const r = await fetch('/api/update-status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hr_id:HR_ID,key,status})});
+    const j = await r.json();
+    if (j.ok) {
+      closeCandModal(null);
+      _alert(STATUS_MAP[status]?.lbl ? `${STATUS_MAP[status].lbl} — сохранено!` : 'Сохранено!');
+      await loadAll();
+    } else { _alert('Ошибка: '+(j.error||'')); }
+  } catch(e) { _alert('Ошибка соединения'); }
+}
 
+// ─── CANDIDATES LIST ──────────────────────────────────────────────────
+let _fWeek='all', _fSpec='all', _fStatus='all';
 function getWeekRange(offset=0) {
-  const now = new Date(TODAY+'T00:00:00');
-  const day = now.getDay(); // 0=sun
-  const mon = new Date(now); mon.setDate(now.getDate() - (day===0?6:day-1) + offset*7);
-  const sun = new Date(mon); sun.setDate(mon.getDate()+6);
+  const now=new Date(TODAY+'T12:00:00'), day=now.getDay();
+  const mon=new Date(now); mon.setDate(now.getDate()-(day===0?6:day-1)+offset*7);
+  const sun=new Date(mon); sun.setDate(mon.getDate()+6);
   return [mon.toISOString().split('T')[0], sun.toISOString().split('T')[0]];
 }
-
 function specCategory(spec) {
-  const s = (spec||'').toLowerCase();
-  if (s.includes('продаж') || s.includes('офис') || s.includes('разъезд') || s.includes('менеджер')) return 'sales';
+  const s=(spec||'').toLowerCase();
+  if (s.includes('продаж')||s.includes('офис')||s.includes('разъезд')||s.includes('менеджер')) return 'sales';
   if (s.includes('администр')) return 'admin';
-  if (s.includes('констр') || s.includes('дизайн') || s.includes('проект')) return 'design';
+  if (s.includes('констр')||s.includes('дизайн')||s.includes('проект')) return 'design';
   return 'other';
 }
+const SPEC_LABELS={sales:'💼 Менеджеры по продажам',admin:'🗂 Администраторы',design:'📐 Конструкторы',other:'✦ Другое'};
 
-const SPEC_LABELS = {
-  sales:  '💼 Менеджеры по продажам',
-  admin:  '🗂 Администраторы',
-  design: '📐 Конструкторы',
-  other:  '✦ Другое',
-};
-
-function setWeekFilter(el,v) {
-  document.querySelectorAll('#week-filters .chip').forEach(c=>c.classList.remove('on'));
-  el.classList.add('on'); _fWeek=v; renderCandidatesFull();
-}
-function setSpecFilter(el,v) {
-  document.querySelectorAll('#spec-filters .chip').forEach(c=>c.classList.remove('on'));
-  el.classList.add('on'); _fSpec=v; renderCandidatesFull();
-}
-function setStatusFilter(el,v) {
-  document.querySelectorAll('#status-filters .chip').forEach(c=>c.classList.remove('on'));
-  el.classList.add('on'); _fStatus=v; renderCandidatesFull();
-}
-
-// legacy alias for old calls
-function filterCands(el,f) { setStatusFilter(el,f); }
+function setWeekFilter(el,v)   { document.querySelectorAll('#week-filters .chip').forEach(c=>c.classList.remove('on'));   el.classList.add('on'); _fWeek=v;   renderCandidatesFull(); }
+function setSpecFilter(el,v)   { document.querySelectorAll('#spec-filters .chip').forEach(c=>c.classList.remove('on'));   el.classList.add('on'); _fSpec=v;   renderCandidatesFull(); }
+function setStatusFilter(el,v) { document.querySelectorAll('#status-filters .chip').forEach(c=>c.classList.remove('on')); el.classList.add('on'); _fStatus=v; renderCandidatesFull(); }
 
 function renderCandidatesFull() {
-  let list = [...candidates];
-
-  // Search filter
-  const q = (document.getElementById('cand-search')?.value || '').toLowerCase().trim();
+  let list=[...candidates];
+  const q=(document.getElementById('cand-search')?.value||'').toLowerCase().trim();
   if (q) {
-    list = list.filter(c => {
-      const name = (c.name||'').toLowerCase();
-      const phone = (c.phone||'').replace(/\D/g,'');
-      const user = (c.username||'').toLowerCase();
-      const tgid = String(c.telegram_id||'');
-      return name.includes(q) || phone.includes(q.replace(/\D/g,'')) || user.includes(q.replace('@','')) || tgid.includes(q);
+    list=list.filter(c=>{
+      const nm=(c.name||'').toLowerCase(), ph=(c.phone||'').replace(/\D/g,''),
+            un=(c.username||'').toLowerCase(), id=String(c.telegram_id||'');
+      return nm.includes(q)||ph.includes(q.replace(/\D/g,''))||un.includes(q.replace('@',''))||id.includes(q);
     });
   }
-
-  // Week filter
-  if (_fWeek !== 'all') {
-    if (_fWeek === 'past') {
-      list = list.filter(c => c.interview_date && c.interview_date < TODAY);
-    } else {
-      const offset = _fWeek === 'next_week' ? 1 : 0;
-      const [wMon, wSun] = getWeekRange(offset);
-      list = list.filter(c => c.interview_date >= wMon && c.interview_date <= wSun);
-    }
+  if (_fWeek!=='all') {
+    if (_fWeek==='past') { list=list.filter(c=>c.interview_date&&c.interview_date<TODAY); }
+    else { const [m,s]=getWeekRange(_fWeek==='next_week'?1:0); list=list.filter(c=>c.interview_date>=m&&c.interview_date<=s); }
   }
-  // Spec filter
-  if (_fSpec !== 'all') list = list.filter(c => specCategory(c.spec) === _fSpec);
-  // Status filter
-  if (_fStatus !== 'all') list = list.filter(c => c.status === _fStatus);
-
+  if (_fSpec!=='all')   list=list.filter(c=>specCategory(c.spec)===_fSpec);
+  if (_fStatus!=='all') list=list.filter(c=>c.status===_fStatus);
   list.sort((a,b)=>(b.interview_date||'').localeCompare(a.interview_date||'')||(b.interview_time||'').localeCompare(a.interview_time||''));
 
-  const el = document.getElementById('cands-list');
-  if (!list.length) { el.innerHTML=`<div class="empty"><div class="e">🔍</div>Кандидатов нет</div>`; return; }
+  const el=document.getElementById('cands-list');
+  if (!list.length){el.innerHTML=`<div class="empty"><div class="e">🔍</div>Кандидатов нет</div>`;return;}
 
-  // Group by spec category
-  const groups = {};
-  list.forEach(c => {
-    const cat = specCategory(c.spec);
-    if (!groups[cat]) groups[cat] = [];
-    groups[cat].push(c);
-  });
+  const groups={}, catOrder=['sales','admin','design','other'];
+  list.forEach(c=>{const cat=specCategory(c.spec);if(!groups[cat])groups[cat]=[];groups[cat].push(c);});
 
-  const catOrder = ['sales','admin','design','other'];
-  let html = '';
-  let cardIdx = 0;
+  let html='';
   for (const cat of catOrder) {
     if (!groups[cat]) continue;
-    if (_fSpec === 'all') {
-      html += `<div style="display:flex;align-items:center;gap:10px;margin:14px 0 8px">
-        <div class="sec-line"></div>
-        <div style="font-size:10px;font-weight:800;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase">${SPEC_LABELS[cat]}</div>
-        <div style="font-size:11px;font-weight:700;color:var(--muted);margin-left:auto">${groups[cat].length}</div>
+    if (_fSpec==='all') {
+      html+=`<div style="display:flex;align-items:center;gap:8px;margin:12px 0 8px">
+        <span style="color:var(--amber);font-size:14px;font-weight:900">—</span>
+        <span style="font-size:10px;font-weight:800;color:var(--amber-dk);letter-spacing:1.2px;text-transform:uppercase">${SPEC_LABELS[cat]}</span>
+        <span style="font-size:11px;font-weight:700;color:var(--mid);margin-left:auto">${groups[cat].length}</span>
       </div>`;
     }
-    html += groups[cat].map(c => {
-      const u = c.username ? `@${c.username}` : `ID:${c.telegram_id}`;
-      const dl = c.interview_date ? fmtDate(c.interview_date) : '—';
-      const delay = (cardIdx++) * 55;
-      return `<div class="card ${cardBorder(c.status)} card-in" style="animation-delay:${delay}ms">
+    html+=groups[cat].map(c=>{
+      const u=c.username?`@${c.username}`:`ID:${c.telegram_id}`;
+      const dl=c.interview_date?fmtDate(c.interview_date):'—';
+      const key=c._key||'';
+      return `<div class="card ${cardBorder(c.status)}" onclick="openCandModal('${key}')">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-          <div><div class="cand-name">${c.name}</div>
-          <div class="cand-meta">${c.spec||'—'} · ${u}</div>
-          <div class="cand-meta" style="margin-top:3px">${dl} · ${c.interview_time||'—'}</div>
-          ${badge(c.status)}</div>
-          <button onclick="openCandModal(JSON.parse(decodeURIComponent('${encodeURIComponent(JSON.stringify(c))}')))" style="background:rgba(251,193,72,0.15);border:1.5px solid rgba(251,193,72,0.4);border-radius:10px;padding:8px 11px;font-size:12px;font-weight:700;color:var(--dark);cursor:pointer;white-space:nowrap;font-family:inherit;transition:transform 0.1s;flex-shrink:0" onmousedown="this.style.transform='scale(0.93)'" onmouseup="this.style.transform='scale(1)'">✏️</button>
+          <div>
+            <div class="cand-name">${c.name}</div>
+            <div class="cand-meta">${c.spec||'—'} · ${u}</div>
+            <div class="cand-meta" style="margin-top:3px">${dl} · ${c.interview_time||'—'}</div>
+            ${badge(c.status)}
+          </div>
+          <button class="card-action-btn rpl" onclick="event.stopPropagation();openCandModal('${key}')">✏️</button>
         </div>
       </div>`;
     }).join('');
   }
-  el.innerHTML = html;
+  el.innerHTML=html;
 }
 
-function renderCandidates(filter) { renderCandidatesFull(); }
-
+// ─── STATS ────────────────────────────────────────────────────────────
 function renderStats() {
   const total=candidates.length,
     came=candidates.filter(c=>['approved','approved_pending','rejected','rejected_pending'].includes(c.status)).length,
@@ -866,70 +826,62 @@ function renderStats() {
     const pct=max>0?Math.min(100,Math.round(val/max*100)):0;
     return `<div style="margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-        <span style="font-size:13px;font-weight:500">${lbl}</span>
+        <span style="font-size:13px;font-weight:500;color:var(--dark)">${lbl}</span>
         <span style="font-size:14px;font-weight:800;color:${color}">${val}</span>
       </div>
-      <div style="height:6px;background:rgba(0,0,0,0.07);border-radius:3px;overflow:hidden">
+      <div style="height:6px;background:var(--bg2);border-radius:3px;overflow:hidden">
         <div class="anim-bar" style="background:${color}" data-pct="${pct}"></div>
       </div>
     </div>`;
   }
-
   document.getElementById('stats-wrap').innerHTML=`
-    <div style="background:var(--card);border-radius:16px;padding:18px;margin-bottom:12px;box-shadow:var(--shadow)">
-      <div class="pulse-label" style="color:var(--muted)">Воронка</div>
-      ${bar('Всего записей',total,total,'var(--muted)')}
-      ${bar('Пришли на собеседование',came,total,'var(--gold)')}
+    <div class="card" style="cursor:default">
+      <div class="pulse-label" style="color:var(--mid)">Воронка</div>
+      ${bar('Всего записей',total,total,'var(--mid)')}
+      ${bar('Пришли на собеседование',came,total,'var(--amber)')}
       ${bar('Приняты на работу',approved,total,'var(--teal)')}
       ${bar('Не пришли',noshow,total,'var(--red)')}
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-      <div style="background:var(--card);border-radius:16px;padding:16px;text-align:center;box-shadow:var(--shadow)">
-        <div style="font-size:38px;font-weight:900;color:var(--gold)">${convPct}%</div>
-        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px;font-weight:700">Конверсия</div>
-      </div>
-      <div style="background:var(--card);border-radius:16px;padding:16px;text-align:center;box-shadow:var(--shadow)">
-        <div style="font-size:38px;font-weight:900;color:var(--teal)">${sched}</div>
-        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px;font-weight:700">Впереди</div>
-      </div>
+    <div class="stat-grid">
+      <div class="stat-mini"><div class="snum" style="color:var(--amber)">${convPct}%</div><div class="slbl">Конверсия</div></div>
+      <div class="stat-mini"><div class="snum" style="color:var(--teal)">${sched}</div><div class="slbl">Впереди</div></div>
     </div>
-    <div style="background:var(--card);border-radius:16px;padding:16px;box-shadow:var(--shadow)">
-      <div style="font-size:9px;color:var(--muted);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">Конверсия в найм</div>
-      <div style="height:10px;background:rgba(0,0,0,0.07);border-radius:5px;overflow:hidden">
-        <div class="anim-bar" style="background:linear-gradient(90deg,var(--gold),var(--teal));height:100%;border-radius:5px;" data-pct="${convPct}"></div>
+    <div class="card" style="cursor:default">
+      <div style="font-size:9px;color:var(--mid);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">Конверсия в найм</div>
+      <div style="height:10px;background:var(--bg2);border-radius:5px;overflow:hidden">
+        <div class="anim-bar" style="background:linear-gradient(90deg,var(--amber),var(--teal));height:100%;border-radius:5px" data-pct="${convPct}"></div>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:7px">
-        <span style="font-size:11px;color:var(--muted)">0%</span>
-        <span style="font-size:12px;color:var(--gold);font-weight:800">${convPct}%</span>
-        <span style="font-size:11px;color:var(--muted)">100%</span>
+        <span style="font-size:11px;color:var(--mid)">0%</span>
+        <span style="font-size:12px;color:var(--amber);font-weight:800">${convPct}%</span>
+        <span style="font-size:11px;color:var(--mid)">100%</span>
       </div>
     </div>`;
-
   requestAnimationFrame(()=>setTimeout(()=>{
     document.querySelectorAll('.anim-bar').forEach(b=>{b.style.width=b.dataset.pct+'%';});
   },100));
 }
 
+// ─── NOTIFICATIONS ────────────────────────────────────────────────────
 function renderNotifBadge(notifs) {
-  const unread=notifs.filter(n=>!n.read).length;
-  const b=document.getElementById('bell-badge');
-  b.textContent=unread>9?'9+':unread;
-  b.style.display=unread>0?'flex':'none';
+  const n=notifs.filter(x=>!x.read).length, b=document.getElementById('bell-badge');
+  b.textContent=n>9?'9+':n; b.style.display=n>0?'flex':'none';
 }
 function renderNotifList(notifs) {
   const el=document.getElementById('notif-list');
-  if (!notifs.length){el.innerHTML='<div style="text-align:center;color:var(--muted);padding:24px">Уведомлений нет</div>';return;}
+  if (!notifs.length){el.innerHTML='<div style="text-align:center;color:var(--mid);padding:24px">Уведомлений нет</div>';return;}
   const tl={booked:'📅 Новая запись',manual:'✏️ Вручную',cancelled:'❌ Отмена'};
   el.innerHTML=notifs.map(n=>{
     const ts=n.ts?new Date(n.ts).toLocaleString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
-    const bg=n.read?'rgba(0,0,0,0.02)':'rgba(251,193,72,0.1)';
-    return `<div style="padding:12px;border-radius:12px;margin-bottom:8px;background:${bg};border:1px solid ${n.read?'var(--border)':'rgba(251,193,72,0.3)'}">
+    const bg=n.read?'rgba(0,0,0,0.02)':'var(--amber-lt)';
+    const brd=n.read?'var(--bg2)':'rgba(245,166,35,0.3)';
+    return `<div style="padding:12px;border-radius:12px;margin-bottom:8px;background:${bg};border:1px solid ${brd}">
       <div style="display:flex;justify-content:space-between">
         <div style="font-size:12px;font-weight:700;color:var(--dark)">${tl[n.type]||n.type}</div>
-        <div style="font-size:10px;color:var(--muted)">${ts}</div>
+        <div style="font-size:10px;color:var(--mid)">${ts}</div>
       </div>
-      <div style="font-size:14px;font-weight:700;margin-top:3px">${n.name}</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:2px">${n.date} · ${n.time}${n.username?' · @'+n.username:''}</div>
+      <div style="font-size:14px;font-weight:700;margin-top:3px;color:var(--dark)">${n.name}</div>
+      <div style="font-size:12px;color:var(--mid);margin-top:2px">${n.date} · ${n.time}${n.username?' · @'+n.username:''}</div>
     </div>`;
   }).join('');
 }
@@ -938,44 +890,38 @@ async function toggleNotifs() {
   const open=p.style.display==='flex';
   p.style.display=open?'none':'flex';
   if (!open) {
-    try { await fetch('/api/notifications/read',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hr_id:HR_ID})}); document.getElementById('bell-badge').style.display='none'; } catch(e){}
+    try {
+      await fetch('/api/notifications/read',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hr_id:HR_ID})});
+      document.getElementById('bell-badge').style.display='none';
+    } catch(e){}
   }
 }
-function closeNotifs(e) { if (!e||e.target===document.getElementById('notif-panel')) document.getElementById('notif-panel').style.display='none'; }
+function closeNotifs(e){if(!e||e.target===document.getElementById('notif-panel'))document.getElementById('notif-panel').style.display='none';}
 
-let _specs = ["Продажи · Офис","Продажи · Разъезд","Администратор","Конструктор"];
-
+// ─── MANUAL ENTRY ─────────────────────────────────────────────────────
+let _specs=['Продажи','Администратор','Конструктор','Другое'];
 async function loadSpecs() {
-  try {
-    const r = await fetch('/api/specs');
-    _specs = await r.json();
-  } catch(e) {}
-  const sel = document.getElementById('m-spec');
-  sel.innerHTML = _specs.map(s=>`<option value="${s}">${s}</option>`).join('') +
+  try { const r=await fetch('/api/specs'); if(r.ok) _specs=await r.json(); } catch(e){}
+  const sel=document.getElementById('m-spec');
+  sel.innerHTML=_specs.filter(s=>s!=='Другое').map(s=>`<option value="${s}">${s}</option>`).join('')+
+    `<option value="Другое">Другое</option>`+
     `<option value="__new__">+ Добавить специализацию...</option>`;
 }
-
-function onSpecChange(sel) {
-  const row = document.getElementById('new-spec-row');
-  row.style.display = sel.value === '__new__' ? 'flex' : 'none';
-}
-
+function onSpecChange(sel){document.getElementById('new-spec-row').style.display=sel.value==='__new__'?'flex':'none';}
 async function addNewSpec() {
-  const val = document.getElementById('m-newspec').value.trim();
-  if (!val) return;
+  const val=document.getElementById('m-newspec').value.trim();
+  if(!val) return;
   try {
-    await fetch('/api/specs', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({spec:val})});
+    await fetch('/api/specs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({spec:val})});
     _specs.push(val);
-    const sel = document.getElementById('m-spec');
-    const opt = document.createElement('option');
-    opt.value = val; opt.textContent = val;
-    sel.insertBefore(opt, sel.lastElementChild);
-    sel.value = val;
-    document.getElementById('new-spec-row').style.display = 'none';
-    document.getElementById('m-newspec').value = '';
-  } catch(e) { tg.showAlert('Ошибка сохранения'); }
+    const sel=document.getElementById('m-spec'), opt=document.createElement('option');
+    opt.value=val; opt.textContent=val;
+    sel.insertBefore(opt, sel.querySelector('[value="Другое"]'));
+    sel.value=val;
+    document.getElementById('new-spec-row').style.display='none';
+    document.getElementById('m-newspec').value='';
+  } catch(e){_alert('Ошибка сохранения');}
 }
-
 function openManualEntry() {
   const def=new Date(); def.setDate(def.getDate()+1);
   document.getElementById('m-date').value=def.toISOString().split('T')[0];
@@ -984,36 +930,36 @@ function openManualEntry() {
   document.getElementById('m-time').value='';
   document.getElementById('new-spec-row').style.display='none';
   loadSpecs();
-  document.getElementById('manual-modal').style.display='flex';
+  document.getElementById('manual-modal').classList.add('open');
 }
-function closeManual(e) { if (!e||e.target===document.getElementById('manual-modal')) document.getElementById('manual-modal').style.display='none'; }
+function closeManual(e){if(!e||e.target===document.getElementById('manual-modal'))document.getElementById('manual-modal').classList.remove('open');}
 async function submitManual() {
-  const name=document.getElementById('m-name').value.trim(),phone=document.getElementById('m-phone').value.trim(),spec=document.getElementById('m-spec').value,date=document.getElementById('m-date').value,time=document.getElementById('m-time').value;
-  if (!name||!date||!time){tg.showAlert('Заполни имя, дату и время');return;}
+  const name=document.getElementById('m-name').value.trim(),
+        phone=document.getElementById('m-phone').value.trim(),
+        spec=document.getElementById('m-spec').value,
+        date=document.getElementById('m-date').value,
+        time=document.getElementById('m-time').value;
+  if (!name||!date||!time){_alert('Заполни имя, дату и время');return;}
+  if (spec==='__new__'){_alert('Сначала добавь специализацию через кнопку «+ Добавить»');return;}
   try {
     const r=await fetch('/api/book-manual',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hr_id:HR_ID,name,phone,spec,date,time})});
     const j=await r.json();
-    if (j.ok){closeManual(null);tg.showAlert('✅ Кандидат добавлен!');loadAll();}
-    else tg.showAlert('Ошибка: '+(j.error||''));
-  } catch(e){tg.showAlert('Ошибка соединения');}
+    if(j.ok){closeManual(null);_alert('✅ Кандидат добавлен!');loadAll();}
+    else _alert('Ошибка: '+(j.error||''));
+  } catch(e){_alert('Ошибка соединения');}
 }
 
-// Export / backup
+// ─── EXPORT ───────────────────────────────────────────────────────────
 async function exportData() {
   try {
-    const r = await fetch(`/api/export?hr_id=${HR_ID}`);
-    const blob = await r.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    const date = new Date().toISOString().split('T')[0];
-    a.href = url; a.download = `becker_hr_backup_${date}.json`;
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a); URL.revokeObjectURL(url);
-  } catch(e) { tg.showAlert('Ошибка при скачивании'); }
+    const r=await fetch(`/api/export?hr_id=${HR_ID}`), blob=await r.blob();
+    const url=URL.createObjectURL(blob), a=document.createElement('a');
+    a.href=url; a.download=`becker_hr_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  } catch(e){_alert('Ошибка при скачивании');}
 }
 
-// Minimum splash time 1.5s
-setTimeout(() => { if (candidates.length===0) hideSplash(); }, 3000);
+setTimeout(()=>hideSplash(), 4000);
 loadAll();
 </script>
 </body>
