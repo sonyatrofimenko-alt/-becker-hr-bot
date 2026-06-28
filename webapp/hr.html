@@ -19,10 +19,11 @@
   --spring:cubic-bezier(.34,1.56,.64,1);--ease:cubic-bezier(.4,0,.2,1);
 }
 [data-theme="dark"]{
-  --bg:#0D0B00;--bg2:#1A1600;--card:#1E1900;
-  --dark:#F5F0E0;--dark2:#D4CDB0;--mid:#8A8470;--light:#5A5448;
-  --shadow:0 2px 12px rgba(0,0,0,0.35);
-  --hdr-bg:#1A1200;--hdr-text:#F5A623;
+  --bg:#0D0B00;--bg2:#382F0F;--card:#1C1804;
+  --dark:#F5F0E0;--dark2:#D4CDB0;--mid:#BCA87C;--light:#8A7A60;
+  --shadow:0 2px 14px rgba(0,0,0,0.55);
+  --hdr-bg:#1C1500;--hdr-text:#F5A623;
+  --amber-lt:rgba(245,166,35,0.10);
 }
 html,body{height:100%;background:var(--bg);color:var(--dark);font-family:'Inter',-apple-system,sans-serif;overflow-x:hidden;transition:background .3s,color .3s}
 body{padding-bottom:100px;min-height:100vh;position:relative}
@@ -132,8 +133,12 @@ body::before{content:'BECKER';position:fixed;bottom:50px;left:50%;transform:tran
 .slot-leg{display:flex;align-items:center;gap:4px;font-size:9px;font-weight:700;color:var(--mid)}
 .slot-leg-dot{width:8px;height:8px;border-radius:3px;border:1.5px solid}
 .day-actions{display:flex;gap:8px;padding:0 16px;margin-bottom:4px}
-.day-act-btn{flex:1;padding:9px 0;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:inherit;transition:all .12s}
+.day-act-btn{flex:1;padding:9px 0;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .12s}
 .day-act-btn:active{transform:scale(.95)}
+.day-act-open{background:rgba(34,197,94,.10);color:#166534;border:1.5px solid rgba(34,197,94,.3)}
+.day-act-close{background:rgba(232,64,64,.08);color:var(--red);border:1.5px solid rgba(232,64,64,.15)}
+[data-theme="dark"] .day-act-open{background:rgba(34,197,94,.12);color:#4ade80;border-color:rgba(34,197,94,.25)}
+[data-theme="dark"] .day-act-close{background:rgba(232,64,64,.10);color:#F87171;border-color:rgba(232,64,64,.2)}
 .save-btn{width:calc(100% - 28px);margin:16px 14px;padding:16px;background:var(--amber);color:var(--dark);font-size:15px;font-weight:800;border:none;border-radius:14px;cursor:pointer;font-family:inherit;transition:all .15s;box-shadow:0 4px 18px rgba(245,166,35,.35)}
 .save-btn:active{transform:scale(.97)}
 
@@ -208,6 +213,28 @@ body::before{content:'BECKER';position:fixed;bottom:50px;left:50%;transform:tran
 [data-theme="dark"] .nav-btn.on .nav-ico{
   box-shadow:0 6px 24px rgba(245,166,35,0.52);
 }
+/* Nav inactive labels — brighter in dark so text is visible */
+[data-theme="dark"] .nav-btn{color:var(--mid)}
+
+/* Modals */
+[data-theme="dark"] .modal-sheet{background:#1C1804}
+[data-theme="dark"] .modal-input{background:#252008;border-color:#3A3210}
+[data-theme="dark"] .status-btn{background:#1C1804;border-color:#3A3210}
+[data-theme="dark"] .status-btn.s-teal{background:rgba(38,198,176,.12);border-color:rgba(38,198,176,.3);color:#5EEAD4}
+[data-theme="dark"] .status-btn.s-red{background:rgba(232,64,64,.1);border-color:rgba(232,64,64,.25);color:#F87171}
+[data-theme="dark"] .status-btn.s-amber{background:rgba(245,166,35,.1);border-color:rgba(245,166,35,.25);color:var(--amber)}
+
+/* Quick-status buttons */
+[data-theme="dark"] .qs-btn.qs-teal{background:rgba(38,198,176,.12);color:#5EEAD4}
+[data-theme="dark"] .qs-btn.qs-red{background:rgba(232,64,64,.1);color:#F87171}
+[data-theme="dark"] .qs-btn.qs-grey{background:rgba(255,255,255,.08);color:var(--mid)}
+
+/* Cards — add subtle border for dark visibility */
+[data-theme="dark"] .card{border:1px solid rgba(245,166,35,0.08)}
+
+/* Search & filter */
+[data-theme="dark"] .search-inp{background:#1C1804;border-color:#382F0F}
+[data-theme="dark"] .chip{background:#252008;border-color:#382F0F}
 
 /* MODALS */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:flex-end}
@@ -803,8 +830,8 @@ function renderSlots() {
       }
     }
     html += `</div><div class="day-actions">
-      <button class="day-act-btn rpl" style="background:rgba(34,197,94,.1);color:#166534;border:1.5px solid rgba(34,197,94,.3)" onclick="fillDay('${ds}')">⚡ Открыть день</button>
-      <button class="day-act-btn rpl" style="background:rgba(232,64,64,.08);color:var(--red);border:1.5px solid rgba(232,64,64,.15)" onclick="clearDay('${ds}')">🗑 Закрыть</button>
+      <button class="day-act-btn day-act-open rpl" onclick="fillDay('${ds}')">⚡ Открыть день</button>
+      <button class="day-act-btn day-act-close rpl" onclick="clearDay('${ds}')">🗑 Закрыть</button>
     </div>`;
   }
   document.getElementById('slots-wrap').innerHTML = html;
