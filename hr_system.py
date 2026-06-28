@@ -215,17 +215,13 @@ async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         return ConversationHandler.END
     if WEBAPP_URL:
         # Кандидат использует мини-приложение
-        first_name = update.effective_user.first_name or ""
-        greeting = f"Привет, <b>{first_name}!</b> 👋\n\n" if first_name else "Привет! 👋\n\n"
-        await update.message.reply_text(
-            f"🏭 <b>BECKER Академия</b> — производитель кухонь премиум-класса\n\n"
-            f"{greeting}"
-            f"✅ 26 лет на рынке — один из лидеров в России\n"
-            f"✅ Собственный завод в Москве, немецкое качество\n"
-            f"✅ Стабильная зарплата + бонусы с первого месяца\n"
-            f"✅ Карьерный рост внутри компании\n\n"
-            f"Запись на собеседование — 2 минуты. Нажми кнопку ниже 👇\n\n"
-            f"Вопросы? {HR_TELEGRAM}",
+        await update.message.reply_photo(
+            photo=f"{WEBAPP_URL}/sonya.jpg",
+            caption=(
+                f"Привет! 👋 Это HR-отдел <b>BECKER Академии</b> — здесь можно записаться на собеседование.\n\n"
+                f"Нажми кнопку ниже, чтобы записаться на собеседование 👇\n\n"
+                f"Или напиши напрямую: {HR_TELEGRAM}"
+            ),
             parse_mode="HTML",
             reply_markup=InlineKeyboardMarkup([[
                 InlineKeyboardButton("📅 Записаться на собеседование", web_app=WebAppInfo(url=WEBAPP_URL))
