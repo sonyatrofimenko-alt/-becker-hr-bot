@@ -2,7 +2,7 @@ import json, os, asyncio
 from datetime import date, datetime, timedelta, time as dtime
 from zoneinfo import ZoneInfo
 from aiohttp import web
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton, WebAppInfo
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton, WebAppInfo, MenuButtonWebApp
 from telegram.ext import (
     ApplicationBuilder, CommandHandler, CallbackQueryHandler,
     MessageHandler, ConversationHandler, filters, ContextTypes
@@ -215,16 +215,18 @@ async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         return ConversationHandler.END
     if WEBAPP_URL:
         # Кандидат использует мини-приложение
+        first_name = update.effective_user.first_name or "Привет"
         await update.message.reply_photo(
-            photo="https://static.tildacdn.com/tild3061-6264-4033-b339-386633363065/Group_9104.png",
+            photo=f"{WEBAPP_URL}/sonya.jpg",
             caption=(
-                f"Привет! 👋 Это HR-отдел <b>BECKER Академии</b> — здесь можно записаться на собеседование.\n\n"
-                "Нажми кнопку ниже, чтобы записаться на собеседование 👇\n\n"
-                f"Или напиши напрямую: {HR_TELEGRAM}"
+                f"<b>BECKER</b> — российский производитель кухонь премиум-класса 🏭\n\n"
+                f"Привет, <b>{first_name}!</b> Меня зовут Софья, я HR-менеджер компании.\n\n"
+                f"Здесь можно записаться на собеседование за 2 минуты — выбери удобное время и мы увидимся!\n\n"
+                f"По вопросам пиши: {HR_TELEGRAM}"
             ),
             parse_mode="HTML",
             reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton("📱 Записаться на собеседование", web_app=WebAppInfo(url=WEBAPP_URL))
+                InlineKeyboardButton("📅 Записаться на собеседование", web_app=WebAppInfo(url=WEBAPP_URL))
             ]])
         )
         return ConversationHandler.END
@@ -2152,6 +2154,20 @@ if __name__ == "__main__":
         _job_queue = app.job_queue
         await app.start()
         await app.updater.start_polling(drop_pending_updates=True)
+
+        # Большая кнопка в поле ввода (открывает мини-приложение без /start)
+        if WEBAPP_URL:
+            try:
+                await _bot.set_chat_menu_button(
+                    menu_button=MenuButtonWebApp(
+                        text="📅 Записаться",
+                        web_app=WebAppInfo(url=WEBAPP_URL)
+                    )
+                )
+                print("✅ Кнопка меню установлена")
+            except Exception as e:
+                print(f"[MENU] Ошибка установки кнопки: {e}")
+
         print("🤖 Бот запущен, жду сообщений...")
         await asyncio.Event().wait()   # работаем вечно
 
