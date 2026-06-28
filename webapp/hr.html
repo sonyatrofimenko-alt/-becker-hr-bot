@@ -81,15 +81,34 @@ body::before{content:'BECKER';position:fixed;bottom:50px;left:50%;transform:tran
 .hr-online{display:inline-block;width:6px;height:6px;border-radius:50%;background:#22c55e;margin-left:5px;vertical-align:middle;animation:onlinePulse 2s ease-in-out infinite}
 @keyframes onlinePulse{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.4)}50%{box-shadow:0 0 0 4px rgba(34,197,94,0)}}
 
-/* PULSE CARD */
-.pulse-card{background:var(--dark);border-radius:var(--r);margin:14px 14px 0;padding:18px 20px;transition:background .3s}
-.pulse-label{font-size:9px;font-weight:800;color:rgba(245,246,247,.3);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px}
-.pulse-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-.pulse-stat .pnum{font-size:34px;font-weight:900;line-height:1}
-.pulse-stat .plbl{font-size:8px;font-weight:700;color:rgba(245,246,247,.3);letter-spacing:1.5px;text-transform:uppercase;margin-top:4px}
-.pulse-ekg{width:100%;margin-top:14px;opacity:.5}
-.ekg-line{stroke-dasharray:600;stroke-dashoffset:600;animation:ekgDraw 2.2s .8s ease forwards}
-@keyframes ekgDraw{to{stroke-dashoffset:0}}
+/* DAY CARD */
+.day-card{
+  background:linear-gradient(135deg,#1E1A0A 0%,#2C2200 100%);
+  border-radius:var(--r);margin:14px 14px 0;padding:20px 22px;
+  position:relative;overflow:hidden;
+}
+.day-card::before{
+  content:'';position:absolute;top:-40px;right:-40px;
+  width:160px;height:160px;
+  background:radial-gradient(circle,rgba(245,166,35,0.18) 0%,transparent 70%);
+  pointer-events:none;
+}
+.day-card::after{
+  content:'BECKER';position:absolute;bottom:12px;right:18px;
+  font-size:28px;font-weight:900;letter-spacing:4px;
+  color:rgba(245,166,35,0.07);pointer-events:none;
+}
+.dc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px}
+.dc-greeting{font-size:10px;font-weight:700;color:rgba(245,240,224,.38);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px}
+.dc-name{font-size:22px;font-weight:900;color:#F5F0E0;line-height:1.1}
+.dc-datebox{text-align:right;flex-shrink:0}
+.dc-day{font-size:40px;font-weight:900;color:var(--amber);line-height:1}
+.dc-mon{font-size:10px;font-weight:700;color:rgba(245,240,224,.38);text-transform:uppercase;letter-spacing:1px;margin-top:1px}
+.dc-divider{height:1px;background:rgba(245,166,35,0.12);margin-bottom:16px}
+.dc-main{display:flex;align-items:baseline;gap:12px}
+.dc-count{font-size:64px;font-weight:900;color:var(--amber);line-height:1;letter-spacing:-2px}
+.dc-count-lbl{font-size:13px;font-weight:600;color:rgba(245,240,224,.5);line-height:1.4;max-width:100px}
+.dc-next{font-size:11px;color:rgba(245,240,224,.38);margin-top:14px;font-weight:500}
 @keyframes numPop{0%{transform:scale(.5);opacity:0}70%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
 .num-anim{animation:numPop .5s var(--spring) both}
 
@@ -331,18 +350,24 @@ body::before{content:'BECKER';position:fixed;bottom:50px;left:50%;transform:tran
   </div>
 </div>
 
-<!-- PULSE CARD -->
-<div class="pulse-card">
-  <div class="pulse-label">Пульс · сводка</div>
-  <div class="pulse-stats">
-    <div class="pulse-stat"><div class="pnum" style="color:var(--teal)" id="s-today">—</div><div class="plbl">Сегодня</div></div>
-    <div class="pulse-stat"><div class="pnum" style="color:var(--amber)" id="s-week">—</div><div class="plbl">Неделя</div></div>
-    <div class="pulse-stat"><div class="pnum" style="color:var(--amber)" id="s-conv">—</div><div class="plbl">Конверсия</div></div>
+<!-- DAY CARD -->
+<div class="day-card">
+  <div class="dc-top">
+    <div>
+      <div class="dc-greeting" id="dc-greeting">Добрый день,</div>
+      <div class="dc-name" id="dc-name">—</div>
+    </div>
+    <div class="dc-datebox">
+      <div class="dc-day" id="dc-day">—</div>
+      <div class="dc-mon" id="dc-mon">—</div>
+    </div>
   </div>
-  <svg class="pulse-ekg" viewBox="0 0 260 32" xmlns="http://www.w3.org/2000/svg">
-    <polyline class="ekg-line" points="0,16 30,16 42,16 50,3 56,29 62,3 68,16 80,16 100,16 108,16 116,9 120,23 124,9 128,16 140,16 180,16 188,10 192,22 196,10 200,16 260,16"
-      fill="none" stroke="#F5A623" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
-  </svg>
+  <div class="dc-divider"></div>
+  <div class="dc-main">
+    <div class="dc-count num-anim" id="dc-count">0</div>
+    <div class="dc-count-lbl">собесед.<br>сегодня</div>
+  </div>
+  <div class="dc-next" id="dc-next">Загружаю...</div>
 </div>
 
 <!-- NOTIF PANEL -->
@@ -576,13 +601,7 @@ function _doHide() {
   const s = document.getElementById('splash');
   if (!s) return;
   s.classList.add('out');
-  setTimeout(() => { s.remove(); _restartEkg(); setTimeout(renderPulse, 100); }, 550);
-}
-function _restartEkg() {
-  const el = document.querySelector('.ekg-line');
-  if (!el) return;
-  const c = el.cloneNode(true);
-  el.parentNode.replaceChild(c, el);
+  setTimeout(() => { s.remove(); setTimeout(renderPulse, 100); }, 550);
 }
 
 // ─── COUNT-UP ─────────────────────────────────────────────────────────
@@ -672,29 +691,36 @@ async function loadAll() {
 
 // ─── PULSE ────────────────────────────────────────────────────────────
 function renderPulse() {
-  const todayCnt = candidates.filter(c => c.interview_date===TODAY && c.status==='scheduled').length;
-  const wEnd = new Date(TODAY+'T12:00:00'); wEnd.setDate(wEnd.getDate()+7);
-  const weekCnt  = candidates.filter(c => {
-    const d = new Date(c.interview_date+'T12:00:00');
-    return d >= new Date(TODAY+'T12:00:00') && d <= wEnd && c.status==='scheduled';
-  }).length;
-  const came     = candidates.filter(c => ['approved','approved_pending','rejected','rejected_pending'].includes(c.status)).length;
-  const approved = candidates.filter(c => ['approved','approved_pending'].includes(c.status)).length;
-  const convNum  = came>0 ? Math.round(approved/came*100) : null;
+  const h = new Date().getHours();
+  const greeting = h<6?'Доброй ночи':h<12?'Доброе утро':h<17?'Добрый день':h<22?'Добрый вечер':'Доброй ночи';
+  const MONTHS_SHORT = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+  const now = new Date();
 
-  ['s-today','s-week','s-conv'].forEach(id => {
-    const el = document.getElementById(id);
-    el.classList.remove('num-anim'); void el.offsetWidth; el.classList.add('num-anim');
-  });
-  setTimeout(() => animateCount(document.getElementById('s-today'), todayCnt, 600), 200);
-  setTimeout(() => animateCount(document.getElementById('s-week'),  weekCnt,  600), 350);
-  setTimeout(() => {
-    const el = document.getElementById('s-conv');
-    if (convNum !== null) {
-      animateCount(el, convNum, 700);
-      setTimeout(() => { el.textContent = convNum+'%'; }, 850);
-    } else { el.textContent = '—'; }
-  }, 500);
+  document.getElementById('dc-greeting').textContent = greeting + ',';
+  document.getElementById('dc-name').textContent     = me.short;
+  document.getElementById('dc-day').textContent      = now.getDate();
+  document.getElementById('dc-mon').textContent      = MONTHS_SHORT[now.getMonth()];
+
+  const todayCnt = candidates.filter(c => c.interview_date===TODAY && c.status==='scheduled').length;
+  const countEl = document.getElementById('dc-count');
+  countEl.classList.remove('num-anim'); void countEl.offsetWidth; countEl.classList.add('num-anim');
+  animateCount(countEl, todayCnt, 800);
+
+  // Ближайшее собеседование
+  const nowMins = now.getHours()*60 + now.getMinutes();
+  const upcoming = candidates
+    .filter(c => c.interview_date===TODAY && c.status==='scheduled' && c.interview_time)
+    .sort((a,b) => a.interview_time.localeCompare(b.interview_time))
+    .find(c => { const [hh,mm]=c.interview_time.split(':').map(Number); return hh*60+mm > nowMins; });
+
+  const nextEl = document.getElementById('dc-next');
+  if (upcoming) {
+    nextEl.textContent = `Следующее в ${upcoming.interview_time} — ${upcoming.name.split(' ')[0]}`;
+  } else if (todayCnt > 0) {
+    nextEl.textContent = 'На сегодня все завершены ✓';
+  } else {
+    nextEl.textContent = 'Записей на сегодня нет';
+  }
 }
 
 // ─── REMINDERS ────────────────────────────────────────────────────────
