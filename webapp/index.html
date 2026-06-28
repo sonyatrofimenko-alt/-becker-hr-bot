@@ -547,7 +547,12 @@ body::before{
 
   <div class="inp-wrap">
     <label class="inp-label" for="name-inp">Как тебя зовут?</label>
-    <input class="inp" id="name-inp" type="text" placeholder="Имя и фамилия" autocomplete="name" enterkeyhint="done">
+    <input class="inp" id="name-inp" type="text" placeholder="Имя и фамилия" autocomplete="name" enterkeyhint="next">
+  </div>
+
+  <div class="inp-wrap">
+    <label class="inp-label" for="phone-inp">Номер телефона</label>
+    <input class="inp" id="phone-inp" type="tel" placeholder="+7 (___) ___-__-__" autocomplete="tel" enterkeyhint="done" inputmode="tel">
   </div>
 
   <div class="btn-wrap">
@@ -853,6 +858,41 @@ setTimeout(() => {
   });
 }, 1800);
 
+// ── PHONE FORMAT +7 ─────────────────────────────────────────────────
+(function() {
+  const pi = document.getElementById('phone-inp');
+  function fmt(raw) {
+    // strip everything except digits
+    let d = raw.replace(/\D/g, '');
+    // normalize: if starts with 8 or 7, replace with 7; otherwise prepend 7
+    if (d.startsWith('8') || d.startsWith('7')) d = '7' + d.slice(1);
+    else d = '7' + d;
+    d = d.slice(0, 11); // max 11 digits (7 + 10)
+    let out = '+7';
+    if (d.length > 1) out += ' (' + d.slice(1, 4);
+    if (d.length >= 4) out += ') ' + d.slice(4, 7);
+    if (d.length >= 7) out += '-' + d.slice(7, 9);
+    if (d.length >= 9) out += '-' + d.slice(9, 11);
+    return out;
+  }
+  pi.addEventListener('focus', () => {
+    if (!pi.value) pi.value = '+7 ';
+  });
+  pi.addEventListener('input', () => {
+    const pos = pi.selectionStart;
+    const prev = pi.value;
+    pi.value = fmt(pi.value);
+    // keep cursor near where user typed
+    const diff = pi.value.length - prev.length;
+    try { pi.setSelectionRange(pos + diff, pos + diff); } catch(_) {}
+  });
+  pi.addEventListener('keydown', e => {
+    if (e.key === 'Backspace' && pi.value === '+7 ') {
+      e.preventDefault(); // don't delete the prefix
+    }
+  });
+})();
+
 // ── RIPPLE ────────────────────────────────────────────────────────────
 document.addEventListener('click', e => {
   const el = e.target.closest('.rpl');
@@ -1011,6 +1051,15 @@ async function goToDate() {
     ni.classList.add('err');
     ni.focus();
     setTimeout(() => ni.classList.remove('err'), 600);
+    return;
+  }
+  const phoneRaw = document.getElementById('phone-inp').value.trim();
+  const phoneDigits = phoneRaw.replace(/\D/g, '');
+  if (phoneDigits.length < 11) {
+    const pi = document.getElementById('phone-inp');
+    pi.classList.add('err');
+    pi.focus();
+    setTimeout(() => pi.classList.remove('err'), 600);
     return;
   }
 
@@ -1184,7 +1233,8 @@ async function submitBooking() {
     name, spec: selectedSpec || 'Продажи',
     date: selectedDate, time: selectedTime,
     hr_id: effectiveHrId,
-    tg_id: TG_ID, username: TG_UN, phone: ''
+    tg_id: TG_ID, username: TG_UN,
+    phone: document.getElementById('phone-inp').value.trim()
   };
 
   try {
