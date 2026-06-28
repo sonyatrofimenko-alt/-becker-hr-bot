@@ -574,7 +574,7 @@ body::before{
 
   <div class="inp-wrap">
     <label class="inp-label" for="name-inp">Как тебя зовут?</label>
-    <input class="inp" id="name-inp" type="text" placeholder="Имя и фамилия" autocomplete="name">
+    <input class="inp" id="name-inp" type="text" placeholder="Имя и фамилия" autocomplete="name" enterkeyhint="done">
   </div>
 
   <div class="btn-wrap">
@@ -1284,6 +1284,11 @@ function showSuccess() {
 }
 
 function closeApp() { if (tg) tg.close(); }
+
+// Закрыть клавиатуру на Enter
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.activeElement?.blur();
+});
 
 // ── THEME ─────────────────────────────────────────────────────────────
 const _savedTheme = localStorage.getItem('becker_theme') || 'light';

@@ -300,8 +300,9 @@ body::before{content:'BECKER';position:fixed;bottom:50px;left:50%;transform:tran
     </div>
   </div>
   <div style="padding:0 14px">
-    <div class="search-wrap" style="margin-bottom:10px">
-      <input id="today-search" class="search-inp" placeholder="🔍  Поиск по имени..." oninput="renderToday()">
+    <div class="search-wrap" style="margin-bottom:10px;position:relative">
+      <input id="today-search" class="search-inp" placeholder="🔍  Поиск по имени..." oninput="renderToday()" enterkeyhint="done" autocomplete="off">
+      <button id="today-search-clear" onclick="document.getElementById('today-search').value='';document.getElementById('today-search').blur();renderToday()" style="display:none;position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:18px;color:var(--mid);cursor:pointer;padding:4px">✕</button>
     </div>
     <div class="reminder-block" id="reminder-block">
       <div class="reminder-title">📝 Нужно написать</div>
@@ -328,7 +329,7 @@ body::before{content:'BECKER';position:fixed;bottom:50px;left:50%;transform:tran
 <div class="sec-wrap" id="sec-cands">
   <div class="sec-lbl">Кандидаты</div>
   <div class="search-wrap">
-    <input id="cand-search" class="search-inp" placeholder="🔍  Поиск по имени, телефону, @никнейму..." oninput="renderCandidatesFull()">
+    <input id="cand-search" class="search-inp" placeholder="🔍  Поиск по имени, телефону, @никнейму..." oninput="renderCandidatesFull()" enterkeyhint="done" autocomplete="off">
   </div>
   <div class="filter-label">Период</div>
   <div class="filter-row" id="week-filters">
@@ -1096,6 +1097,30 @@ async function exportData() {
 
 setTimeout(()=>hideSplash(), 4000);
 loadAll();
+
+// ─── KEYBOARD HANDLING ────────────────────────────────────────────────
+// Hide bottom nav when keyboard opens (fixed elements float above keyboard on iOS)
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => {
+    const kbOpen = window.visualViewport.height < window.innerHeight - 100;
+    document.querySelector('.bot-nav').style.display = kbOpen ? 'none' : '';
+  });
+}
+// Dismiss keyboard on Enter
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.activeElement?.blur();
+});
+// Show/hide ✕ clear button on today-search
+document.getElementById('today-search').addEventListener('input', function() {
+  const btn = document.getElementById('today-search-clear');
+  if (btn) btn.style.display = this.value ? 'block' : 'none';
+});
+document.getElementById('today-search').addEventListener('blur', function() {
+  setTimeout(() => {
+    const btn = document.getElementById('today-search-clear');
+    if (btn && !this.value) btn.style.display = 'none';
+  }, 150);
+});
 
 // ─── PULL TO REFRESH ──────────────────────────────────────────────────
 const _ptrEl = (() => {
