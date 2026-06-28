@@ -66,12 +66,18 @@ def _ensure_table():
     except Exception as e:
         print(f"[DB] ensure_table error: {e}")
 
+def _normalize(data: dict) -> dict:
+    """Fix any type mismatches from legacy data."""
+    if not isinstance(data.get("notifications"), dict):
+        data["notifications"] = {}
+    return data
+
 def load():
     if not DATABASE_URL:
         # Локальный режим: читаем из файла
         if os.path.exists(DATA_FILE):
             with open(DATA_FILE, encoding="utf-8") as f:
-                return json.load(f)
+                return _normalize(json.load(f))
         return _EMPTY_DATA()
     try:
         conn = _db_conn()
@@ -79,7 +85,7 @@ def load():
             cur.execute("SELECT value FROM hr_store WHERE key='data'")
             row = cur.fetchone()
         conn.close()
-        return json.loads(row[0]) if row else _EMPTY_DATA()
+        return _normalize(json.loads(row[0])) if row else _EMPTY_DATA()
     except Exception as e:
         print(f"[DB] load error: {e}")
         return _EMPTY_DATA()
