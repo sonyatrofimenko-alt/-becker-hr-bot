@@ -30,7 +30,8 @@ HR_PHONE     = "+7 (919) 890-41-15"
 HR_TELEGRAM  = "@sonya_trof"
 DATA_FILE    = "hr_data.json"
 
-DEFAULT_SLOTS = ["11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "17:30"]
+DEFAULT_SLOTS = ["11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
+                 "15:00", "15:30", "16:00", "16:30", "17:00", "17:30"]
 
 _EMPTY_DATA = lambda: {"slots": {}, "candidates": {}, "notifications": {}, "custom_specs": []}
 
@@ -1483,16 +1484,34 @@ async def serve_hr_app(request):
     return web.FileResponse(os.path.join(WEBAPP_DIR, "hr.html"))
 
 async def serve_slots(request):
-    """Свободные слоты кандидату (следующие 7 дней)."""
+    """Свободные слоты кандидату (следующие 14 дней, пн-пт)."""
     data  = load()
     today = date.today()
     result = {}
-    for i in range(1, 8):
-        d     = today + timedelta(days=i)
+
+    # If no HR has configured slots yet — use defaults for all weekdays
+    use_defaults = not any(
+        any(times for times in days.values())
+        for days in data.get("slots", {}).values()
+    )
+
+    for i in range(1, 15):
+        d = today + timedelta(days=i)
+        if d.weekday() >= 5:          # skip Sat/Sun
+            continue
         d_str = d.strftime("%Y-%m-%d")
         slots = get_all_free_slots(data, d_str)
         if slots:
             result[d_str] = [{"time": t, "hr_id": h} for (t, h) in slots]
+        elif use_defaults:
+            result[d_str] = [
+                {"time": t, "hr_id": hr_id}
+                for hr_id in HR_IDS
+                for t in DEFAULT_SLOTS
+            ]
+        if len(result) >= 5:          # show max 5 days
+            break
+
     return web.Response(text=json.dumps(result, ensure_ascii=False),
                         content_type="application/json", headers=CORS)
 
