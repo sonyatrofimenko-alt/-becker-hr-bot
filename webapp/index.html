@@ -64,17 +64,17 @@ body::before{
 #splash{
   position:fixed;inset:0;z-index:9999;
   background:var(--amber);
-  display:flex;align-items:center;justify-content:center;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
   transition:opacity .5s var(--ease);
 }
 #splash.out{opacity:0;pointer-events:none}
-.sp-icon{
-  animation:spPop .65s var(--spring) both;
-}
-@keyframes spPop{
-  0%{transform:scale(0) rotate(-8deg);opacity:0}
-  100%{transform:scale(1) rotate(0);opacity:1}
-}
+.sp-brand{font-size:42px;font-weight:900;color:var(--dark);letter-spacing:4px;animation:spFade .5s .2s ease both}
+.sp-sub{font-size:11px;font-weight:700;color:rgba(28,28,30,.5);letter-spacing:3px;text-transform:uppercase;margin-top:8px;animation:spFade .5s .35s ease both}
+.sp-dots{display:flex;gap:7px;margin-top:36px;animation:spFade .5s .5s ease both}
+.sp-dot{width:7px;height:7px;border-radius:50%;background:rgba(28,28,30,.25);animation:spDot 1.2s infinite ease-in-out}
+.sp-dot:nth-child(2){animation-delay:.2s}.sp-dot:nth-child(3){animation-delay:.4s}
+@keyframes spFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spDot{0%,80%,100%{transform:scale(.7);opacity:.3}40%{transform:scale(1);opacity:1}}
 
 /* ── SCREENS ── */
 .screen{display:none;position:relative;z-index:1}
@@ -429,37 +429,10 @@ body::before{
 
 <!-- ══ SPLASH ══ -->
 <div id="splash">
-  <div class="sp-icon">
-    <svg width="140" height="120" viewBox="0 0 140 120" fill="none" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
-      <!-- hood -->
-      <path d="M50 28 L52 14 L88 14 L90 28 Z"/>
-      <rect x="58" y="14" width="24" height="5" rx="1.5"/>
-      <line x1="62" y1="17" x2="78" y2="17" stroke-width="1.5" opacity=".5"/>
-      <!-- counter top -->
-      <rect x="14" y="28" width="112" height="5" rx="2"/>
-      <!-- sink left -->
-      <rect x="20" y="33" width="36" height="42" rx="2"/>
-      <rect x="25" y="38" width="26" height="14" rx="1.5"/>
-      <circle cx="38" cy="45" r="2.5"/>
-      <line x1="38" y1="40" x2="38" y2="38" stroke-width="2"/>
-      <line x1="24" y1="59" x2="32" y2="59" stroke-width="1.5"/>
-      <line x1="44" y1="59" x2="52" y2="59" stroke-width="1.5"/>
-      <!-- center oven -->
-      <rect x="60" y="33" width="20" height="42" rx="2"/>
-      <rect x="63" y="37" width="14" height="16" rx="1.5"/>
-      <circle cx="65" cy="58" r="2"/>
-      <circle cx="73" cy="58" r="2"/>
-      <!-- right cabinet -->
-      <rect x="84" y="33" width="42" height="42" rx="2"/>
-      <rect x="89" y="37" width="15" height="18" rx="1.5"/>
-      <rect x="110" y="37" width="11" height="18" rx="1.5"/>
-      <line x1="89" y1="63" x2="96" y2="63" stroke-width="1.5"/>
-      <line x1="108" y1="63" x2="118" y2="63" stroke-width="1.5"/>
-      <!-- base -->
-      <line x1="14" y1="75" x2="126" y2="75"/>
-      <line x1="20" y1="75" x2="20" y2="82"/>
-      <line x1="120" y1="75" x2="120" y2="82"/>
-    </svg>
+  <div class="sp-brand">BECKER</div>
+  <div class="sp-sub">Запись на собеседование</div>
+  <div class="sp-dots">
+    <div class="sp-dot"></div><div class="sp-dot"></div><div class="sp-dot"></div>
   </div>
 </div>
 

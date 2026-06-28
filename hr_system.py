@@ -1519,10 +1519,15 @@ async def serve_slots(request):
         if slots:
             result[d_str] = [{"time": t, "hr_id": h} for (t, h) in slots]
         elif use_defaults:
+            booked_times = {
+                c["interview_time"]
+                for c in data["candidates"].values()
+                if c.get("interview_date") == d_str and c.get("status") == "scheduled"
+            }
             result[d_str] = [
-                {"time": t, "hr_id": hr_id}
-                for hr_id in HR_IDS
+                {"time": t, "hr_id": HR_IDS[0]}
                 for t in DEFAULT_SLOTS
+                if t not in booked_times
             ]
         if len(result) >= 5:          # show max 5 days
             break
@@ -1693,7 +1698,27 @@ async def serve_book(request):
 
         # Проверить что слот ещё свободен
         free = get_free_slots(data, day_str, booked_hr)
-        if time_str not in free:
+        if not free:
+            # HR не настроил расписание — проверяем вручную по дефолтным слотам
+            use_defaults = not any(
+                any(times for times in days.values())
+                for days in data.get("slots", {}).values()
+            )
+            if use_defaults and time_str in DEFAULT_SLOTS:
+                # Слот доступен по умолчанию, если никем не занят
+                already_booked_times = {
+                    c["interview_time"]
+                    for c in data["candidates"].values()
+                    if c.get("interview_date") == day_str
+                    and c.get("status") == "scheduled"
+                }
+                if time_str in already_booked_times:
+                    return web.Response(text='{"ok":false,"error":"slot_taken"}',
+                                        content_type="application/json", headers=CORS)
+            elif time_str not in free:
+                return web.Response(text='{"ok":false,"error":"slot_taken"}',
+                                    content_type="application/json", headers=CORS)
+        elif time_str not in free:
             return web.Response(text='{"ok":false,"error":"slot_taken"}',
                                 content_type="application/json", headers=CORS)
 
