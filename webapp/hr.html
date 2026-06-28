@@ -202,6 +202,19 @@ body::before{content:'BECKER';position:fixed;bottom:50px;left:50%;transform:tran
 /* MINI BUTTON */
 .mini-btn{background:rgba(245,166,35,.18);border:1.5px solid rgba(245,166,35,.4);border-radius:10px;padding:7px 12px;font-size:11px;font-weight:800;color:var(--dark);cursor:pointer;font-family:inherit;transition:transform .1s}
 .mini-btn:active{transform:scale(.93)}
+
+/* QUICK STATUS BUTTONS */
+.qs-btn{padding:6px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:none;font-family:inherit;transition:all .15s}
+.qs-btn:active{transform:scale(.93)}
+.qs-btn.qs-teal{background:rgba(38,198,176,.12);color:#1a7a74}
+.qs-btn.qs-red{background:rgba(232,64,64,.08);color:var(--red)}
+.qs-btn.qs-grey{background:rgba(0,0,0,.06);color:var(--mid)}
+
+/* NAV BADGE */
+.nav-badge{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:8px;font-weight:800;border-radius:8px;padding:1px 4px;min-width:14px;text-align:center;border:1.5px solid var(--bg);display:none}
+
+/* PULL TO REFRESH */
+#ptr-indicator{position:fixed;top:0;left:50%;transform:translateX(-50%) translateY(-100%);background:var(--amber);color:var(--dark);font-size:12px;font-weight:800;padding:10px 20px;border-radius:0 0 14px 14px;z-index:50;transition:transform .2s;pointer-events:none;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -287,6 +300,9 @@ body::before{content:'BECKER';position:fixed;bottom:50px;left:50%;transform:tran
     </div>
   </div>
   <div style="padding:0 14px">
+    <div class="search-wrap" style="margin-bottom:10px">
+      <input id="today-search" class="search-inp" placeholder="🔍  Поиск по имени..." oninput="renderToday()">
+    </div>
     <div class="reminder-block" id="reminder-block">
       <div class="reminder-title">📝 Нужно написать</div>
       <div id="reminder-list"></div>
@@ -357,7 +373,7 @@ body::before{content:'BECKER';position:fixed;bottom:50px;left:50%;transform:tran
 <div class="bot-nav">
   <div class="bot-nav-inner">
     <div class="nav-btn on" onclick="navTo('today',this)"><div class="nav-ico">📋</div>Сегодня</div>
-    <div class="nav-btn"    onclick="navTo('cands',this)"><div class="nav-ico">👥</div>Кандидаты</div>
+    <div class="nav-btn"    onclick="navTo('cands',this)"><div class="nav-ico" style="position:relative">👥<span class="nav-badge" id="cands-badge"></span></div>Кандидаты</div>
     <div class="nav-btn"    onclick="navTo('stats',this)"><div class="nav-ico">📊</div>Статистика</div>
   </div>
 </div>
@@ -377,6 +393,10 @@ body::before{content:'BECKER';position:fixed;bottom:50px;left:50%;transform:tran
     <button onclick="setStatus('approved_pending')" class="status-btn s-teal">✅ Принят(а) — написать оффер</button>
     <button onclick="setStatus('rejected_pending')" class="status-btn s-red">❌ Отказ</button>
     <button onclick="setStatus('scheduled')"        class="status-btn s-amber">📅 Записан(а) — сбросить статус</button>
+    <div style="height:1px;background:var(--bg2);margin:14px 0"></div>
+    <div class="filter-label" style="margin:0 0 8px">Заметки HR</div>
+    <textarea id="cm-notes" class="modal-input" placeholder="Впечатления, контакт для оффера, что обсудили..." style="resize:none;height:80px;font-size:14px"></textarea>
+    <button onclick="saveNotes()" class="save-btn rpl" style="margin:4px 0 0;padding:13px;font-size:13px;box-shadow:none">💾 Сохранить заметку</button>
   </div>
 </div>
 
@@ -468,7 +488,7 @@ const DAYS   = ['вс','пн','вт','ср','чт','пт','сб'];
 const TODAY  = (() => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })();
 
 // ─── STATE ────────────────────────────────────────────────────────────
-let candidates = [], mySlots = {}, _candMap = {};
+let candidates = [], mySlots = {}, _candMap = {}, _slotsOffset = 0;
 
 // ─── RIPPLE ───────────────────────────────────────────────────────────
 document.addEventListener('click', e => {
@@ -573,7 +593,7 @@ async function loadAll() {
     candidates.forEach(c => { if (c._key) _candMap[c._key] = c; });
 
     renderReminders(); renderToday(); renderSlots();
-    renderCandidatesFull(); renderStats();
+    renderCandidatesFull(); renderStats(); updateCandBadge();
     const safeNotifs = Array.isArray(notifs) ? notifs : [];
     renderNotifBadge(safeNotifs); renderNotifList(safeNotifs);
 
@@ -630,14 +650,42 @@ function renderReminders() {
 
 // ─── TODAY ────────────────────────────────────────────────────────────
 function renderToday() {
-  const list = candidates.filter(c => c.interview_date===TODAY)
+  const now  = new Date();
+  const q    = (document.getElementById('today-search')?.value || '').toLowerCase().trim();
+  let list   = candidates.filter(c => c.interview_date === TODAY)
     .sort((a,b) => (a.interview_time||'').localeCompare(b.interview_time||''));
+  if (q) list = list.filter(c => (c.name||'').toLowerCase().includes(q));
   const el = document.getElementById('today-list');
   if (!list.length) { el.innerHTML=`<div class="empty"><div class="e">☀️</div>Сегодня собеседований нет</div>`; return; }
   el.innerHTML = list.map(c => {
     const u    = c.username ? `@${c.username}` : `ID:${c.telegram_id}`;
     const conf = c.confirmed===true ? '✅ Подтвердил(а)' : c.confirmed===false ? '❌ Отказал(ась)' : '❓ Без ответа';
     const key  = c._key || '';
+
+    // Авто-подсказка: прошло 30+ мин с начала собеседования
+    const pastDeadline = (() => {
+      if (c.status !== 'scheduled' || !c.interview_time) return false;
+      const [h, m] = c.interview_time.split(':').map(Number);
+      const dt = new Date(); dt.setHours(h, m, 0, 0);
+      return now > new Date(dt.getTime() + 30 * 60 * 1000);
+    })();
+    const noShowHint = pastDeadline ? `
+      <div style="margin-top:10px;padding:10px;background:rgba(232,64,64,0.06);border-radius:10px;border:1px solid rgba(232,64,64,0.15)">
+        <div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:7px">⏰ Прошло 30+ минут — отметить результат:</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="qs-btn qs-grey" onclick="event.stopPropagation();quickStatus('${key}','no_show')">👻 Не пришёл</button>
+          <button class="qs-btn qs-teal" onclick="event.stopPropagation();quickStatus('${key}','approved_pending')">✅ Пришёл, принят</button>
+          <button class="qs-btn qs-red"  onclick="event.stopPropagation();quickStatus('${key}','rejected_pending')">❌ Пришёл, отказ</button>
+        </div>
+      </div>` : '';
+
+    const qs = (!pastDeadline && c.status === 'scheduled') ? `
+      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+        <button class="qs-btn qs-teal" onclick="event.stopPropagation();quickStatus('${key}','approved_pending')">✅ Принят</button>
+        <button class="qs-btn qs-red" onclick="event.stopPropagation();quickStatus('${key}','rejected_pending')">❌ Отказ</button>
+        <button class="qs-btn qs-grey" onclick="event.stopPropagation();quickStatus('${key}','no_show')">👻 Не пришёл</button>
+      </div>` : '';
+
     return `<div class="card ${cardBorder(c.status)}" onclick="openCandModal('${key}')">
       <div style="display:flex;align-items:flex-start;justify-content:space-between">
         <div>
@@ -649,16 +697,32 @@ function renderToday() {
         </div>
         <button class="card-action-btn rpl" onclick="event.stopPropagation();openCandModal('${key}')">✏️ Статус</button>
       </div>
+      ${noShowHint}${qs}
     </div>`;
   }).join('');
+}
+
+function slotsWeek(dir) {
+  if (_slotsOffset + dir < 0) return;
+  _slotsOffset += dir;
+  renderSlots();
+  window.scrollTo({top:0, behavior:'smooth'});
 }
 
 // ─── SLOTS ────────────────────────────────────────────────────────────
 function renderSlots() {
   const hasExplicit = Object.values(mySlots).some(s => s.length > 0);
-  let html = '';
+  const baseD = new Date(TODAY+'T12:00:00');
+  baseD.setDate(baseD.getDate() + _slotsOffset * 7);
+  const endD  = new Date(baseD); endD.setDate(baseD.getDate() + 6);
+  const weekLabel = `${baseD.getDate()} ${MONTHS[baseD.getMonth()]} — ${endD.getDate()} ${MONTHS[endD.getMonth()]}`;
+  let html = `<div style="display:flex;align-items:center;gap:8px;padding:8px 14px 4px">
+    <button class="back-btn" onclick="slotsWeek(-1)" ${_slotsOffset<=0?'disabled style="opacity:.4;pointer-events:none"':''}>← Пред.</button>
+    <div style="flex:1;text-align:center;font-size:11px;font-weight:700;color:var(--dark)">${weekLabel}</div>
+    <button class="back-btn" onclick="slotsWeek(1)">След. →</button>
+  </div>`;
   for (let i=0; i<7; i++) {
-    const d  = new Date(TODAY+'T12:00:00'); d.setDate(d.getDate()+i);
+    const d  = new Date(TODAY+'T12:00:00'); d.setDate(d.getDate() + _slotsOffset*7 + i);
     const ds = d.toISOString().split('T')[0];
     const explicit = mySlots[ds];
     const active = (explicit && explicit.length > 0)
@@ -717,12 +781,46 @@ function openCandModal(keyOrCand) {
   document.getElementById('cm-name').textContent    = c.name;
   document.getElementById('cm-meta').textContent    = `${c.spec||'—'}  ·  ${c.interview_date||'—'} ${c.interview_time||''}`;
   document.getElementById('cm-contact').textContent = u;
+  document.getElementById('cm-notes').value         = c.notes || '';
   document.getElementById('cand-modal').classList.add('open');
+}
+
+async function saveNotes() {
+  if (!_activeCand) return;
+  const notes = document.getElementById('cm-notes').value;
+  const btn = document.querySelector('#cand-modal .save-btn');
+  if (btn) { btn.textContent = 'Сохраняю...'; btn.disabled = true; }
+  try {
+    const r = await fetch('/api/candidate-notes', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({hr_id: HR_ID, key: _activeCand._key, notes})
+    });
+    const j = await r.json();
+    if (j.ok) {
+      _activeCand.notes = notes;
+      _candMap[_activeCand._key] = _activeCand;
+      if (btn) { btn.textContent = '✅ Сохранено!'; setTimeout(() => { btn.textContent = '💾 Сохранить заметку'; btn.disabled = false; }, 1500); }
+    } else {
+      if (btn) { btn.textContent = '💾 Сохранить заметку'; btn.disabled = false; }
+      _alert('Ошибка: ' + (j.error || ''));
+    }
+  } catch(e) {
+    if (btn) { btn.textContent = '💾 Сохранить заметку'; btn.disabled = false; }
+    _alert('Ошибка соединения');
+  }
 }
 function closeCandModal(e) {
   if (!e || e.target===document.getElementById('cand-modal'))
     document.getElementById('cand-modal').classList.remove('open');
 }
+async function quickStatus(key, status) {
+  const c = _candMap[key];
+  if (!c) return;
+  _activeCand = c;
+  await setStatus(status);
+}
+
 async function setStatus(status) {
   if (!_activeCand) return;
   const key = _activeCand._key;
@@ -857,9 +955,46 @@ function renderStats() {
         <span style="font-size:11px;color:var(--mid)">100%</span>
       </div>
     </div>`;
+  // Конверсия по специализации
+  const bySpec = {};
+  candidates.forEach(c => {
+    const cat = specCategory(c.spec);
+    if (!bySpec[cat]) bySpec[cat] = {total:0, came:0, approved:0};
+    bySpec[cat].total++;
+    if (['approved','approved_pending','rejected','rejected_pending'].includes(c.status)) bySpec[cat].came++;
+    if (['approved','approved_pending'].includes(c.status)) bySpec[cat].approved++;
+  });
+  const specRows = Object.entries(bySpec).map(([cat, d]) => {
+    const conv = d.came > 0 ? Math.round(d.approved / d.came * 100) : 0;
+    const col  = conv >= 50 ? 'var(--teal)' : conv > 0 ? 'var(--amber)' : 'var(--mid)';
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--bg2)">
+      <span style="font-size:13px;color:var(--dark)">${SPEC_LABELS[cat]||cat}</span>
+      <div style="display:flex;gap:14px;align-items:center">
+        <span style="font-size:11px;color:var(--mid)">${d.total} зап.</span>
+        <span style="font-size:14px;font-weight:800;color:${col}">${d.came ? conv+'%' : '—'}</span>
+      </div>
+    </div>`;
+  }).join('');
+  if (specRows) {
+    document.getElementById('stats-wrap').innerHTML += `
+      <div class="card" style="cursor:default;margin-top:10px">
+        <div class="pulse-label" style="color:var(--mid)">Конверсия по специализации</div>
+        ${specRows}
+      </div>`;
+  }
+
   requestAnimationFrame(()=>setTimeout(()=>{
     document.querySelectorAll('.anim-bar').forEach(b=>{b.style.width=b.dataset.pct+'%';});
   },100));
+}
+
+// ─── CAND BADGE ───────────────────────────────────────────────────────
+function updateCandBadge() {
+  const n = candidates.filter(c => c.status === 'scheduled').length;
+  const b = document.getElementById('cands-badge');
+  if (!b) return;
+  b.textContent = n > 9 ? '9+' : String(n);
+  b.style.display = n > 0 ? 'block' : 'none';
 }
 
 // ─── NOTIFICATIONS ────────────────────────────────────────────────────
@@ -870,7 +1005,7 @@ function renderNotifBadge(notifs) {
 function renderNotifList(notifs) {
   const el=document.getElementById('notif-list');
   if (!notifs.length){el.innerHTML='<div style="text-align:center;color:var(--mid);padding:24px">Уведомлений нет</div>';return;}
-  const tl={booked:'📅 Новая запись',manual:'✏️ Вручную',cancelled:'❌ Отмена'};
+  const tl={booked:'📅 Новая запись',new:'📅 Новая запись',manual:'✏️ Вручную',cancelled:'❌ Отмена',confirmed:'✅ Подтвердил(а)',declined:'⚠️ Отказал(ась)'};
   el.innerHTML=notifs.map(n=>{
     const ts=n.ts?new Date(n.ts).toLocaleString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
     const bg=n.read?'rgba(0,0,0,0.02)':'var(--amber-lt)';
@@ -961,6 +1096,45 @@ async function exportData() {
 
 setTimeout(()=>hideSplash(), 4000);
 loadAll();
+
+// ─── PULL TO REFRESH ──────────────────────────────────────────────────
+const _ptrEl = (() => {
+  const el = document.createElement('div');
+  el.id = 'ptr-indicator';
+  el.textContent = '↓ Потяни чтобы обновить';
+  document.body.appendChild(el);
+  return el;
+})();
+let _ptrStart = 0, _ptrActive = false;
+const PTR_THR = 70;
+document.addEventListener('touchstart', e => {
+  _ptrStart = e.touches[0].clientY;
+  _ptrActive = window.scrollY <= 2;
+}, {passive: true});
+document.addEventListener('touchmove', e => {
+  if (!_ptrActive) return;
+  const dy = e.touches[0].clientY - _ptrStart;
+  if (dy > 0 && dy < PTR_THR * 2) {
+    const pct = Math.min(dy / PTR_THR, 1);
+    _ptrEl.style.transform = `translateX(-50%) translateY(${(pct - 1) * 100}%)`;
+  }
+}, {passive: true});
+document.addEventListener('touchend', e => {
+  if (!_ptrActive) return;
+  const dy = e.changedTouches[0].clientY - _ptrStart;
+  _ptrEl.style.transform = 'translateX(-50%) translateY(-100%)';
+  if (dy >= PTR_THR) {
+    _ptrEl.textContent = '↻ Обновляю...';
+    _ptrEl.style.transform = 'translateX(-50%) translateY(0)';
+    loadAll().then(() => {
+      setTimeout(() => {
+        _ptrEl.style.transform = 'translateX(-50%) translateY(-100%)';
+        _ptrEl.textContent = '↓ Потяни чтобы обновить';
+      }, 1000);
+    });
+  }
+  _ptrActive = false;
+}, {passive: true});
 </script>
 </body>
 </html>

@@ -15,7 +15,8 @@ WEBAPP_DIR   = os.path.join(os.path.dirname(os.path.abspath(__file__)), "webapp"
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 
 # Глобальная ссылка на бот (устанавливается после инициализации)
-_bot = None
+_bot       = None
+_job_queue = None
 
 # ── Настройки ────────────────────────────────────────────────────────────────
 HR_IDS = {
@@ -800,6 +801,13 @@ async def candidate_confirm_callback(update: Update, ctx: ContextTypes.DEFAULT_T
 
     if action == "confirm":
         cand["confirmed"] = True
+        notifs = data.setdefault("notifications", {})
+        notifs.setdefault(str(booked_hr), []).insert(0, {
+            "type": "confirmed", "name": cand["name"],
+            "date": cand.get("interview_date", ""), "time": cand.get("interview_time", ""),
+            "username": cand.get("username", ""),
+            "ts": datetime.now().isoformat(), "read": False
+        })
         save(data)
         is_today = cand.get("interview_date") == date.today().strftime("%Y-%m-%d")
         when_word = "Сегодня" if is_today else "Завтра"
@@ -819,6 +827,13 @@ async def candidate_confirm_callback(update: Update, ctx: ContextTypes.DEFAULT_T
         )
     else:
         cand["confirmed"] = False
+        notifs = data.setdefault("notifications", {})
+        notifs.setdefault(str(booked_hr), []).insert(0, {
+            "type": "declined", "name": cand["name"],
+            "date": cand.get("interview_date", ""), "time": cand.get("interview_time", ""),
+            "username": cand.get("username", ""),
+            "ts": datetime.now().isoformat(), "read": False
+        })
         save(data)
         await q.edit_message_text(
             f"Понятно, {first}. Если захочешь перенести — пиши:\n{HR_PHONE}  ·  {HR_TELEGRAM}"
@@ -1665,6 +1680,17 @@ async def serve_book(request):
 
         data = load()
 
+        # Проверить дубль записи
+        if tg_id:
+            existing = data["candidates"].get(str(tg_id))
+            if existing and existing.get("status") == "scheduled":
+                return web.Response(
+                    text=json.dumps({"ok": False, "error": "already_booked",
+                                     "date": existing.get("interview_date"),
+                                     "time": existing.get("interview_time")},
+                                    ensure_ascii=False),
+                    content_type="application/json", headers=CORS)
+
         # Проверить что слот ещё свободен
         free = get_free_slots(data, day_str, booked_hr)
         if time_str not in free:
@@ -1717,19 +1743,42 @@ async def serve_book(request):
             # Telegram-подтверждение кандидату
             if tg_id:
                 try:
-                    first  = name.split()[0]
-                    d_fmt2 = datetime.strptime(day_str, "%Y-%m-%d").strftime("%-d %B")
+                    first   = name.split()[0]
+                    d_fmt2  = datetime.strptime(day_str, "%Y-%m-%d").strftime("%-d %B")
                     hr_name = HR_IDS.get(booked_hr, "HR BECKER")
                     cand_text = (
                         f"✅ <b>Записали, {first}!</b>\n\n"
                         f"📅 <b>{d_fmt2} в {time_str}</b>\n"
                         f"📍 {COMPANY_ADDR}\n"
                         f"👤 Ваш HR: {hr_name}\n\n"
-                        f"Накануне я пришлю напоминание 🔔"
+                        f"<b>Что взять с собой:</b>\n"
+                        f"• Паспорт или другой документ\n"
+                        f"• Хорошее настроение 😊\n\n"
+                        f"<b>Как добраться:</b>\n"
+                        f"м. Сокольники, 5 минут пешком\n\n"
+                        f"Накануне пришлю напоминание 🔔\n"
+                        f"Вопросы? {HR_TELEGRAM}"
                     )
                     await _bot.send_message(chat_id=tg_id, text=cand_text, parse_mode="HTML")
                 except Exception as e:
                     print(f"[BOOK] candidate confirm error: {e}")
+
+            # 2h-напоминание для записи в сегодняшний день
+            if tg_id and day_str == date.today().strftime("%Y-%m-%d") and _job_queue:
+                try:
+                    _msk_tz = ZoneInfo("Europe/Moscow")
+                    h, m = map(int, time_str.split(":"))
+                    interview_msk = datetime.now(_msk_tz).replace(
+                        hour=h, minute=m, second=0, microsecond=0)
+                    remind_msk = interview_msk - timedelta(hours=2)
+                    if remind_msk > datetime.now(_msk_tz) + timedelta(minutes=5):
+                        _job_queue.run_once(
+                            send_2h_reminder,
+                            when=remind_msk,
+                            data={"tg_id": tg_id, "hr_id": booked_hr, "key": key}
+                        )
+                except Exception as e:
+                    print(f"[2h schedule] error: {e}")
 
         return web.Response(text='{"ok":true}', content_type="application/json", headers=CORS)
     except Exception as e:
@@ -1817,6 +1866,171 @@ async def serve_static(request):
         return web.FileResponse(filepath)
     raise web.HTTPNotFound()
 
+async def serve_my_booking(request):
+    try:
+        tg_id = int(request.rel_url.query.get("tg_id", 0))
+        if not tg_id:
+            return web.Response(text='{"ok":false}', content_type="application/json", headers=CORS)
+        data = load()
+        cand = data["candidates"].get(str(tg_id))
+        if cand and cand.get("status") == "scheduled":
+            return web.Response(
+                text=json.dumps({"ok": True, "booking": cand}, ensure_ascii=False),
+                content_type="application/json", headers=CORS)
+        return web.Response(text='{"ok":false}', content_type="application/json", headers=CORS)
+    except Exception as e:
+        return web.Response(text=json.dumps({"ok": False, "error": str(e)}),
+                            content_type="application/json", headers=CORS)
+
+async def serve_cancel_booking(request):
+    try:
+        body = await request.json()
+        tg_id = int(body.get("tg_id", 0))
+        if not tg_id:
+            return web.Response(text='{"ok":false,"error":"no_tg_id"}',
+                                content_type="application/json", headers=CORS)
+        data = load()
+        key = str(tg_id)
+        cand = data["candidates"].get(key)
+        if not cand or cand.get("status") != "scheduled":
+            return web.Response(text='{"ok":false,"error":"not_found"}',
+                                content_type="application/json", headers=CORS)
+        hr_id_str = str(cand.get("hr_id", HR_ID))
+        notifs = data.setdefault("notifications", {})
+        notifs.setdefault(hr_id_str, []).insert(0, {
+            "type": "cancelled", "name": cand["name"],
+            "date": cand.get("interview_date", ""), "time": cand.get("interview_time", ""),
+            "username": cand.get("username", ""),
+            "ts": datetime.now().isoformat(), "read": False
+        })
+        del data["candidates"][key]
+        save(data)
+        if _bot:
+            try:
+                await _bot.send_message(
+                    chat_id=int(hr_id_str),
+                    text=f"❌ <b>{cand['name']}</b> отменил(а) запись\n"
+                         f"📅 {cand.get('interview_date','')} в {cand.get('interview_time','')}",
+                    parse_mode="HTML"
+                )
+            except Exception:
+                pass
+        return web.Response(text='{"ok":true}', content_type="application/json", headers=CORS)
+    except Exception as e:
+        return web.Response(text=json.dumps({"ok": False, "error": str(e)}),
+                            content_type="application/json", headers=CORS)
+
+async def send_2h_reminder(ctx: ContextTypes.DEFAULT_TYPE):
+    d = ctx.job.data
+    tg_id    = d.get("tg_id", 0)
+    hr_id    = d.get("hr_id")
+    cand_key = d.get("key")
+    data = load()
+    cand = data["candidates"].get(cand_key) if cand_key else None
+    if not cand or cand.get("status") != "scheduled":
+        return
+    first = cand["name"].split()[0]
+    if tg_id:
+        try:
+            await ctx.bot.send_message(
+                chat_id=tg_id,
+                text=f"{first}, через 2 часа ждём тебя!\n"
+                     f"━━━━━━━━━━━━━━━━━━\n"
+                     f"⏰ <b>{cand['interview_time']}</b>\n"
+                     f"📍 {COMPANY_ADDR}\n"
+                     f"━━━━━━━━━━━━━━━━━━\n"
+                     f"Всё в силе?",
+                reply_markup=InlineKeyboardMarkup([[
+                    InlineKeyboardButton("Да, приду",  callback_data=f"cand_confirm_{tg_id}"),
+                    InlineKeyboardButton("Не смогу",   callback_data=f"cand_decline_{tg_id}")
+                ]]),
+                parse_mode="HTML"
+            )
+        except Exception as e:
+            print(f"[2h] candidate error: {e}")
+    if hr_id:
+        conf = cand.get("confirmed")
+        conf_lbl = "✅ Подтвердил(а)" if conf is True else ("❌ Отказал(ась)" if conf is False else "❓ Не отвечал(а)")
+        spec_line = f"💼  {cand['spec']}\n" if cand.get("spec") and cand["spec"] != "—" else ""
+        try:
+            await ctx.bot.send_message(
+                chat_id=hr_id,
+                text=f"⏰ <b>Через 2 часа — {cand['interview_time']}</b>\n"
+                     f"━━━━━━━━━━━━━━━━━━\n"
+                     f"👤  <b>{cand['name']}</b>  |  @{cand.get('username') or '—'}\n"
+                     f"{spec_line}"
+                     f"Подтверждение: {conf_lbl}",
+                reply_markup=InlineKeyboardMarkup([[
+                    InlineKeyboardButton("✅ СОБЕСЕДОВАНИЕ было",  callback_data=f"hr_met_{cand_key}"),
+                    InlineKeyboardButton("👻 Не пришёл(а)",        callback_data=f"hr_noshow_{cand_key}")
+                ]]),
+                parse_mode="HTML"
+            )
+        except Exception as e:
+            print(f"[2h] HR card error: {e}")
+
+async def weekly_report(ctx: ContextTypes.DEFAULT_TYPE):
+    data  = load()
+    today = date.today()
+    mon   = today - timedelta(days=today.weekday())
+    sun   = mon + timedelta(days=6)
+    mon_s = mon.strftime("%Y-%m-%d")
+    sun_s = sun.strftime("%Y-%m-%d")
+    for hr_id in HR_IDS:
+        my_cands   = [c for c in data["candidates"].values() if c.get("hr_id") == hr_id]
+        this_week  = [c for c in my_cands if mon_s <= (c.get("interview_date") or "") <= sun_s]
+        total      = len(this_week)
+        approved   = sum(1 for c in this_week if c.get("status") in ("approved","approved_pending"))
+        rejected   = sum(1 for c in this_week if c.get("status") in ("rejected","rejected_pending"))
+        noshow     = sum(1 for c in this_week if c.get("status") == "no_show")
+        sched      = sum(1 for c in this_week if c.get("status") == "scheduled")
+        came       = total - sched
+        conv       = round(approved / came * 100) if came else 0
+        pending    = [c for c in my_cands if c.get("status") == "approved_pending"]
+        if total == 0 and not pending:
+            continue
+        lines = [
+            f"📊 <b>Итоги недели {mon.strftime('%-d %b')} — {sun.strftime('%-d %b')}</b>",
+            f"━━━━━━━━━━━━━━━━━━",
+            f"👥 Собеседований: <b>{total}</b>",
+            f"✅ Приняты: <b>{approved}</b>",
+            f"❌ Отказы: <b>{rejected}</b>",
+            f"👻 Не пришли: <b>{noshow}</b>",
+            f"📅 Запланированы: <b>{sched}</b>",
+        ]
+        if came:
+            lines.append(f"📈 Конверсия: <b>{conv}%</b>")
+        if pending:
+            lines.append(f"\n⏳ <b>Ждут оффера ({len(pending)}):</b>")
+            for c in pending:
+                un = f"@{c['username']}" if c.get("username") else (f"ID:{c['telegram_id']}" if c.get("telegram_id") else "—")
+                lines.append(f"  · {c['name']} — {un}")
+        try:
+            await ctx.bot.send_message(chat_id=hr_id, text="\n".join(lines), parse_mode="HTML")
+        except Exception as e:
+            print(f"[weekly] send error: {e}")
+
+async def serve_candidate_notes(request):
+    try:
+        body  = await request.json()
+        hr_id = int(body.get("hr_id", 0))
+        key   = body.get("key", "")
+        notes = body.get("notes", "")
+        data  = load()
+        cand  = data["candidates"].get(key)
+        if not cand:
+            return web.Response(text='{"ok":false,"error":"not found"}',
+                                content_type="application/json", headers=CORS)
+        if cand.get("hr_id") != hr_id and not cand.get("shared"):
+            return web.Response(text='{"ok":false,"error":"forbidden"}',
+                                content_type="application/json", headers=CORS)
+        cand["notes"] = notes
+        save(data)
+        return web.Response(text='{"ok":true}', content_type="application/json", headers=CORS)
+    except Exception as e:
+        return web.Response(text=json.dumps({"ok": False, "error": str(e)}),
+                            content_type="application/json", headers=CORS)
+
 async def run_webserver():
     app_web = web.Application()
     app_web.router.add_get("/",                     serve_index)
@@ -1834,6 +2048,9 @@ async def run_webserver():
     app_web.router.add_post("/api/specs",              serve_specs_post)
     app_web.router.add_get("/api/export",              serve_export)
     app_web.router.add_post("/api/import",             serve_import)
+    app_web.router.add_get("/api/my-booking",          serve_my_booking)
+    app_web.router.add_post("/api/cancel-booking",     serve_cancel_booking)
+    app_web.router.add_post("/api/candidate-notes",    serve_candidate_notes)
     app_web.router.add_get("/{filename}",           serve_static)
     runner = web.AppRunner(app_web)
     await runner.setup()
@@ -1849,6 +2066,7 @@ def build_app():
     app.job_queue.run_daily(daily_check,      time=dtime(9,  0, tzinfo=_msk))
     app.job_queue.run_daily(evening_reminder, time=dtime(17, 0, tzinfo=_msk))
     app.job_queue.run_daily(daily_18_check,   time=dtime(18, 0, tzinfo=_msk))
+    app.job_queue.run_daily(weekly_report,    time=dtime(9,  0, tzinfo=_msk), days=(0,))
 
     conv = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
@@ -1909,8 +2127,9 @@ if __name__ == "__main__":
 
         app = build_app()
         await app.initialize()
-        global _bot
-        _bot = app.bot   # доступен для serve_book и прочих web-хендлеров
+        global _bot, _job_queue
+        _bot       = app.bot
+        _job_queue = app.job_queue
         await app.start()
         await app.updater.start_polling(drop_pending_updates=True)
         print("🤖 Бот запущен, жду сообщений...")

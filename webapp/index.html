@@ -749,6 +749,65 @@ body::before{
 
   <div class="btn-wrap">
     <button class="btn btn-primary rpl" onclick="closeApp()">Отлично, жду встречи! 👋</button>
+    <button class="btn btn-ghost" onclick="cancelBooking()" id="btn-cancel-success">Отменить запись</button>
+  </div>
+</div>
+
+<!-- ══ SCREEN: УЖЕ ЗАПИСАН ══ -->
+<div id="scr-booked" class="screen">
+  <div class="hdr">
+    <div class="hdr-bar">
+      <div class="hdr-logo">
+        <img class="hdr-logo-img" src="https://perfect-youth-production-b175.up.railway.app/logo.png" onerror="this.style.display='none'">
+        <div><div class="hdr-brand">BECKER</div><div class="hdr-brand-sub">Академия</div></div>
+      </div>
+      <div class="hdr-avatar" id="av-booked">?</div>
+    </div>
+    <div class="hdr-body">
+      <div class="hdr-h1">Твоя<br>запись</div>
+      <div class="hdr-h2">Ты уже записан(а) на собеседование</div>
+    </div>
+  </div>
+
+  <div class="success-wrap">
+    <div class="success-outer">
+      <div class="success-inner">
+        <div class="success-check">📅</div>
+      </div>
+    </div>
+    <div class="success-title">Запись активна</div>
+    <div class="success-sub">Увидимся на собеседовании!<br>Накануне придёт напоминание 🔔</div>
+  </div>
+
+  <div class="sec">Детали встречи</div>
+  <div class="confirm-card">
+    <div class="confirm-row">
+      <div class="confirm-ic">📅</div>
+      <div>
+        <div class="confirm-lbl">Дата и время</div>
+        <div class="confirm-val" id="booked-dt">—</div>
+      </div>
+    </div>
+    <div class="confirm-row">
+      <div class="confirm-ic">📍</div>
+      <div>
+        <div class="confirm-lbl">Адрес</div>
+        <div class="confirm-val">Стромынка 18к13, м. Сокольники</div>
+      </div>
+    </div>
+    <div class="confirm-row">
+      <div class="confirm-ic">💼</div>
+      <div>
+        <div class="confirm-lbl">Специализация</div>
+        <div class="confirm-val" id="booked-spec">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-wrap">
+    <button class="btn btn-primary rpl" onclick="closeApp()">Понятно, буду 👋</button>
+    <button class="btn btn-ghost" onclick="rescheduleBooking()" id="btn-reschedule">Перенести запись</button>
+    <button class="btn btn-ghost" onclick="cancelBooking()" id="btn-cancel-booked" style="color:var(--red);border-color:rgba(232,64,64,0.25)">Отменить запись</button>
   </div>
 </div>
 
@@ -816,7 +875,9 @@ setTimeout(() => {
   sp.classList.add('out');
   setTimeout(() => sp.remove(), 600);
   initAvatar();
-  loadSpecsAndRender();
+  checkExistingBooking().then(isBooked => {
+    if (!isBooked) loadSpecsAndRender();
+  });
 }, 1800);
 
 // ── RIPPLE ────────────────────────────────────────────────────────────
@@ -1161,6 +1222,17 @@ async function submitBooking() {
     });
     const res = await r.json();
 
+    if (res.error === 'already_booked') {
+      btn.textContent = 'Записаться ✓';
+      btn.disabled = false;
+      showBookedScreen({
+        interview_date: res.date,
+        interview_time: res.time,
+        spec: selectedSpec
+      });
+      return;
+    }
+
     if (res.error === 'slot_taken') {
       btn.textContent = 'Записаться ✓';
       btn.disabled = false;
@@ -1262,6 +1334,112 @@ function launchConfetti() {
     ].join(';');
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 3800);
+  }
+}
+
+// ── EXISTING BOOKING CHECK ────────────────────────────────────────────
+async function checkExistingBooking() {
+  if (!TG_ID) return false;
+  try {
+    const r = await fetch(`/api/my-booking?tg_id=${TG_ID}`);
+    const j = await r.json();
+    if (j.ok && j.booking) {
+      showBookedScreen(j.booking);
+      return true;
+    }
+  } catch(e) {}
+  return false;
+}
+
+function daysUntil(dateStr) {
+  const today  = new Date(); today.setHours(0,0,0,0);
+  const target = new Date(dateStr + 'T00:00:00'); target.setHours(0,0,0,0);
+  const diff   = Math.round((target - today) / 86400000);
+  if (diff === 0) return 'сегодня';
+  if (diff === 1) return 'завтра';
+  if (diff >= 2 && diff <= 4) return `через ${diff} дня`;
+  return `через ${diff} дней`;
+}
+
+function showBookedScreen(b) {
+  const d = new Date((b.interview_date || '') + 'T12:00:00');
+  const dtText = (b.interview_date ? fmtDate(d) : '—') + (b.interview_time ? ' · ' + b.interview_time : '');
+  document.getElementById('booked-dt').textContent = dtText;
+  document.getElementById('booked-spec').textContent = b.spec || '—';
+  // Счётчик дней в подзаголовке
+  const sub = document.querySelector('#scr-booked .hdr-h2');
+  if (sub && b.interview_date) {
+    const when = daysUntil(b.interview_date);
+    sub.textContent = `Встреча — ${when} · жди, мы готовимся!`;
+  }
+  showScreen('scr-booked');
+}
+
+async function rescheduleBooking() {
+  const savedSpec = document.getElementById('booked-spec')?.textContent || 'Продажи';
+  const doReschedule = async () => {
+    const r1 = document.getElementById('btn-reschedule');
+    if (r1) { r1.disabled = true; r1.textContent = 'Отменяю...'; }
+    try {
+      const r = await fetch('/api/cancel-booking', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({tg_id: TG_ID})
+      });
+      const j = await r.json();
+      if (j.ok) {
+        await loadSpecsAndRender();
+        selectedSpec = savedSpec;
+        document.getElementById('btn-spec').disabled = false;
+        document.querySelectorAll('.spec-card').forEach(c => c.classList.remove('sel'));
+      } else {
+        if (r1) { r1.disabled = false; r1.textContent = 'Перенести запись'; }
+        if (tg) tg.showAlert('Не удалось отменить: ' + (j.error || ''));
+      }
+    } catch(e) {
+      if (r1) { r1.disabled = false; r1.textContent = 'Перенести запись'; }
+      if (tg) tg.showAlert('Ошибка соединения');
+    }
+  };
+  if (tg && tg.showConfirm) {
+    tg.showConfirm('Перенести запись? Текущий слот освободится, выберешь новый.', ok => { if (ok) doReschedule(); });
+  } else {
+    if (confirm('Перенести запись? Текущий слот освободится.')) doReschedule();
+  }
+}
+
+async function cancelBooking() {
+  if (!TG_ID) return;
+  const doCancel = async () => {
+    const btn1 = document.getElementById('btn-cancel-booked');
+    const btn2 = document.getElementById('btn-cancel-success');
+    if (btn1) { btn1.disabled = true; btn1.textContent = 'Отменяю...'; }
+    if (btn2) { btn2.disabled = true; btn2.textContent = 'Отменяю...'; }
+    try {
+      const r = await fetch('/api/cancel-booking', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({tg_id: TG_ID})
+      });
+      const j = await r.json();
+      if (j.ok) {
+        loadSpecsAndRender();
+      } else {
+        if (btn1) { btn1.disabled = false; btn1.textContent = 'Отменить запись'; }
+        if (btn2) { btn2.disabled = false; btn2.textContent = 'Отменить запись'; }
+        const msg = 'Не удалось отменить. ' + (j.error || '');
+        if (tg) tg.showAlert(msg); else alert(msg);
+      }
+    } catch(e) {
+      if (btn1) { btn1.disabled = false; btn1.textContent = 'Отменить запись'; }
+      if (btn2) { btn2.disabled = false; btn2.textContent = 'Отменить запись'; }
+      if (tg) tg.showAlert('Ошибка соединения'); else alert('Ошибка соединения');
+    }
+  };
+  if (tg && tg.showConfirm) {
+    tg.showConfirm('Отменить запись на собеседование?', ok => { if (ok) doCancel(); });
+  } else {
+    if (confirm('Отменить запись на собеседование?')) doCancel();
   }
 }
 
