@@ -216,7 +216,7 @@ async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if WEBAPP_URL:
         # Кандидат использует мини-приложение
         await update.message.reply_photo(
-            photo=f"{WEBAPP_URL}/sonya.jpg",
+            photo=f"{WEBAPP_URL}/welcome.jpg",
             caption=(
                 f"Привет! 👋 Это HR-отдел <b>BECKER Академии</b> — здесь можно записаться на собеседование.\n\n"
                 f"Нажми кнопку ниже, чтобы записаться на собеседование 👇\n\n"
