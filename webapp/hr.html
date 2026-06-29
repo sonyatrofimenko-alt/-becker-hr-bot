@@ -791,8 +791,8 @@ function renderReminders() {
   block.classList.add('show');
   document.getElementById('reminder-list').innerHTML = pending.map(c => {
     const u   = c.username ? `@${c.username}` : (c.phone || `ID:${c.telegram_id}`);
-    const act = c.status==='approved_pending' ? '✅ Написать об оффере' : '❌ Уведомить об отказе';
-    const col = c.status==='approved_pending' ? 'var(--teal)' : 'var(--red)';
+    const act = c.status==='approved_pending' ? '✅ Написать об оффере' : '⏰ Авто-отказ уйдёт в 18:00';
+    const col = c.status==='approved_pending' ? 'var(--teal)' : 'var(--mid)';
     return `<div class="reminder-item">
       <div style="font-size:13px;font-weight:700;color:var(--dark)">${c.name}</div>
       <div style="font-size:11px;color:var(--mid);margin-top:2px">${u}</div>

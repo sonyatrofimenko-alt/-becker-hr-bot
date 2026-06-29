@@ -709,6 +709,7 @@ async def daily_18_check(ctx: ContextTypes.DEFAULT_TYPE):
                 except Exception as e:
                     print(f"[18:00] rejection send error: {e}")
             c["rejection_sent"] = True
+            c["status"] = "rejected"
             changed = True
 
     if changed:
@@ -1600,7 +1601,9 @@ async def serve_update_status(request):
         cand["status"] = status
         save(data)
 
-        # Telegram-уведомление HR о смене статуса через webapp
+        tg_id = cand.get("telegram_id", 0)
+        first = cand["name"].split()[0]
+
         if _bot:
             STATUS_RU = {
                 "no_show":          "👻 Не пришёл(а)",
@@ -1619,6 +1622,39 @@ async def serve_update_status(request):
                 )
             except Exception:
                 pass
+
+            # Уведомление кандидату — только Telegram-пользователям
+            if tg_id:
+                try:
+                    if status == "approved_pending":
+                        await _bot.send_message(
+                            chat_id=tg_id,
+                            text=f"{first}, спасибо, что нашёл(ла) время!\n\n"
+                                 f"Рады были познакомиться. Наш HR напишет тебе <b>завтра до обеда</b>.\n\n"
+                                 f"Если есть вопросы — {HR_TELEGRAM}",
+                            parse_mode="HTML"
+                        )
+                    elif status == "rejected_pending":
+                        await _bot.send_message(
+                            chat_id=tg_id,
+                            text=f"{first}, спасибо, что нашёл(ла) время!\n\n"
+                                 f"Рады были познакомиться. Наш HR напишет тебе <b>завтра до обеда</b>.\n\n"
+                                 f"Если есть вопросы — {HR_TELEGRAM}",
+                            parse_mode="HTML"
+                        )
+                    elif status == "no_show":
+                        await _bot.send_message(
+                            chat_id=tg_id,
+                            text=f"{first}, сегодня ждали тебя на СОБЕСЕДОВАНИЕ — что-то пошло не так?\n\n"
+                                 f"Вакансия открыта — можем перенести:",
+                            reply_markup=InlineKeyboardMarkup([[
+                                InlineKeyboardButton("Да, перенесём",  callback_data="reschedule_yes"),
+                                InlineKeyboardButton("Нет, спасибо",   callback_data="reschedule_no")
+                            ]]),
+                            parse_mode="HTML"
+                        )
+                except Exception:
+                    pass
 
         return web.Response(text='{"ok":true}', content_type="application/json", headers=CORS)
     except Exception as e:

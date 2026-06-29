@@ -1431,7 +1431,10 @@ async function rescheduleBooking() {
         await loadSpecsAndRender();
         selectedSpec = savedSpec;
         document.getElementById('btn-spec').disabled = false;
-        document.querySelectorAll('.spec-card').forEach(c => c.classList.remove('sel'));
+        document.querySelectorAll('.spec-card').forEach(c => {
+          c.classList.remove('sel');
+          if (c.querySelector('.sc-name')?.textContent === savedSpec) c.classList.add('sel');
+        });
       } else {
         if (r1) { r1.disabled = false; r1.textContent = 'Перенести запись'; }
         if (tg) tg.showAlert('Не удалось отменить: ' + (j.error || ''));
