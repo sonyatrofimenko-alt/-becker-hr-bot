@@ -756,7 +756,7 @@ function renderPulse() {
   if (weekEl) { weekEl.classList.remove('num-anim'); void weekEl.offsetWidth; weekEl.classList.add('num-anim'); animateCount(weekEl, weekCnt, 800); }
 
   // Стата 3 — ожидают ответа (offer_sent или review)
-  const pendingCnt = candidates.filter(c => c.status==='offer_sent' || c.status==='review').length;
+  const pendingCnt = candidates.filter(c => c.status==='approved_pending' || c.status==='rejected_pending').length;
   const pendEl = document.getElementById('dc-pending');
   if (pendEl) { pendEl.classList.remove('num-anim'); void pendEl.offsetWidth; pendEl.classList.add('num-anim'); animateCount(pendEl, pendingCnt, 900); }
 
@@ -1011,7 +1011,7 @@ function getWeekRange(offset=0) {
   const now=new Date(TODAY+'T12:00:00'), day=now.getDay();
   const mon=new Date(now); mon.setDate(now.getDate()-(day===0?6:day-1)+offset*7);
   const sun=new Date(mon); sun.setDate(mon.getDate()+6);
-  return [mon.toISOString().split('T')[0], sun.toISOString().split('T')[0]];
+  return [_localDate(mon), _localDate(sun)];
 }
 function specCategory(spec) {
   const s=(spec||'').toLowerCase();
