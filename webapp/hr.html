@@ -1174,7 +1174,7 @@ function renderNotifBadge(notifs) {
 function renderNotifList(notifs) {
   const el=document.getElementById('notif-list');
   if (!notifs.length){el.innerHTML='<div style="text-align:center;color:var(--mid);padding:24px">Уведомлений нет</div>';return;}
-  const tl={booked:'📅 Новая запись',new:'📅 Новая запись',manual:'✏️ Вручную',cancelled:'❌ Отмена',confirmed:'✅ Подтвердил(а)',declined:'⚠️ Отказал(ась)'};
+  const tl={booked:'📅 Новая запись',new:'📅 Новая запись',manual:'✏️ Вручную',cancelled:'❌ Отмена',confirmed:'✅ Подтвердил(а)',declined:'⚠️ Отказал(ась)',rescheduled:'🔄 Перенос'};
   el.innerHTML=notifs.map(n=>{
     const ts=n.ts?new Date(n.ts).toLocaleString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
     const bg=n.read?'rgba(0,0,0,0.02)':'var(--amber-lt)';

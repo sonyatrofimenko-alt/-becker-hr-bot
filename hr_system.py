@@ -506,33 +506,10 @@ async def pick_time(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             ctx.job_queue.run_once(
                 send_2h_reminder,
                 when=delay,
-                data={
-                    "user_id":  user.id,
-                    "name":     d["name"],
-                    "time":     chosen_time,
-                }
+                data={"tg_id": user.id, "hr_id": booked_hr_id, "key": str(user.id)}
             )
 
     return ConversationHandler.END
-
-# ── Напоминание за 2 часа (для записей на сегодня) ───────────────────────────
-async def send_2h_reminder(ctx: ContextTypes.DEFAULT_TYPE):
-    job_data = ctx.job.data
-    first = job_data["name"].split()[0]
-    await ctx.bot.send_message(
-        chat_id=job_data["user_id"],
-        text=f"{first}, напоминаем!\n"
-             f"━━━━━━━━━━━━━━━━━━\n"
-             f"Через 2 часа — в <b>{job_data['time']}</b> — ждём тебя в BECKER.\n"
-             f"{COMPANY_ADDR}\n"
-             f"━━━━━━━━━━━━━━━━━━\n"
-             f"Всё в силе?",
-        reply_markup=InlineKeyboardMarkup([[
-            InlineKeyboardButton("Да, приду",  callback_data=f"cand_confirm_{job_data['user_id']}"),
-            InlineKeyboardButton("Не смогу",   callback_data=f"cand_decline_{job_data['user_id']}")
-        ]]),
-        parse_mode="HTML"
-    )
 
 # ── 9:00 — карточки HR + утреннее напоминание кандидатам ─────────────────────
 async def daily_check(ctx: ContextTypes.DEFAULT_TYPE):
@@ -925,6 +902,14 @@ async def changed_plans_choice_callback(update: Update, ctx: ContextTypes.DEFAUL
             f"Окей, {first}, понятно! 🙏\n\nЕсли передумаешь — пиши:\n📱 {HR_PHONE}  |  💬 {HR_TELEGRAM}"
         )
         if cand:
+            data2 = load()
+            data2.setdefault("notifications", {}).setdefault(str(booked_hr), []).insert(0, {
+                "type": "declined", "name": cand["name"],
+                "date": cand.get("interview_date", ""), "time": cand.get("interview_time", ""),
+                "username": cand.get("username", ""),
+                "ts": datetime.now().isoformat(), "read": False
+            })
+            save(data2)
             await ctx.bot.send_message(
                 chat_id=booked_hr,
                 text=f"🤔 <b>{cand['name']}</b> передумал(а)\n"
@@ -937,6 +922,14 @@ async def changed_plans_choice_callback(update: Update, ctx: ContextTypes.DEFAUL
             f"Понятно, {first}! Удачи в поиске 🙏\n\nЕсли что изменится:\n📱 {HR_PHONE} | 💬 {HR_TELEGRAM}"
         )
         if cand:
+            data2 = load()
+            data2.setdefault("notifications", {}).setdefault(str(booked_hr), []).insert(0, {
+                "type": "cancelled", "name": cand["name"],
+                "date": cand.get("interview_date", ""), "time": cand.get("interview_time", ""),
+                "username": cand.get("username", ""),
+                "ts": datetime.now().isoformat(), "read": False
+            })
+            save(data2)
             await ctx.bot.send_message(
                 chat_id=booked_hr,
                 text=f"❌ <b>{cand['name']} — вакансия не актуальна</b>\n"
@@ -1110,6 +1103,19 @@ async def resch_time_callback(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         f"Стало:  <b>{new_dt.strftime('%-d %B')}  ·  {new_time}</b>\n"
         f"━━━━━━━━━━━━━━━━━━"
     )
+    # In-app уведомление для HR
+    notif_entry = {
+        "type": "rescheduled", "name": cand["name"],
+        "date": day_str, "time": new_time,
+        "username": cand.get("username", ""),
+        "ts": datetime.now().isoformat(), "read": False
+    }
+    data2 = load()
+    notifs2 = data2.setdefault("notifications", {})
+    notifs2.setdefault(str(new_hr), []).insert(0, notif_entry)
+    if old_hr != new_hr:
+        notifs2.setdefault(str(old_hr), []).insert(0, notif_entry)
+    save(data2)
     # Уведомить обоих HR если HR поменялся, иначе только нового
     await ctx.bot.send_message(chat_id=new_hr, text=notify_text, parse_mode="HTML")
     if old_hr != new_hr:
