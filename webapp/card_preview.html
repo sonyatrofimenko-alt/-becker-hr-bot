@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#F0E8D8;font-family:'Inter',sans-serif;padding:20px;display:flex;flex-direction:column;gap:16px}
+.label{font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#888;margin-bottom:6px;padding-left:2px}
+
+/* ── ВАРИАНТ 1: Тёмная + 3 стата ── */
+.card1{
+  background:linear-gradient(135deg,#18181B 0%,#09090B 100%);
+  border-radius:20px;padding:0;overflow:hidden;
+  box-shadow:0 8px 32px rgba(0,0,0,0.2);
+}
+.c1-top-bar{height:3px;background:linear-gradient(90deg,#F5A623,#FBBF24,rgba(245,166,35,0))}
+.c1-body{padding:20px 22px 18px}
+.c1-row1{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px}
+.c1-greeting{font-size:11px;font-weight:600;color:rgba(255,255,255,.4);letter-spacing:.5px;margin-bottom:5px}
+.c1-name{font-size:24px;font-weight:900;color:#fff;letter-spacing:-.3px}
+.c1-date{background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.2);border-radius:12px;padding:8px 12px;text-align:center}
+.c1-date-d{font-size:26px;font-weight:900;color:#F5A623;line-height:1}
+.c1-date-m{font-size:9px;font-weight:700;color:rgba(245,166,35,.6);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.c1-stats{display:flex;gap:1px;margin-bottom:18px;background:rgba(255,255,255,.06);border-radius:12px;overflow:hidden}
+.c1-stat{flex:1;padding:12px 8px;text-align:center}
+.c1-stat-n{font-size:28px;font-weight:900;color:#F5A623;line-height:1}
+.c1-stat-l{font-size:9px;font-weight:600;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.8px;margin-top:3px}
+.c1-stat:first-child .c1-stat-n{color:#fff}
+.c1-next{display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(245,166,35,.08);border-radius:10px;font-size:12px;color:rgba(255,255,255,.6);font-weight:500}
+.c1-next-ic{color:#F5A623;font-size:13px}
+
+/* ── ВАРИАНТ 2: Белая + большое число справа ── */
+.card2{
+  background:#fff;border-radius:20px;overflow:hidden;
+  box-shadow:0 2px 16px rgba(0,0,0,0.08);
+}
+.c2-accent{background:#F5A623;height:100%;width:6px;flex-shrink:0}
+.c2-body{padding:20px 20px 18px;display:flex;flex-direction:column;justify-content:space-between;flex:1}
+.c2-top{display:flex;align-items:flex-start;justify-content:space-between}
+.c2-left{}
+.c2-greeting{font-size:10px;font-weight:700;color:#999;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px}
+.c2-name{font-size:22px;font-weight:900;color:#18181B;line-height:1.1}
+.c2-big-num{text-align:right}
+.c2-num{font-size:72px;font-weight:900;color:#F5A623;line-height:1;letter-spacing:-3px}
+.c2-num-l{font-size:10px;font-weight:700;color:#ccc;text-transform:uppercase;letter-spacing:1px;margin-top:-4px;text-align:right}
+.c2-bottom{display:flex;align-items:center;justify-content:space-between;padding-top:14px;border-top:1px solid #F5F5F5}
+.c2-date{font-size:12px;color:#999;font-weight:500}
+.c2-next{font-size:12px;color:#18181B;font-weight:600;display:flex;align-items:center;gap:5px}
+.c2-next-ic{color:#F5A623}
+.card2-wrap{display:flex;border-radius:20px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,0.08)}
+
+/* ── ВАРИАНТ 3: Amber hero полностью ── */
+.card3{
+  background:linear-gradient(135deg,#F5A623 0%,#E8920A 100%);
+  border-radius:20px;padding:22px;overflow:hidden;position:relative;
+  box-shadow:0 8px 24px rgba(245,166,35,0.4);
+}
+.card3::before{
+  content:'';position:absolute;top:-40px;right:-40px;width:180px;height:180px;
+  border-radius:50%;background:rgba(255,255,255,0.12);pointer-events:none;
+}
+.card3::after{
+  content:'BECKER';position:absolute;bottom:10px;right:16px;
+  font-size:32px;font-weight:900;letter-spacing:4px;
+  color:rgba(0,0,0,0.07);pointer-events:none;
+}
+.c3-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px}
+.c3-greeting{font-size:10px;font-weight:700;color:rgba(0,0,0,.45);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px}
+.c3-name{font-size:24px;font-weight:900;color:#18181B}
+.c3-date{background:rgba(0,0,0,.12);border-radius:12px;padding:8px 12px;text-align:center}
+.c3-date-d{font-size:28px;font-weight:900;color:#18181B;line-height:1}
+.c3-date-m{font-size:9px;font-weight:800;color:rgba(0,0,0,.45);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.c3-main{display:flex;align-items:baseline;gap:12px;margin-bottom:16px}
+.c3-num{font-size:64px;font-weight:900;color:#fff;line-height:1;letter-spacing:-2px;text-shadow:0 2px 8px rgba(0,0,0,.15)}
+.c3-lbl{font-size:13px;font-weight:700;color:rgba(0,0,0,.5);line-height:1.5}
+.c3-next{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.08);border-radius:10px;padding:9px 12px;font-size:12px;color:rgba(0,0,0,.65);font-weight:600}
+
+/* ── ВАРИАНТ 4: Двухстрочный компакт + полоска прогресса ── */
+.card4{
+  background:#fff;border-radius:20px;overflow:hidden;
+  box-shadow:0 2px 16px rgba(0,0,0,0.08);
+}
+.c4-bar{height:4px;background:#F0F0F0;position:relative}
+.c4-bar-fill{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,#F5A623,#FBBF24);border-radius:2px;width:60%}
+.c4-body{padding:18px 20px 16px}
+.c4-row1{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.c4-person{display:flex;align-items:center;gap:10px}
+.c4-avatar{width:40px;height:40px;border-radius:50%;background:#F5A623;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;flex-shrink:0}
+.c4-greeting{font-size:10px;color:#999;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.c4-name{font-size:17px;font-weight:900;color:#18181B;margin-top:1px}
+.c4-date-pill{background:#FFF7E6;border:1.5px solid rgba(245,166,35,.25);border-radius:10px;padding:6px 12px;text-align:center}
+.c4-date-d{font-size:20px;font-weight:900;color:#F5A623;line-height:1}
+.c4-date-m{font-size:8px;font-weight:800;color:#F5A623;opacity:.6;text-transform:uppercase;letter-spacing:1px}
+.c4-divider{height:1px;background:#F5F5F5;margin-bottom:14px}
+.c4-stats{display:flex;align-items:center;gap:0;margin-bottom:14px}
+.c4-stat{flex:1;text-align:center;position:relative}
+.c4-stat+.c4-stat::before{content:'';position:absolute;left:0;top:4px;bottom:4px;width:1px;background:#F0F0F0}
+.c4-stat-n{font-size:28px;font-weight:900;color:#F5A623;line-height:1}
+.c4-stat-n.today{color:#18181B}
+.c4-stat-l{font-size:9px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:.8px;margin-top:3px}
+.c4-next{display:flex;align-items:center;gap:7px;font-size:12px;color:#555;font-weight:600;padding-top:12px;border-top:1px solid #F5F5F5}
+.c4-ic{color:#F5A623;font-size:13px}
+</style>
+</head>
+<body>
+
+<div class="label">1 — Тёмная со статами</div>
+<div class="card1">
+  <div class="c1-top-bar"></div>
+  <div class="c1-body">
+    <div class="c1-row1">
+      <div>
+        <div class="c1-greeting">Доброе утро,</div>
+        <div class="c1-name">Софья</div>
+      </div>
+      <div class="c1-date">
+        <div class="c1-date-d">29</div>
+        <div class="c1-date-m">пн · июн</div>
+      </div>
+    </div>
+    <div class="c1-stats">
+      <div class="c1-stat"><div class="c1-stat-n">5</div><div class="c1-stat-l">сегодня</div></div>
+      <div class="c1-stat"><div class="c1-stat-n">18</div><div class="c1-stat-l">неделя</div></div>
+      <div class="c1-stat"><div class="c1-stat-n">3</div><div class="c1-stat-l">ожидают</div></div>
+    </div>
+    <div class="c1-next"><span class="c1-next-ic">⏱</span> Следующее в 11:00 — Иван</div>
+  </div>
+</div>
+
+<div class="label">2 — Белая, большое число справа</div>
+<div class="card2-wrap">
+  <div class="c2-accent"></div>
+  <div class="card2" style="box-shadow:none;border-radius:0 20px 20px 0;flex:1">
+    <div class="c2-body">
+      <div class="c2-top">
+        <div class="c2-left">
+          <div class="c2-greeting">Доброе утро,</div>
+          <div class="c2-name">Софья</div>
+        </div>
+        <div class="c2-big-num">
+          <div class="c2-num">5</div>
+          <div class="c2-num-l">сегодня</div>
+        </div>
+      </div>
+      <div class="c2-bottom">
+        <div class="c2-date">29 июня · пн</div>
+        <div class="c2-next"><span class="c2-next-ic">⏱</span> в 11:00 — Иван</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="label">3 — Полностью amber</div>
+<div class="card3">
+  <div class="c3-top">
+    <div>
+      <div class="c3-greeting">Доброе утро,</div>
+      <div class="c3-name">Софья</div>
+    </div>
+    <div class="c3-date">
+      <div class="c3-date-d">29</div>
+      <div class="c3-date-m">пн · июн</div>
+    </div>
+  </div>
+  <div class="c3-main">
+    <div class="c3-num">5</div>
+    <div class="c3-lbl">собеседований<br>сегодня</div>
+  </div>
+  <div class="c3-next">⏱ Следующее в 11:00 — Иван</div>
+</div>
+
+<div class="label">4 — Аватар + прогресс + статы</div>
+<div class="card4">
+  <div class="c4-bar"><div class="c4-bar-fill"></div></div>
+  <div class="c4-body">
+    <div class="c4-row1">
+      <div class="c4-person">
+        <div class="c4-avatar">С</div>
+        <div>
+          <div class="c4-greeting">Доброе утро,</div>
+          <div class="c4-name">Софья</div>
+        </div>
+      </div>
+      <div class="c4-date-pill">
+        <div class="c4-date-d">29</div>
+        <div class="c4-date-m">пн</div>
+      </div>
+    </div>
+    <div class="c4-divider"></div>
+    <div class="c4-stats">
+      <div class="c4-stat"><div class="c4-stat-n today">5</div><div class="c4-stat-l">сегодня</div></div>
+      <div class="c4-stat"><div class="c4-stat-n">18</div><div class="c4-stat-l">неделя</div></div>
+      <div class="c4-stat"><div class="c4-stat-n">72%</div><div class="c4-stat-l">конверсия</div></div>
+    </div>
+    <div class="c4-next"><span class="c4-ic">⏱</span> Следующее в 11:00 — Иван</div>
+  </div>
+</div>
+
+</body>
+</html>

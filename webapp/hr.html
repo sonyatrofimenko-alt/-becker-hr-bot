@@ -82,78 +82,47 @@ body::before{content:'BECKER';position:fixed;bottom:50px;left:50%;transform:tran
 @keyframes onlinePulse{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.4)}50%{box-shadow:0 0 0 4px rgba(34,197,94,0)}}
 
 /* DAY CARD */
+/* ── DAY CARD ── */
 .day-card{
-  background:linear-gradient(145deg,#1A1500 0%,#2C2100 60%,#1E1800 100%);
-  border-radius:20px;margin:14px 14px 0;padding:22px 22px 18px;
-  position:relative;overflow:hidden;border:1px solid rgba(245,166,35,0.12);
-  box-shadow:0 8px 32px rgba(0,0,0,0.4),inset 0 1px 0 rgba(245,166,35,0.08);
+  background:linear-gradient(135deg,#18181B 0%,#09090B 100%);
+  border-radius:20px;margin:14px 14px 0;overflow:hidden;
+  box-shadow:0 8px 32px rgba(0,0,0,0.22);
 }
-/* Пульсирующее свечение сверху-справа */
-.day-card::before{
-  content:'';position:absolute;top:-50px;right:-50px;
-  width:200px;height:200px;
-  background:radial-gradient(circle,rgba(245,166,35,0.22) 0%,transparent 65%);
-  animation:dcGlow 3.5s ease-in-out infinite;pointer-events:none;
-}
-/* Второй акцент снизу-слева */
-.day-card::after{
-  content:'';position:absolute;bottom:-40px;left:-20px;
-  width:140px;height:140px;
-  background:radial-gradient(circle,rgba(245,166,35,0.08) 0%,transparent 70%);
-  pointer-events:none;
-}
-@keyframes dcGlow{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.12)}}
+.dc-top-bar{height:3px;background:linear-gradient(90deg,#F5A623,#FBBF24,rgba(245,166,35,0))}
+.dc-body{padding:18px 20px 16px}
 
-.dc-badge{
-  display:inline-flex;align-items:center;gap:6px;
-  background:rgba(245,166,35,0.15);border:1px solid rgba(245,166,35,0.25);
-  border-radius:20px;padding:4px 10px;margin-bottom:14px;
-}
-.dc-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--amber);animation:dcPing 2s ease infinite}
-.dc-badge-txt{font-size:9px;font-weight:800;color:var(--amber);letter-spacing:2px;text-transform:uppercase}
-@keyframes dcPing{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
-
-.dc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px}
-.dc-left{}
-.dc-greeting{font-size:11px;font-weight:700;color:rgba(245,240,224,.6);letter-spacing:1px;margin-bottom:5px}
-.dc-name{font-size:26px;font-weight:900;color:#F5F0E0;line-height:1.1;letter-spacing:-.3px}
+.dc-row1{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px}
+.dc-greeting{font-size:10px;font-weight:600;color:rgba(255,255,255,.4);letter-spacing:.5px;margin-bottom:5px}
+.dc-name{font-size:24px;font-weight:900;color:#fff;letter-spacing:-.3px}
 
 .dc-datebox{
-  background:rgba(245,166,35,0.12);border:1px solid rgba(245,166,35,0.2);
-  border-radius:14px;padding:8px 12px;text-align:center;flex-shrink:0;
+  background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.2);
+  border-radius:12px;padding:8px 12px;text-align:center;flex-shrink:0;
 }
-.dc-day{font-size:32px;font-weight:900;color:var(--amber);line-height:1}
-.dc-mon{font-size:9px;font-weight:800;color:rgba(245,200,80,.7);text-transform:uppercase;letter-spacing:1.5px;margin-top:2px}
+.dc-day{font-size:26px;font-weight:900;color:#F5A623;line-height:1}
+.dc-mon{font-size:9px;font-weight:700;color:rgba(245,166,35,.6);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
 
-.dc-divider{height:1px;background:linear-gradient(90deg,rgba(245,166,35,0.25),transparent);margin-bottom:18px}
+.dc-stats{
+  display:flex;gap:1px;margin-bottom:16px;
+  background:rgba(255,255,255,.06);border-radius:12px;overflow:hidden;
+}
+.dc-stat{flex:1;padding:11px 8px;text-align:center}
+.dc-stat-n{font-size:26px;font-weight:900;color:#F5A623;line-height:1}
+.dc-stat-n.dc-today{color:#fff}
+.dc-stat-l{font-size:8px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.8px;margin-top:3px}
 
-.dc-main{display:flex;align-items:center;gap:16px;margin-bottom:16px}
-.dc-count{
-  font-size:72px;font-weight:900;color:var(--amber);line-height:1;letter-spacing:-3px;
-  text-shadow:0 0 30px rgba(245,166,35,0.4);
-}
-.dc-count-lbl{
-  font-size:14px;font-weight:700;color:rgba(245,240,224,.75);
-  line-height:1.5;border-left:2px solid rgba(245,166,35,0.3);padding-left:12px;
-}
 .dc-next{
   display:flex;align-items:center;gap:8px;
-  font-size:12px;color:rgba(245,240,224,.6);font-weight:600;
-  background:rgba(245,166,35,0.07);border-radius:10px;padding:8px 12px;
+  padding:9px 13px;
+  background:rgba(245,166,35,.08);border-radius:10px;
+  font-size:12px;color:rgba(255,255,255,.6);font-weight:500;
 }
-.dc-next-ic{font-size:14px;flex-shrink:0}
-@keyframes numPop{0%{transform:scale(.5);opacity:0}70%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
-.num-anim{animation:numPop .6s var(--spring) both}
-/* Shimmer sweep across card on load */
-.day-card-shine{
-  position:absolute;inset:0;pointer-events:none;z-index:1;overflow:hidden;border-radius:20px;
-}
-.day-card-shine::after{
-  content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;
-  background:linear-gradient(90deg,transparent,rgba(245,166,35,0.06),transparent);
-  animation:dcShine 2.5s 0.3s ease forwards;
-}
-@keyframes dcShine{0%{left:-100%}100%{left:200%}}
+.dc-next-ic{color:#F5A623;font-size:13px;flex-shrink:0}
+
+.dc-count{display:none}/* скрыт, считаем через dc-stat */
+
+@keyframes numPop{0%{transform:scale(.5);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+.num-anim{animation:numPop .55s var(--spring) both}
 
 /* SECTION LABEL */
 .sec-lbl{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber-dk);padding:16px 16px 10px;display:flex;align-items:center;gap:8px}
@@ -395,29 +364,36 @@ body::before{content:'BECKER';position:fixed;bottom:50px;left:50%;transform:tran
 
 <!-- DAY CARD -->
 <div class="day-card">
-  <div class="day-card-shine"></div>
-  <div class="dc-badge">
-    <div class="dc-badge-dot"></div>
-    <span class="dc-badge-txt" id="dc-badge-txt">BECKER HR</span>
-  </div>
-  <div class="dc-top">
-    <div class="dc-left">
-      <div class="dc-greeting" id="dc-greeting">Добрый день,</div>
-      <div class="dc-name" id="dc-name">—</div>
+  <div class="dc-top-bar"></div>
+  <div class="dc-body">
+    <div class="dc-row1">
+      <div>
+        <div class="dc-greeting" id="dc-greeting">Добрый день,</div>
+        <div class="dc-name" id="dc-name">—</div>
+      </div>
+      <div class="dc-datebox">
+        <div class="dc-day" id="dc-day">—</div>
+        <div class="dc-mon" id="dc-mon">—</div>
+      </div>
     </div>
-    <div class="dc-datebox">
-      <div class="dc-day" id="dc-day">—</div>
-      <div class="dc-mon" id="dc-mon">—</div>
+    <div class="dc-stats">
+      <div class="dc-stat">
+        <div class="dc-stat-n dc-today num-anim" id="dc-count">0</div>
+        <div class="dc-stat-l">сегодня</div>
+      </div>
+      <div class="dc-stat">
+        <div class="dc-stat-n num-anim" id="dc-week">0</div>
+        <div class="dc-stat-l">неделя</div>
+      </div>
+      <div class="dc-stat">
+        <div class="dc-stat-n num-anim" id="dc-pending">0</div>
+        <div class="dc-stat-l">ожидают</div>
+      </div>
     </div>
-  </div>
-  <div class="dc-divider"></div>
-  <div class="dc-main">
-    <div class="dc-count num-anim" id="dc-count">0</div>
-    <div class="dc-count-lbl">собеседований<br>запланировано<br>на сегодня</div>
-  </div>
-  <div class="dc-next" id="dc-next">
-    <span class="dc-next-ic">⏱</span>
-    <span id="dc-next-txt">Загружаю...</span>
+    <div class="dc-next" id="dc-next">
+      <span class="dc-next-ic">⏱</span>
+      <span id="dc-next-txt">Загружаю...</span>
+    </div>
   </div>
 </div>
 
@@ -756,20 +732,33 @@ function renderPulse() {
   const now = new Date();
 
   document.getElementById('dc-greeting').textContent = greeting + ',';
-  // Если имя не определено (вне Telegram) — показываем роль
   const displayName = (me.short && me.short !== 'HR') ? me.short : (me.role || 'Кабинет');
   document.getElementById('dc-name').textContent = displayName;
-  document.getElementById('dc-day').textContent  = now.getDate();
-  document.getElementById('dc-mon').textContent  = MONTHS_SHORT[now.getMonth()] + ' · ' + DAYS_SHORT[now.getDay()];
 
+  const DAYS_RU = ['вс','пн','вт','ср','чт','пт','сб'];
+  const dateEl = document.getElementById('dc-day');
+  const monEl  = document.getElementById('dc-mon');
+  if (dateEl) dateEl.textContent = now.getDate();
+  if (monEl)  monEl.textContent  = MONTHS_SHORT[now.getMonth()] + ' · ' + DAYS_RU[now.getDay()];
+
+  // Стата 1 — сегодня
   const todayCnt = candidates.filter(c => c.interview_date===TODAY && c.status==='scheduled').length;
   const countEl = document.getElementById('dc-count');
-  countEl.classList.remove('num-anim'); void countEl.offsetWidth; countEl.classList.add('num-anim');
-  animateCount(countEl, todayCnt, 900);
+  if (countEl) { countEl.classList.remove('num-anim'); void countEl.offsetWidth; countEl.classList.add('num-anim'); animateCount(countEl, todayCnt, 700); }
 
-  // Баджик с числом
-  const badgeTxt = document.getElementById('dc-badge-txt');
-  if (badgeTxt) badgeTxt.textContent = todayCnt > 0 ? `АКТИВЕН · ${todayCnt}` : 'BECKER HR';
+  // Стата 2 — неделя (пн–вс текущей недели)
+  const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay() + (now.getDay()===0?-6:1));
+  const weekEnd   = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6);
+  const _ld = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const ws = _ld(weekStart), we = _ld(weekEnd);
+  const weekCnt = candidates.filter(c => c.status==='scheduled' && c.interview_date >= ws && c.interview_date <= we).length;
+  const weekEl = document.getElementById('dc-week');
+  if (weekEl) { weekEl.classList.remove('num-anim'); void weekEl.offsetWidth; weekEl.classList.add('num-anim'); animateCount(weekEl, weekCnt, 800); }
+
+  // Стата 3 — ожидают ответа (offer_sent или review)
+  const pendingCnt = candidates.filter(c => c.status==='offer_sent' || c.status==='review').length;
+  const pendEl = document.getElementById('dc-pending');
+  if (pendEl) { pendEl.classList.remove('num-anim'); void pendEl.offsetWidth; pendEl.classList.add('num-anim'); animateCount(pendEl, pendingCnt, 900); }
 
   // Ближайшее собеседование
   const nowMins = now.getHours()*60 + now.getMinutes();
@@ -779,18 +768,18 @@ function renderPulse() {
     .find(c => { const [hh,mm]=c.interview_time.split(':').map(Number); return hh*60+mm > nowMins; });
 
   const nextTxtEl = document.getElementById('dc-next-txt');
-  const nextEl = document.getElementById('dc-next');
+  const nextIcEl  = document.querySelector('.dc-next-ic');
   if (!nextTxtEl) return;
 
   if (upcoming) {
-    nextTxtEl.textContent = `Следующее в ${upcoming.interview_time} — ${upcoming.name.split(' ')[0]}`;
-    if (nextEl) nextEl.querySelector('.dc-next-ic').textContent = '⏱';
+    nextTxtEl.textContent = `в ${upcoming.interview_time} — ${upcoming.name.split(' ')[0]}`;
+    if (nextIcEl) nextIcEl.textContent = '⏱';
   } else if (todayCnt > 0) {
     nextTxtEl.textContent = 'На сегодня все завершены';
-    if (nextEl) nextEl.querySelector('.dc-next-ic').textContent = '✓';
+    if (nextIcEl) nextIcEl.textContent = '✓';
   } else {
     nextTxtEl.textContent = 'Записей на сегодня нет';
-    if (nextEl) nextEl.querySelector('.dc-next-ic').textContent = '📋';
+    if (nextIcEl) nextIcEl.textContent = '📋';
   }
 }
 
