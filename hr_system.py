@@ -1586,7 +1586,7 @@ async def serve_update_status(request):
         hr_id  = int(body.get("hr_id", 0))
         key    = body.get("key", "")
         status = body.get("status", "")
-        VALID  = {"no_show", "approved_pending", "rejected_pending", "scheduled"}
+        VALID  = {"no_show", "approved_pending", "rejected_pending", "scheduled", "approved"}
         if not key or status not in VALID:
             return web.Response(text='{"ok":false,"error":"invalid params"}',
                                 content_type="application/json", headers=CORS)

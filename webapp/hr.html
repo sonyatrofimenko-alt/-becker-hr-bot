@@ -190,9 +190,11 @@ body::before{content:'BECKER';position:fixed;bottom:50px;left:50%;transform:tran
 /* REMINDER */
 .reminder-block{background:var(--amber-lt);border:1.5px solid rgba(245,166,35,.35);border-radius:var(--rs);padding:14px;margin:0 14px 12px;display:none}
 .reminder-block.show{display:block}
-.reminder-title{font-size:11px;font-weight:800;color:var(--dark);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px}
-.reminder-item{padding:8px 0;border-bottom:1px solid rgba(245,166,35,.2)}
+.reminder-title{font-size:11px;font-weight:800;color:var(--amber-dk);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px}
+.reminder-item{padding:10px 0;border-bottom:1px solid rgba(245,166,35,.2);display:flex;align-items:center;justify-content:space-between;gap:10px}
 .reminder-item:last-child{border-bottom:none}
+.reminder-done-btn{flex-shrink:0;background:var(--teal);color:#fff;border:none;border-radius:10px;padding:7px 12px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;transition:opacity .2s}
+.reminder-done-btn:active{opacity:.7}
 
 /* STATS */
 .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
@@ -423,7 +425,7 @@ body::before{content:'BECKER';position:fixed;bottom:50px;left:50%;transform:tran
       <button id="today-search-clear" onclick="document.getElementById('today-search').value='';document.getElementById('today-search').blur();renderToday()" style="display:none;position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:18px;color:var(--mid);cursor:pointer;padding:4px">✕</button>
     </div>
     <div class="reminder-block" id="reminder-block">
-      <div class="reminder-title">📝 Нужно написать</div>
+      <div class="reminder-title" id="reminder-title">✍️ Написать об оффере</div>
       <div id="reminder-list"></div>
     </div>
     <div id="today-list" class="stagger"><div style="text-align:center;padding:28px;color:var(--mid)">⏳</div></div>
@@ -785,20 +787,36 @@ function renderPulse() {
 
 // ─── REMINDERS ────────────────────────────────────────────────────────
 function renderReminders() {
-  const pending = candidates.filter(c => c.status==='approved_pending' || c.status==='rejected_pending');
+  const pending = candidates.filter(c => c.status==='approved_pending');
   const block = document.getElementById('reminder-block');
   if (!pending.length) { block.classList.remove('show'); return; }
   block.classList.add('show');
+  const titleEl = document.getElementById('reminder-title');
+  if (titleEl) titleEl.textContent = `✍️ Написать об оффере (${pending.length})`;
   document.getElementById('reminder-list').innerHTML = pending.map(c => {
-    const u   = c.username ? `@${c.username}` : (c.phone || `ID:${c.telegram_id}`);
-    const act = c.status==='approved_pending' ? '✅ Написать об оффере' : '⏰ Авто-отказ уйдёт в 18:00';
-    const col = c.status==='approved_pending' ? 'var(--teal)' : 'var(--mid)';
+    const key = c._key || '';
+    const contact = c.username ? `@${c.username}` : (c.phone || (c.telegram_id ? `ID:${c.telegram_id}` : '—'));
+    const dateStr = c.interview_date ? fmtDate(c.interview_date) : '';
     return `<div class="reminder-item">
-      <div style="font-size:13px;font-weight:700;color:var(--dark)">${c.name}</div>
-      <div style="font-size:11px;color:var(--mid);margin-top:2px">${u}</div>
-      <div style="font-size:11px;font-weight:600;margin-top:3px;color:${col}">${act}</div>
+      <div style="min-width:0">
+        <div style="font-size:13px;font-weight:700;color:var(--dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div>
+        <div style="font-size:11px;color:var(--mid);margin-top:1px">${contact}</div>
+        ${dateStr ? `<div style="font-size:10px;color:var(--mid);margin-top:1px">Был(а) ${dateStr}</div>` : ''}
+      </div>
+      <button class="reminder-done-btn" onclick="markOffered('${key}',this)">✅ Написал(а)</button>
     </div>`;
   }).join('');
+}
+
+async function markOffered(key, btn) {
+  btn.disabled = true; btn.textContent = '...';
+  try {
+    const r = await fetch('/api/update-status', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({hr_id: HR_ID, key, status: 'approved'})});
+    const j = await r.json();
+    if (j.ok) { await loadAll(); }
+    else { btn.disabled=false; btn.textContent='✅ Написал(а)'; _alert('Ошибка: '+(j.error||'')); }
+  } catch(e) { btn.disabled=false; btn.textContent='✅ Написал(а)'; }
 }
 
 // ─── TODAY ────────────────────────────────────────────────────────────
@@ -822,22 +840,46 @@ function renderToday() {
       const dt = new Date(); dt.setHours(h, m, 0, 0);
       return now > new Date(dt.getTime() + 30 * 60 * 1000);
     })();
-    const noShowHint = pastDeadline ? `
-      <div style="margin-top:10px;padding:10px;background:rgba(232,64,64,0.06);border-radius:10px;border:1px solid rgba(232,64,64,0.15)">
-        <div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:7px">⏰ Прошло 30+ минут — отметить результат:</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
+    // Блок действий зависит от статуса
+    let actionBlock = '';
+    if (c.status === 'approved_pending') {
+      actionBlock = `
+        <div style="margin-top:10px;padding:10px;background:rgba(38,198,176,0.08);border-radius:10px;border:1px solid rgba(38,198,176,0.25)">
+          <div style="font-size:11px;font-weight:700;color:var(--teal);margin-bottom:7px">✅ Пришёл(а) — принят(а)</div>
+          <div style="font-size:11px;color:var(--mid);margin-bottom:8px">Напишите кандидату об оффере. После — отметьте здесь.</div>
+          <button class="qs-btn qs-teal" onclick="event.stopPropagation();markOffered('${key}',this)">✅ Написал(а) об оффере</button>
+        </div>`;
+    } else if (c.status === 'rejected_pending') {
+      actionBlock = `
+        <div style="margin-top:10px;padding:10px;background:rgba(0,0,0,0.04);border-radius:10px;border:1px solid var(--bg2)">
+          <div style="font-size:11px;font-weight:700;color:var(--mid)">❌ Пришёл(а) — не подошёл(ла)</div>
+          <div style="font-size:11px;color:var(--mid);margin-top:3px">Авто-уведомление кандидату уйдёт в 18:00. Ничего делать не нужно.</div>
+        </div>`;
+    } else if (c.status === 'no_show') {
+      actionBlock = `
+        <div style="margin-top:10px;padding:10px;background:rgba(0,0,0,0.04);border-radius:10px;border:1px solid var(--bg2)">
+          <div style="font-size:11px;font-weight:700;color:var(--mid)">👻 Не пришёл(а)</div>
+          <div style="font-size:11px;color:var(--mid);margin-top:3px">Кандидату отправлено сообщение с предложением перенести.</div>
+        </div>`;
+    } else if (pastDeadline) {
+      actionBlock = `
+        <div style="margin-top:10px;padding:10px;background:rgba(232,64,64,0.06);border-radius:10px;border:1px solid rgba(232,64,64,0.15)">
+          <div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:7px">⏰ Прошло 30+ минут — отметить результат:</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="qs-btn qs-teal" onclick="event.stopPropagation();quickStatus('${key}','approved_pending')">✅ Пришёл, принят</button>
+            <button class="qs-btn qs-red"  onclick="event.stopPropagation();quickStatus('${key}','rejected_pending')">❌ Пришёл, отказ</button>
+            <button class="qs-btn qs-grey" onclick="event.stopPropagation();quickStatus('${key}','no_show')">👻 Не пришёл</button>
+          </div>
+        </div>`;
+    } else if (c.status === 'scheduled') {
+      actionBlock = `
+        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+          <button class="qs-btn qs-teal" onclick="event.stopPropagation();quickStatus('${key}','approved_pending')">✅ Принят</button>
+          <button class="qs-btn qs-red" onclick="event.stopPropagation();quickStatus('${key}','rejected_pending')">❌ Отказ</button>
           <button class="qs-btn qs-grey" onclick="event.stopPropagation();quickStatus('${key}','no_show')">👻 Не пришёл</button>
-          <button class="qs-btn qs-teal" onclick="event.stopPropagation();quickStatus('${key}','approved_pending')">✅ Пришёл, принят</button>
-          <button class="qs-btn qs-red"  onclick="event.stopPropagation();quickStatus('${key}','rejected_pending')">❌ Пришёл, отказ</button>
-        </div>
-      </div>` : '';
-
-    const qs = (!pastDeadline && c.status === 'scheduled') ? `
-      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
-        <button class="qs-btn qs-teal" onclick="event.stopPropagation();quickStatus('${key}','approved_pending')">✅ Принят</button>
-        <button class="qs-btn qs-red" onclick="event.stopPropagation();quickStatus('${key}','rejected_pending')">❌ Отказ</button>
-        <button class="qs-btn qs-grey" onclick="event.stopPropagation();quickStatus('${key}','no_show')">👻 Не пришёл</button>
-      </div>` : '';
+        </div>`;
+    }
+    const noShowHint = ''; // удалено — логика перенесена в actionBlock
 
     return `<div class="card ${cardBorder(c.status)}" onclick="openCandModal('${key}')">
       <div style="display:flex;align-items:flex-start;justify-content:space-between">
@@ -850,7 +892,7 @@ function renderToday() {
         </div>
         <button class="card-action-btn rpl" onclick="event.stopPropagation();openCandModal('${key}')">✏️ Статус</button>
       </div>
-      ${noShowHint}${qs}
+      ${actionBlock}
     </div>`;
   }).join('');
 }
